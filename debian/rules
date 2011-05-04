@@ -1,0 +1,49 @@
+#!/usr/bin/make -f
+
+build_dir   = build
+install_dir = debian/tmp
+setup       = /usr/bin/python ./setup.py --quiet
+
+binary: binary-indep
+
+binary-arch:
+
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_installman
+	dh_install --list-missing --sourcedir $(install_dir)
+	dh_fixperms
+	dh_compress -X.py
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_installdirs 
+	cp -R specs $(install_dir)
+
+build: build-stamp
+build-stamp: 
+	dh_testdir
+	$(setup) build --build-base $(build_dir) install --no-compile --install-purelib $(install_dir)/lib/rtslib --install-scripts $(install_dir)/bin
+	echo "2.5, 2.6" > $(install_dir)/lib/rtslib/.version
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	$(setup) clean
+	find . -name "*.pyc" | xargs rm -f
+	find . -name "*.pyo" | xargs rm -f
+	rm -rf $(build_dir) $(install_dir)
+	dh_clean
+
+.PHONY: binary binary-indep install build clean
+

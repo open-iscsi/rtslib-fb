@@ -1,0 +1,19 @@
+Source: rtslib
+Section: python
+Priority: optional
+Maintainer: Jerome Martin <jxm@risingtidesystems.com>
+Build-Depends: debhelper(>= 7.0.1), python2.5, python2.6, python-epydoc
+Standards-Version: 3.8.1
+
+Package: python-rtslib
+Architecture: all
+Depends: python (>= 2.5)|python2.5|python2.6, python-configobj
+Suggests: rtslib-doc
+Conflicts: rtsadmin-frozen
+Description: RisingTide Systems generic SCSI target API in python.
+
+Package: rtslib-doc
+Section: doc
+Architecture: all
+Recommends: iceweasel | www-browser
+Description: RisingTide Systems generic SCSI target API documentation.

@@ -1,0 +1,137 @@
+# This file is part of RTSLib Community Edition.
+# Copyright (c) 2011 by RisingTide Systems LLC
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, version 3 (AGPLv3).
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+This directory (normally /var/lib/target) contains the spec files for
+RisingTide Systems's LIO SCSI target subsystem fabric modules.
+
+Each spec file should be named MODULE.spec, where MODULE is the name the fabric
+module is to be referred as. It contains a series of KEY = VALUE pairs, one per
+line.
+
+KEY is an alphanumeric (no spaces) string.
+VALUE can be anything. Quotes can be used for strings, but are not mandatory.
+Lists of VALUEs are comma-separated.
+
+Syntax
+------
+
+* Strings
+String values can either be enclosed in double quotes or not.
+Those examples are equivalent:
+kernel_module = "my_module"
+kernel_module = my_module
+
+* Lists
+Lists are comma-separated lists of values. If you want to use a comma in a
+string, use double quotes. Example:
+my_string = value1, value2, "value3, with comma", value4
+
+* Comments
+All lines beginning with a pound sign (#) will be ignored.
+Empty lines will be ignored too.
+
+Available keys
+--------------
+
+* features
+Lists the target fabric available features. Default value:
+discovery_auth, acls, acls_auth, nps
+exemple: features = discovery_auth, acls, acls_auth
+
+Detail of features:
+
+  * tpgts
+  The target fabric module is using iSCSI-style target portal group tags.
+
+  * discovery_auth
+  The target fabric module supports a fabric-wide authentication for
+  discovery.
+  
+  * acls
+  The target's TPGTs do support explicit initiator ACLs.
+  
+  * acls_auth
+  The target's TPGT's ACLs do support per-ACL initiator authentication.
+  
+  * nps
+  The TPGTs do support iSCSI-like IPv4/IPv6 network portals, using IP:PORT
+  group names.
+  
+  * nexus
+  The TPGTs do have a 'nexus' attribute that contains the local initiator
+  serial unit. This attribute must be set before being able to create any
+  LUNs.
+  
+* wwn_type
+Sets the type of WWN expected by the target fabric. Defaults to 'free'.
+Example: wwn_type = iqn
+Current valid types are:
+
+  * free
+  Freeform WWN.
+
+  * iqn
+  The fabric module targets are using iSCSI-type IQNs.
+
+  * naa
+  NAA SAS address type WWN.
+
+  * unit_serial
+  Disk-type unit serial.
+
+* wwn_from_files
+In some cases, and independently from the wwn type, the target WWNs must be
+picked from a list of existing ones, the most obvious case being hardware-set
+WWNs. Only the WWNs both matching the wwn_type (after filtering if set, see
+below) and fetched from the specified files will be allowed for targets. The
+value of this key is a list (one or more, comma-separated) of UNIX style
+pathname patterns: * and ? wildcards can be used, and character ranges
+expressed with [] will be correctly expanded.  Each file is assumed to contain
+one or more WWNs, and line ends, spaces, tabs and null (\0) will be considered
+as separators chars.
+Example: wwn_from_files = /sys/class/fc_host/host[0-9]/port_name
+
+* wwn_from_files_filter
+Empty by default, this one allows specifying a shell command to which each WWN
+from files will be fed, and the output of the filter will be used as the final
+WWN to use. Examples:
+wwn_from_files_filter = "sed -e s/0x// -e 's/../&:/g' -e s/:$//"
+wwn_from_files_filter = "sed -e s/0x// -e 's/../&:/g' -e s/:$// | tr [a-z] [A-Z]"
+The first example transforms strings like '0x21000024ff314c48' into
+'21:00:00:24:ff:31:4c:48', the second one also shifts lower cases into upper
+case, demonstrating that you can pipe as many commands you want into another.
+
+* wwn_from_cmds
+Same as wwn_from_files, but instead of taking a list of file patterns, takes a
+list of shell commands. Each commands output will be considered as a list of
+WWNs to be used, separated ny line ends, spaces, tabs and null (\0)
+chararcters.
+
+* wwn_from_cmds_filter
+Same as wwn_from_files_filter, but filters/transforms the WWNs gotten from the
+results of the wwn_from_cmds shell commands.
+
+* kernel_module
+Sets the name of the kernel module implementing the fabric modules. If not
+specified, it will be assumed to be MODULE_target_mod, where MODNAME is the
+name of the fabric module, as used to name the spec file. Note that you must
+not specify any .ko or such extension here.
+Example: kernel_module = my_module
+
+* configfs_group
+Sets the name of the configfs group used by the fabric module. Defaults to the
+name of the module as used to name the spec file.
+Example: configfs_group = iscsi
+
