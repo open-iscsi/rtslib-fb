@@ -17,6 +17,9 @@ RTSLib Community Edition is a python library that provides an object API to
 RisingTide Systems generic SCSI Target as well as third-party target fabric
 modules written for it and backend storage objects.
 
+The latest version of this program might be obtained at:
+http://www.risingtidesystems.com/git/
+
 It is useful for developing 3rd-party applications, as well as serving as a
 foundation for RisingTide Systems userspace tools.
 
