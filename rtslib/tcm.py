@@ -640,14 +640,6 @@ class PSCSIStorageObject(StorageObject):
         self._set_udev_path(udev_path)
         self._enable()
 
-    def _get_wwn(self):
-        self._check_self()
-        if self.is_configured():
-            path = "%s/wwn/vpd_unit_serial" % self.path
-            return fread(path).partition(":")[2].strip()
-        else:
-            return ""
-
     def _get_model(self):
         self._check_self()
         info = fread("%s/info" % self.path)
@@ -682,7 +674,7 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject public stuff
 
-    wwn = property(_get_wwn,
+    wwn = property(StorageObject._get_wwn,
             doc="Get the StorageObject T10 WWN Unit Serial as a string."
             + " You cannot set it for pscsi-backed StorageObjects.")
     model = property(_get_model,
