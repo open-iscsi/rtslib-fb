@@ -441,12 +441,11 @@ class StorageObject(CFSNode):
 
         # If we are called after a configure error, we can skip this
         if self.is_configured():
-            gen = self._gen_attached_luns()
-            while self.status == 'activated':
-                gen.next().delete()
-
-            # FIXME: delete ALUA tp pt gps
-            # FIXME: delete snapshots
+            for lun in self._gen_attached_luns():
+                if self.status != 'activated':
+                    break
+                else:
+                    gen.next().delete()
 
         super(StorageObject, self).delete()
 
