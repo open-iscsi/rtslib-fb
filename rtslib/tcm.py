@@ -388,12 +388,10 @@ class StorageObject(CFSNode):
 
     def _gen_attached_luns(self):
         '''
-        This function is used only by delete().  The idea is that delete() can
-        check when there are no more attached LUNs because when the last one is
-        deleted, the status of the StorageObject changes. Then, we can stop
-        fetching the values.  The list comprehension of _list_attached_luns
-        cannot be used here because of limitations in python 2.5.
+        Fast scan of luns attached to a storage object. This is an order of
+        magnitude faster than using root.luns and matching path on them.
         '''
+        isdir = os.path.isdir
         islink = os.path.islink
         listdir = os.listdir
         realpath = os.path.realpath
@@ -406,61 +404,28 @@ class StorageObject(CFSNode):
             base = fabric_module.path
             for tgt_dir in listdir(base):
                 if tgt_dir not in target_names_excludes:
-                    tpgt_dirs = "%s/%s" % (base, tgt_dir)
-                    for tpgt_dir in listdir(tpgt_dirs):
-                        lun_dirs = "%s/%s/%s/lun" % (base, tgt_dir, tpgt_dir)
-                        for lun_dir in listdir(lun_dirs):
-                            lun_files = "%s/%s/%s" % (base, tgt_dir, tpgt_dir)
-                            lun_files += "/lun/%s" % lun_dir
-                            for lun_file in listdir(lun_files):
-                                link = "%s/%s/%s/" % (base, tgt_dir, tpgt_dir)
-                                link += "/lun/%s/%s" % (lun_dir, lun_file)
-                                if islink(link) and realpath(link) == path:
-                                    val = (tpgt_dir + "_" + lun_dir).split('_')
-                                    target = Target(fabric_module, tgt_dir)
-                                    yield LUN(TPG(target, val[1]), val[3])
+                    tpgts_base = "%s/%s" % (base, tgt_dir)
+                    for tpgt_dir in listdir(tpgts_base):
+                        luns_base = "%s/%s/lun" % (tpgts_base, tpgt_dir)
+                        if isdir(luns_base):
+                            for lun_dir in listdir(luns_base):
+                                links_base = "%s/%s" % (luns_base, lun_dir)
+                                for lun_file in listdir(links_base):
+                                    link = "%s/%s" % (links_base, lun_file)
+                                    if islink(link) and realpath(link) == path:
+                                        val = (tpgt_dir + "_" + lun_dir)
+                                        val = val.split('_')
+                                        target = Target(fabric_module, tgt_dir)
+                                        yield LUN(TPG(target, val[1]), val[3])
 
     def _list_attached_luns(self):
         '''
-        Code below is ugly and hairy, but this is the result of a lot of tests
-        for optimizing the speed of it. islink() is slower, glob is slower,
-        direct object parsing is slower, etc.  Do not touch without retesting
-        mass deletion of storage objects with lots of luns attached !  Besides,
-        generators on the whole object chain whould actually SLOW things down
-        becauser we need to parse the whole list, not stop at first or n-th
-        match.  Also tried joins, intermediate path save & reuse, etc.  It is
-        approx. 20 times faster than using root.luns and matching path on them.
+        Just returns a set of all luns attached to a storage object.
         '''
-        # TODO: Handle SAS loopback LUN
         self._check_self()
-
-        # The StorageObject is not in use, so there are no luns attached.
-        if self.status == 'deactivated':
-            return []
         luns = set([])
-        listdir = os.listdir
-        realpath = os.path.realpath
-        path = self.path
-
-        xwwn = FabricModule.target_names_excludes
-        xlink = ["alua_tg_pt_write_md", "alua_tg_pt_status",
-                 "alua_tg_pt_offline", "alua_tg_pt_gp"]
-        from root import RTSRoot
-        rtsroot = RTSRoot()
-        for fabric_module in rtsroot.loaded_fabric_modules:
-            base = fabric_module.path
-            luns.update(set(
-                [LUN(TPG(Target(wwn), tpgt.split("_")[1]), lun.split("_")[1])
-                 for wwn in listdir(base) if wwn not in xwwn
-                 for tpgt in listdir(
-                     "%s/%s" % (base,wwn))
-                 for lun in listdir(
-                     "%s/%s/%s/lun" % (base, wwn, tpgt))
-                 for link in listdir(
-                     "%s/%s/%s/lun/%s" % (base, wwn, tpgt, lun))
-                 if link not in xlink
-                 if realpath("%s/%s/%s/lun/%s/%s"
-                             % (base, wwn, tpgt, lun, link)) == path]))
+        for lun in self._gen_attached_luns():
+            luns.add(lun)
         return luns
 
     # StorageObject public stuff
