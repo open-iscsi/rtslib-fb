@@ -120,7 +120,7 @@ def fread(path):
         file_fd.close()
 
     return string
-  
+
 def is_dev_in_use(path):
     '''
     This function will check if the device or file referenced by path is
@@ -166,7 +166,7 @@ def get_disk_size(path):
     if major is None:
         return None
     # list of [major, minor, #blocks (1K), name
-    partitions = [ x.split()[0:4] 
+    partitions = [ x.split()[0:4]
                   for x in fread("/proc/partitions").split("\n")[2:] if x]
     size = None
     for partition in partitions:
@@ -186,7 +186,7 @@ def get_block_numbers(path):
         mode = os.stat(dev)
     except OSError:
         return (None, None)
-		    
+
     if not stat.S_ISBLK(mode[stat.ST_MODE]):
         return (None, None)
 
@@ -358,7 +358,7 @@ def get_block_type(path):
     if major in type_disk_known_majors:
         return 0
 
-    # Same for LVM LVs, but as we cannot use major here 
+    # Same for LVM LVs, but as we cannot use major here
     # (it varies accross distros), use the realpath to check
     if os.path.dirname(dev) == "/dev/mapper":
         return 0
@@ -367,7 +367,7 @@ def get_block_type(path):
     blocks = [(fread("%s/dev" % fdev).strip().split(':')[0],
         fread("%s/dev" % fdev).strip().split(':')[1],
         fread("%s/device/type" % fdev).strip())
-        for fdev in glob.glob("/sys/block/*") 
+        for fdev in glob.glob("/sys/block/*")
         if os.path.isfile("%s/device/type" % fdev)]
 
     for block in blocks:
@@ -380,13 +380,13 @@ def list_scsi_hbas():
     '''
     This function returns the list of HBA indexes for existing SCSI HBAs.
     '''
-    return list(set([int(device.partition(":")[0]) 
-        for device in os.listdir("/sys/bus/scsi/devices") 
+    return list(set([int(device.partition(":")[0])
+        for device in os.listdir("/sys/bus/scsi/devices")
         if re.match("[0-9:]+", device)]))
 
 def convert_scsi_path_to_hctl(path):
     '''
-    This function returns the SCSI ID in H:C:T:L form for the block 
+    This function returns the SCSI ID in H:C:T:L form for the block
     device being mapped to the udev path specified.
     If no match is found, None is returned.
 
@@ -452,12 +452,12 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
             "The host, controller, target and lun parameter must be integers.")
 
     scsi_dev_path = "/sys/class/scsi_device"
-    sysfs_names = [os.path.basename(name) for name 
-            in glob.glob("%s/%d:%d:%d:%d/device/block:*" 
+    sysfs_names = [os.path.basename(name) for name
+            in glob.glob("%s/%d:%d:%d:%d/device/block:*"
             % (scsi_dev_path, host, controller, target, lun))]
     if len(sysfs_names) == 0:
-        sysfs_names = [os.path.basename(name) for name 
-                in glob.glob("%s/%d:%d:%d:%d/device/block/*" 
+        sysfs_names = [os.path.basename(name) for name
+                in glob.glob("%s/%d:%d:%d:%d/device/block/*"
                 % (scsi_dev_path, host, controller, target, lun))]
     if len(sysfs_names) > 0:
         for name in sysfs_names:
@@ -475,7 +475,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
         return ''
 
 def convert_human_to_bytes(hsize, kilo=1024):
-    ''' 
+    '''
     This function converts human-readable amounts of bytes to bytes.
     It understands the following units :
         - I{B} or no unit present for Bytes
@@ -484,7 +484,7 @@ def convert_human_to_bytes(hsize, kilo=1024):
         - I{g}, I{G}, I{gB}, I{GB} for GB (gigabytes)
         - I{t}, I{T}, I{tB}, I{TB} for TB (terabytes)
 
-    Note: The definition of I{kilo} defaults to 1kB = 1024Bytes. 
+    Note: The definition of I{kilo} defaults to 1kB = 1024Bytes.
     Strictly speaking, those should not be called I{kB} but I{kiB}.
     You can override that with the optional kilo parameter.
 
@@ -525,7 +525,7 @@ def convert_human_to_bytes(hsize, kilo=1024):
     size = size * int(kilo) ** power
     return size
 
-def generate_wwn(wwn_type): 
+def generate_wwn(wwn_type):
     '''
     Generates a random WWN of the specified type:
         - unit_serial: T10 WWN Unit Serial.
@@ -591,14 +591,14 @@ def list_available_kernel_modules():
     '''
     kver = os.uname()[2]
     depfile = "/lib/modules/%s/modules.dep" % kver
-    return [module.split(".")[0] for module in 
+    return [module.split(".")[0] for module in
             re.findall(r"[a-zA-Z0-9_-]+\.ko:", fread(depfile))]
 
 def list_loaded_kernel_modules():
     '''
     List all currently loaded kernel modules
     '''
-    return [line.split(" ")[0] for line in 
+    return [line.split(" ")[0] for line in
             fread("/proc/modules").split('\n') if line]
 
 def modprobe(module):
@@ -618,7 +618,7 @@ def modprobe(module):
             else:
                 return True
         else:
-            raise RTSLibError("Kernel module %s does not exists on disk " 
+            raise RTSLibError("Kernel module %s does not exists on disk "
                                   % module + "and is not loaded.")
     else:
         return False
@@ -633,8 +633,8 @@ def exec_argv(argv, strip=True, shell=False):
     shell, instead of the argv list.
 
     '''
-    process = subprocess.Popen(argv, 
-                               stdout=subprocess.PIPE, 
+    process = subprocess.Popen(argv,
+                               stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                shell=shell)
     (stdoutdata, stderrdata) = process.communicate()
@@ -643,8 +643,8 @@ def exec_argv(argv, strip=True, shell=False):
         stdoutdata = "\n".join([line.strip()
                                 for line in stdoutdata.split("\n")
                                 if line.strip()])
-        stderrdata = "\n".join([line.strip() 
-                                for line in stderrdata.split("\n") 
+        stderrdata = "\n".join([line.strip()
+                                for line in stderrdata.split("\n")
                                 if line.strip()])
     if process.returncode != 0:
         raise RTSLibError(stderrdata)

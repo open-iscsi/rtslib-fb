@@ -42,8 +42,8 @@ class Backstore(CFSNode):
             self._index = int(index)
         except ValueError:
             raise RTSLibError("Invalid backstore index: %s" % index)
-        self._path = "%s/core/%s_%d" % (self.configfs_dir, 
-                                        self._plugin, 
+        self._path = "%s/core/%s_%d" % (self.configfs_dir,
+                                        self._plugin,
                                         self._index)
         self._create_in_cfs_ine(mode)
 
@@ -56,7 +56,7 @@ class Backstore(CFSNode):
     def _list_storage_objects(self):
         self._check_self()
         storage_objects = []
-        storage_object_names = [os.path.basename(s) 
+        storage_object_names = [os.path.basename(s)
                                 for s in os.listdir(self.path)
                                 if s not in set(["hba_info", "hba_mode"])]
 
@@ -96,8 +96,8 @@ class Backstore(CFSNode):
     def delete(self):
         '''
         Recursively deletes a Backstore object.
-        This will delete all attached StorageObject objects, and then the 
-        Backstore itself. The underlying file and block storages will not be 
+        This will delete all attached StorageObject objects, and then the
+        Backstore itself. The underlying file and block storages will not be
         touched, but all ramdisk data will be lost.
         '''
         self._check_self()
@@ -109,7 +109,7 @@ class Backstore(CFSNode):
             doc="Get the backstore plugin name.")
     index = property(_get_index,
             doc="Get the backstore index as an int.")
-    storage_objects = property(_list_storage_objects, 
+    storage_objects = property(_list_storage_objects,
             doc="Get the list of StorageObjects attached to the backstore.")
     version = property(_get_version,
             doc="Get the Backstore plugin version string.")
@@ -135,15 +135,15 @@ class PSCSIBackstore(Backstore):
             - I{'lookup'} the object MUST already exist configFS.
             - I{'create'} the object must NOT already exist in configFS.
         @type mode:string
-        @param legacy: Enable legacy physcal HBA mode. If True, you must 
+        @param legacy: Enable legacy physcal HBA mode. If True, you must
         specify it also in lookup mode for StorageObjects to be notified.
         You've been warned !
         @return: A PSCSIBackstore object.
         '''
         self._legacy = legacy
-        super(PSCSIBackstore, self).__init__("pscsi", 
-                                              PSCSIStorageObject, 
-                                              index, 
+        super(PSCSIBackstore, self).__init__("pscsi",
+                                              PSCSIStorageObject,
+                                              index,
                                               mode)
 
     def _create_in_cfs_ine(self, mode):
@@ -190,7 +190,7 @@ class RDDRBackstore(Backstore):
         @return: A RDDRBackstore object.
         '''
 
-        super(RDDRBackstore, self).__init__("rd_dr", RDDRStorageObject, 
+        super(RDDRBackstore, self).__init__("rd_dr", RDDRStorageObject,
                                              index, mode)
 
     # RDDRBackstore public stuff
@@ -200,7 +200,7 @@ class RDDRBackstore(Backstore):
         Same as RDDRStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return RDDRStorageObject(self, name=name, 
+        return RDDRStorageObject(self, name=name,
                                  size=size, gen_wwn=gen_wwn)
 
 class RDMCPBackstore(Backstore):
@@ -223,7 +223,7 @@ class RDMCPBackstore(Backstore):
         @return: A RDMCPBackstore object.
         '''
 
-        super(RDMCPBackstore, self).__init__("rd_mcp", RDMCPStorageObject, 
+        super(RDMCPBackstore, self).__init__("rd_mcp", RDMCPStorageObject,
                                               index, mode)
 
     # RDMCPBackstore public stuff
@@ -233,7 +233,7 @@ class RDMCPBackstore(Backstore):
         Same as RDMCPStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return RDMCPStorageObject(self, name=name, 
+        return RDMCPStorageObject(self, name=name,
                                   size=size, gen_wwn=gen_wwn)
 
 class FileIOBackstore(Backstore):
@@ -256,19 +256,19 @@ class FileIOBackstore(Backstore):
         @return: A FileIOBackstore object.
         '''
 
-        super(FileIOBackstore, self).__init__("fileio", FileIOStorageObject, 
+        super(FileIOBackstore, self).__init__("fileio", FileIOStorageObject,
                                                index, mode)
 
     # FileIOBackstore public stuff
 
-    def storage_object(self, name, dev=None, size=None, 
+    def storage_object(self, name, dev=None, size=None,
                        gen_wwn=True, buffered_mode=False):
         '''
         Same as FileIOStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return FileIOStorageObject(self, name=name, dev=dev, 
-                                   size=size, gen_wwn=gen_wwn, 
+        return FileIOStorageObject(self, name=name, dev=dev,
+                                   size=size, gen_wwn=gen_wwn,
                                    buffered_mode=buffered_mode)
 
 class IBlockBackstore(Backstore):
@@ -291,7 +291,7 @@ class IBlockBackstore(Backstore):
         @return: An IBlockBackstore object.
         '''
 
-        super(IBlockBackstore, self).__init__("iblock", IBlockStorageObject, 
+        super(IBlockBackstore, self).__init__("iblock", IBlockStorageObject,
                                                index, mode)
 
     # IBlockBackstore public stuff
@@ -301,14 +301,14 @@ class IBlockBackstore(Backstore):
         Same as IBlockStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return IBlockStorageObject(self, name=name, dev=dev, 
+        return IBlockStorageObject(self, name=name, dev=dev,
                                    gen_wwn=gen_wwn)
 
 class StorageObject(CFSNode):
     '''
     This is an interface to storage objects in configFS. A StorageObject is
     identified by its backstore and its name.
-    '''	
+    '''
     # StorageObject private stuff
 
     def __init__(self, backstore, backstore_class, name, mode):
@@ -443,7 +443,7 @@ class StorageObject(CFSNode):
         path = self.path
 
         xwwn = FabricModule.target_names_excludes
-        xlink = ["alua_tg_pt_write_md", "alua_tg_pt_status", 
+        xlink = ["alua_tg_pt_write_md", "alua_tg_pt_status",
                  "alua_tg_pt_offline", "alua_tg_pt_gp"]
         from root import RTSRoot
         rtsroot = RTSRoot()
@@ -459,7 +459,7 @@ class StorageObject(CFSNode):
                  for link in listdir(
                      "%s/%s/%s/lun/%s" % (base, wwn, tpgt, lun))
                  if link not in xlink
-                 if realpath("%s/%s/%s/lun/%s/%s" 
+                 if realpath("%s/%s/%s/lun/%s/%s"
                              % (base, wwn, tpgt, lun, link)) == path]))
         return luns
 
@@ -468,15 +468,15 @@ class StorageObject(CFSNode):
     def delete(self):
         '''
         Recursively deletes a StorageObject object.
-        This will delete all attached LUNs currently using the StorageObject 
-        object, and then the StorageObject itself. The underlying file and 
+        This will delete all attached LUNs currently using the StorageObject
+        object, and then the StorageObject itself. The underlying file and
         block storages will not be touched, but all ramdisk data will be lost.
         '''
         self._check_self()
 
         # If we are called after a configure error, we can skip this
         if self.is_configured():
-            gen = self._gen_attached_luns() 
+            gen = self._gen_attached_luns()
             while self.status == 'activated':
                 gen.next().delete()
 
@@ -528,8 +528,8 @@ class PSCSIStorageObject(StorageObject):
               with the same I{name} can pre-exist in the parent PSCSIBackstore
               in that mode, or instanciation will fail.
             - B{Lookup mode}: If I{dev} is not set, then the PSCSIStorageObject
-              will be bound to the existing configFS object in the parent 
-              PSCSIBackstore having the specified I{name}. The underlying 
+              will be bound to the existing configFS object in the parent
+              PSCSIBackstore having the specified I{name}. The underlying
               configFS object must already exist in that mode, or instanciation
               will fail.
 
@@ -538,19 +538,19 @@ class PSCSIStorageObject(StorageObject):
         @param name: The name of the PSCSIStorageObject.
         @type name: string
         @param dev: You have two choices:
-            - Use the SCSI id of the device: I{dev="H:C:T:L"}. If the parent 
-              backstore is in legacy mode, you must use I{dev="C:T:L"} 
-              instead, as the backstore index of the SCSI dev device would then be 
+            - Use the SCSI id of the device: I{dev="H:C:T:L"}. If the parent
+              backstore is in legacy mode, you must use I{dev="C:T:L"}
+              instead, as the backstore index of the SCSI dev device would then be
               constrained by the parent backstore index.
-            - Use the path to the SCSI device: I{dev="/path/to/dev"}. 
+            - Use the path to the SCSI device: I{dev="/path/to/dev"}.
               Note that if the parent Backstore is in legacy mode, the device
               must have the same backstore index as the parent backstore.
         @type dev: string
-        @return: A PSCSIStorageObject object. 
+        @return: A PSCSIStorageObject object.
         '''
         if dev is not None:
-            super(PSCSIStorageObject, self).__init__(backstore, 
-                                                     PSCSIBackstore, 
+            super(PSCSIStorageObject, self).__init__(backstore,
+                                                     PSCSIBackstore,
                                                      name, 'create')
             try:
                 self._configure(dev)
@@ -558,8 +558,8 @@ class PSCSIStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(PSCSIStorageObject, self).__init__(backstore, 
-                                                     PSCSIBackstore, 
+            super(PSCSIStorageObject, self).__init__(backstore,
+                                                     PSCSIBackstore,
                                                      name, 'lookup')
 
     def _configure(self, dev):
@@ -581,9 +581,9 @@ class PSCSIStorageObject(StorageObject):
                                       + "path, and dev parameter not "
                                       + "in C:T:L format: %s." % dev)
                 else:
-                    udev_path = convert_scsi_hctl_to_path(parent_hostid, 
-                                                                channelid, 
-                                                                targetid, 
+                    udev_path = convert_scsi_hctl_to_path(parent_hostid,
+                                                                channelid,
+                                                                targetid,
                                                                 lunid)
                 if not udev_path:
                     raise RTSLibError("SCSI device does not exist.")
@@ -612,9 +612,9 @@ class PSCSIStorageObject(StorageObject):
                                       + "parameter not in H:C:T:L "
                                       + "format: %s." % dev)
                 else:
-                    udev_path = convert_scsi_hctl_to_path(hostid, 
-                                                                channelid, 
-                                                                targetid, 
+                    udev_path = convert_scsi_hctl_to_path(hostid,
+                                                                channelid,
+                                                                targetid,
                                                                 lunid)
                 if not udev_path:
                     raise RTSLibError("SCSI device does not exist.")
@@ -624,7 +624,7 @@ class PSCSIStorageObject(StorageObject):
         if is_dev_in_use(udev_path):
             raise RTSLibError("Cannot configure StorageObject because "
                               + "device %s (SCSI %d:%d:%d:%d) "
-                              % (udev_path, hostid, channelid, 
+                              % (udev_path, hostid, channelid,
                                  targetid, lunid)
                               + "is already in use.")
 
@@ -643,13 +643,13 @@ class PSCSIStorageObject(StorageObject):
     def _get_model(self):
         self._check_self()
         info = fread("%s/info" % self.path)
-        return str(re.search(".*Model:(.*)Rev:", 
+        return str(re.search(".*Model:(.*)Rev:",
                              ' '.join(info.split())).group(1)).strip()
 
     def _get_vendor(self):
         self._check_self()
         info = fread("%s/info" % self.path)
-        return str(re.search(".*Vendor:(.*)Model:", 
+        return str(re.search(".*Vendor:(.*)Model:",
                              ' '.join(info.split())).group(1)).strip()
 
     def _get_revision(self):
@@ -702,14 +702,14 @@ class RDDRStorageObject(StorageObject):
     def __init__(self, backstore, name, size=None, gen_wwn=True):
         '''
         A RDDRStorageObject can be instanciated in two ways:
-            - B{Creation mode}: If I{size} is specified, the underlying 
-              configFS object will be created with that parameter. 
-              No RDDRStorageObject with the same I{name} can pre-exist in the 
+            - B{Creation mode}: If I{size} is specified, the underlying
+              configFS object will be created with that parameter.
+              No RDDRStorageObject with the same I{name} can pre-exist in the
               parent RDDRBackstore in that mode, or instanciation will fail.
             - B{Lookup mode}: If I{size} is not set, then the RDDRStorageObject
-              will be bound to the existing configFS object in the parent 
-              RDDRBackstore having the specified I{name}. 
-              The underlying configFS object must already exist in that mode, 
+              will be bound to the existing configFS object in the parent
+              RDDRBackstore having the specified I{name}.
+              The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
         @param backstore: The parent backstore of the RDDRStorageObject.
@@ -727,13 +727,13 @@ class RDDRStorageObject(StorageObject):
                 Example: size="1MB" for a one megabytes storage object.
                 - Note that the size will be rounded to the closest 4096 Bytes
                   RAM pages count. For instance, a size of 100000 Bytes will be
-                  rounded to 24 pages, really 98304 Bytes. 
+                  rounded to 24 pages, really 98304 Bytes.
                 - The base value for kilo is 1024, aka 1kB = 1024B.
                   Strictly speaking, we use kiB, MiB, etc.
         @type size: string or int
         @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
         @type gen_wwn: bool
-        @return: A RDDRStorageObject object. 
+        @return: A RDDRStorageObject object.
         '''
 
         if size is not None:
@@ -793,14 +793,14 @@ class RDMCPStorageObject(StorageObject):
     def __init__(self, backstore, name, size=None, gen_wwn=True):
         '''
         A RDMCPStorageObject can be instanciated in two ways:
-            - B{Creation mode}: If I{size} is specified, the underlying 
-              configFS object will be created with that parameter. 
-              No RDMCPStorageObject with the same I{name} can pre-exist in the 
+            - B{Creation mode}: If I{size} is specified, the underlying
+              configFS object will be created with that parameter.
+              No RDMCPStorageObject with the same I{name} can pre-exist in the
               parent RDMCPBackstore in that mode, or instanciation will fail.
-            - B{Lookup mode}: If I{size} is not set, then the 
-              RDMCPStorageObject will be bound to the existing configFS object 
-              in the parent RDMCPBackstore having the specified I{name}. 
-              The underlying configFS object must already exist in that mode, 
+            - B{Lookup mode}: If I{size} is not set, then the
+              RDMCPStorageObject will be bound to the existing configFS object
+              in the parent RDMCPBackstore having the specified I{name}.
+              The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
         @param backstore: The parent backstore of the RDMCPStorageObject.
@@ -816,21 +816,21 @@ class RDMCPStorageObject(StorageObject):
                 - B{g}, B{G}, B{gB}, B{GB} for GB (gigabytes)
                 - B{t}, B{T}, B{tB}, B{TB} for TB (terabytes)
                 Example: size="1MB" for a one megabytes storage object.
-                - Note that the size will be rounded to the closest 4096 Bytes 
+                - Note that the size will be rounded to the closest 4096 Bytes
                   RAM pages count. For instance, a size of 100000 Bytes will be
-                  rounded to 24 pages, really 98304 Bytes. 
+                  rounded to 24 pages, really 98304 Bytes.
                 - The base value for kilo is 1024, aka 1kB = 1024B.
                   Strictly speaking, we use kiB, MiB, etc.
         @type size: string or int
         @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
         @type gen_wwn: bool
-        @return: A RDMCPStorageObject object. 
+        @return: A RDMCPStorageObject object.
         '''
 
         if size is not None:
-            super(RDMCPStorageObject, self).__init__(backstore, 
-                                                     RDMCPBackstore, 
-                                                     name, 
+            super(RDMCPStorageObject, self).__init__(backstore,
+                                                     RDMCPBackstore,
+                                                     name,
                                                      'create')
             try:
                 self._configure(size, gen_wwn)
@@ -838,9 +838,9 @@ class RDMCPStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(RDMCPStorageObject, self).__init__(backstore, 
-                                                     RDMCPBackstore, 
-                                                     name, 
+            super(RDMCPStorageObject, self).__init__(backstore,
+                                                     RDMCPBackstore,
+                                                     name,
                                                      'lookup')
 
     def _configure(self, size, wwn):
@@ -886,31 +886,31 @@ class FileIOStorageObject(StorageObject):
 
     # FileIOStorageObject private stuff
 
-    def __init__(self, backstore, name, dev=None, size=None, 
+    def __init__(self, backstore, name, dev=None, size=None,
                  gen_wwn=True, buffered_mode=False):
         '''
         A FileIOStorageObject can be instanciated in two ways:
-            - B{Creation mode}: If I{dev} and I{size} are specified, the 
+            - B{Creation mode}: If I{dev} and I{size} are specified, the
               underlying configFS object will be created with those parameters.
               No FileIOStorageObject with the same I{name} can pre-exist in the
               parent FileIOBackstore in that mode, or instanciation will fail.
-            - B{Lookup mode}: If I{dev} and I{size} are not set, then the 
+            - B{Lookup mode}: If I{dev} and I{size} are not set, then the
               FileIOStorageObject will be bound to the existing configFS object
-              in the parent FileIOBackstore having the specified I{name}. 
-              The underlying configFS object must already exist in that mode, 
+              in the parent FileIOBackstore having the specified I{name}.
+              The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
         @param backstore: The parent backstore of the FileIOStorageObject.
         @type backstore: FileIOBackstore
         @param name: The name of the FileIOStorageObject.
         @type name: string
-        @param dev: The path to the backend file or block device to be used. 
+        @param dev: The path to the backend file or block device to be used.
             - Examples: I{dev="/dev/sda"}, I{dev="/tmp/myfile"}
-            - The only block device type that is accepted I{TYPE_DISK}, or 
-              partitions of a I{TYPE_DISK} device. 
+            - The only block device type that is accepted I{TYPE_DISK}, or
+              partitions of a I{TYPE_DISK} device.
               For other device types, use pscsi.
         @type dev: string
-        @param size: The maximum size to allocate for the file. 
+        @param size: The maximum size to allocate for the file.
         Not used for block devices.
             - If size is an int, it represents a number of bytes
             - If size is a string, the following units can be used :
@@ -920,22 +920,22 @@ class FileIOStorageObject(StorageObject):
                 - B{g}, B{G}, B{gB}, B{GB} for GB (gigabytes)
                 - B{t}, B{T}, B{tB}, B{TB} for TB (terabytes)
                 Example: size="1MB" for a one megabytes storage object.
-                - The base value for kilo is 1024, aka 1kB = 1024B. 
+                - The base value for kilo is 1024, aka 1kB = 1024B.
                   Strictly speaking, we use kiB, MiB, etc.
         @type size: string or int
         @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
         @type gen_wwn: bool
-        @param buffered_mode: Should we create the StorageObject in buffered 
-        mode or not ? Byt default, we create it in synchronous mode 
+        @param buffered_mode: Should we create the StorageObject in buffered
+        mode or not ? Byt default, we create it in synchronous mode
         (non-buffered). This cannot be changed later.
         @type buffered_mode: bool
-        @return: A FileIOStorageObject object. 
+        @return: A FileIOStorageObject object.
         '''
 
         if dev is not None:
-            super(FileIOStorageObject, self).__init__(backstore, 
-                                                      FileIOBackstore, 
-                                                      name, 
+            super(FileIOStorageObject, self).__init__(backstore,
+                                                      FileIOBackstore,
+                                                      name,
                                                       'create')
             try:
                 self._configure(dev, size, gen_wwn, buffered_mode)
@@ -943,9 +943,9 @@ class FileIOStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(FileIOStorageObject, self).__init__(backstore, 
-                                                      FileIOBackstore, 
-                                                      name, 
+            super(FileIOStorageObject, self).__init__(backstore,
+                                                      FileIOBackstore,
+                                                      name,
                                                       'lookup')
 
     def _configure(self, dev, size, wwn, buffered_mode):
@@ -1037,34 +1037,34 @@ class IBlockStorageObject(StorageObject):
         '''
         A BlockIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
-              object will be created with that parameter. 
-              No BlockIOStorageObject with the same I{name} can pre-exist in 
+              object will be created with that parameter.
+              No BlockIOStorageObject with the same I{name} can pre-exist in
               the parent BlockIOBackstore in that mode.
-            - B{Lookup mode}: If I{dev} is not set, then the 
-              BlockIOStorageObject will be bound to the existing configFS 
-              object in the parent BlockIOBackstore having the specified 
-              I{name}. The underlying configFS object must already exist in 
+            - B{Lookup mode}: If I{dev} is not set, then the
+              BlockIOStorageObject will be bound to the existing configFS
+              object in the parent BlockIOBackstore having the specified
+              I{name}. The underlying configFS object must already exist in
               that mode, or instanciation will fail.
 
         @param backstore: The parent backstore of the BlockIOStorageObject.
         @type backstore: BlockIOBackstore
         @param name: The name of the BlockIOStorageObject.
         @type name: string
-        @param dev: The path to the backend block device to be used. 
-            - Example: I{dev="/dev/sda"}. 
-            - The only device type that is accepted I{TYPE_DISK}. 
+        @param dev: The path to the backend block device to be used.
+            - Example: I{dev="/dev/sda"}.
+            - The only device type that is accepted I{TYPE_DISK}.
               For other device types, use pscsi.
         @type dev: string
-        @param gen_wwn: Should we generate a T10 WWN Unit Serial when 
+        @param gen_wwn: Should we generate a T10 WWN Unit Serial when
         creating the object ?
         @type gen_wwn: bool
-        @return: A BlockIOStorageObject object. 
+        @return: A BlockIOStorageObject object.
         '''
 
         if dev is not None:
-            super(IBlockStorageObject, self).__init__(backstore, 
-                                                      IBlockBackstore, 
-                                                      name, 
+            super(IBlockStorageObject, self).__init__(backstore,
+                                                      IBlockBackstore,
+                                                      name,
                                                       'create')
             try:
                 self._configure(dev, gen_wwn)
@@ -1072,9 +1072,9 @@ class IBlockStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(IBlockStorageObject, self).__init__(backstore, 
-                                                      IBlockBackstore, 
-                                                      name, 
+            super(IBlockStorageObject, self).__init__(backstore,
+                                                      IBlockBackstore,
+                                                      name,
                                                       'lookup')
 
     def _configure(self, dev, wwn):

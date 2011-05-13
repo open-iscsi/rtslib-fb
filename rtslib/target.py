@@ -33,7 +33,7 @@ class FabricModule(CFSNode):
     It can load/unload modules, provide information about them and
     handle the configfs housekeeping. It uses module configuration
     files in /var/target/fabric/*.spec. After instanciation, whether or
-    not the fabric module is loaded and 
+    not the fabric module is loaded and
     '''
 
     version_attributes = set(["lio_version", "version"])
@@ -236,13 +236,13 @@ class LUN(CFSNode):
     def __init__(self, parent_tpg, lun, storage_object=None, alias=None):
         '''
         A LUN object can be instanciated in two ways:
-            - B{Creation mode}: If I{storage_object} is specified, the 
-              underlying configFS object will be created with that parameter. 
+            - B{Creation mode}: If I{storage_object} is specified, the
+              underlying configFS object will be created with that parameter.
               No LUN with the same I{lun} index can pre-exist in the parent TPG
               in that mode, or instanciation will fail.
-            - B{Lookup mode}: If I{storage_object} is not set, then the LUN 
-              will be bound to the existing configFS LUN object of the parent 
-              TPG having the specified I{lun} index. The underlying configFS 
+            - B{Lookup mode}: If I{storage_object} is not set, then the LUN
+              will be bound to the existing configFS LUN object of the parent
+              TPG having the specified I{lun} index. The underlying configFS
               object must already exist in that mode.
 
         @param parent_tpg: The parent TPG object.
@@ -278,7 +278,7 @@ class LUN(CFSNode):
         if storage_object is None and alias is not None:
             raise RTSLibError("The alias parameter has no meaning " \
                               + "without the storage_object parameter.")
-    
+
         if storage_object is not None:
             self._create_in_cfs_ine('create')
             try:
@@ -333,7 +333,7 @@ class LUN(CFSNode):
             if os.path.islink("%s/%s" % (self.path, path)):
                 alias_path = os.path.realpath("%s/%s" % (self.path, path))
                 break
-        if alias_path is None: 
+        if alias_path is None:
             raise RTSLibBrokenLink("Broken LUN in configFS, no "
                                    + "storage object attached.")
         from root import RTSRoot
@@ -377,7 +377,7 @@ class LUN(CFSNode):
 
     def delete(self):
         '''
-        If the underlying configFS object does not exists, this method does 
+        If the underlying configFS object does not exists, this method does
         nothing. If the underlying configFS object exists, this method attempts
         to delete it along with all MappedLUN objects referencing that LUN.
         '''
@@ -410,7 +410,7 @@ class LUN(CFSNode):
 
 class MappedLUN(CFSNode):
     '''
-    This is an interface to RTS Target Mapped LUNs. 
+    This is an interface to RTS Target Mapped LUNs.
     A MappedLUN is a mapping of a TPG LUN to a specific initiator node, and is
     part of a NodeACL. It allows the initiator to actually access the TPG LUN
     if ACLs are enabled for the TPG. The initial TPG LUN will then be seen by
@@ -419,13 +419,13 @@ class MappedLUN(CFSNode):
 
     # MappedLUN private stuff
 
-    def __init__(self, parent_nodeacl, mapped_lun, 
+    def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None):
         '''
         A MappedLUN object can be instanciated in two ways:
             - B{Creation mode}: If I{tpg_lun} is specified, the underlying
               configFS object will be created with that parameter. No MappedLUN
-              with the same I{mapped_lun} index can pre-exist in the parent 
+              with the same I{mapped_lun} index can pre-exist in the parent
               NodeACL in that mode, or instanciation will fail.
             - B{Lookup mode}: If I{tpg_lun} is not set, then the MappedLUN will
               be bound to the existing configFS MappedLUN object of the parent
@@ -464,7 +464,7 @@ class MappedLUN(CFSNode):
         if tpg_lun is None and write_protect is not None:
             raise RTSLibError("The write_protect parameter has no " \
                               + "meaning without the tpg_lun parameter.")
-    
+
         if tpg_lun is not None:
             self._create_in_cfs_ine('create')
             try:
@@ -588,11 +588,11 @@ class NodeACL(CFSNode):
         '''
         @param parent_tpg: The parent TPG object.
         @type parent_tpg: TPG
-        @param node_wwn: The wwn of the initiator node for which the ACL is 
+        @param node_wwn: The wwn of the initiator node for which the ACL is
         created.
         @type node_wwn: string
         @param mode:An optionnal string containing the object creation mode:
-            - I{'any'} means the configFS object will be either looked up or 
+            - I{'any'} means the configFS object will be either looked up or
             created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
@@ -713,7 +713,7 @@ class NodeACL(CFSNode):
     def delete(self):
         '''
         Delete the NodeACL, including all MappedLUN objects.
-        If the underlying configFS object does not exist, this method does 
+        If the underlying configFS object does not exist, this method does
         nothing.
         '''
         self._check_self()
@@ -726,7 +726,7 @@ class NodeACL(CFSNode):
         Same as MappedLUN() but without the parent_nodeacl parameter.
         '''
         self._check_self()
-        return MappedLUN(self, mapped_lun=mapped_lun, tpg_lun=tpg_lun, 
+        return MappedLUN(self, mapped_lun=mapped_lun, tpg_lun=tpg_lun,
                          write_protect=write_protect)
 
     chap_userid = property(_get_chap_userid, _set_chap_userid,
@@ -734,11 +734,11 @@ class NodeACL(CFSNode):
     chap_password = property(_get_chap_password, _set_chap_password,
                              doc=\
                              "Set or get the initiator CHAP auth password.")
-    chap_mutual_userid = property(_get_chap_mutual_userid, 
+    chap_mutual_userid = property(_get_chap_mutual_userid,
                                   _set_chap_mutual_userid,
                                   doc=\
                                   "Set or get the mutual CHAP auth userid.")
-    chap_mutual_password = property(_get_chap_mutual_password, 
+    chap_mutual_password = property(_get_chap_mutual_password,
                                     _set_chap_mutual_password,
                                     doc=\
                                     "Set or get the mutual CHAP password.")
@@ -774,7 +774,7 @@ class NetworkPortal(CFSNode):
         @param port: The NetworkPortal TCP/IP port.
         @type port: int
         @param mode:An optionnal string containing the object creation mode:
-            - I{'any'} means the configFS object will be either looked up or 
+            - I{'any'} means the configFS object will be either looked up or
               created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
@@ -783,8 +783,8 @@ class NetworkPortal(CFSNode):
         '''
 
         super(NetworkPortal, self).__init__()
-        if not re.match("^(25[0-5]|2[0-4]\d|[01]\d{2}|\d{1,2})" 
-                        + "(\.(25[0-5]|2[0-4]\d|[01]\d{2}|\d{1,2})){3}$", 
+        if not re.match("^(25[0-5]|2[0-4]\d|[01]\d{2}|\d{1,2})"
+                        + "(\.(25[0-5]|2[0-4]\d|[01]\d{2}|\d{1,2})){3}$",
                         str(ip_address)):
             raise RTSLibError("Invalid IP address.")
         else:
@@ -840,7 +840,7 @@ class TPG(CFSNode):
         @param tag: The TPG Tag (TPGT).
         @type tag: int > 0
         @param mode:An optionnal string containing the object creation mode:
-            - I{'any'} means the configFS object will be either looked up or 
+            - I{'any'} means the configFS object will be either looked up or
               created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
@@ -964,7 +964,7 @@ class TPG(CFSNode):
         if not self.has_feature('acls'):
             return []
         node_acls = []
-        node_acl_dirs = [os.path.basename(path) 
+        node_acl_dirs = [os.path.basename(path)
                          for path in os.listdir("%s/acls" % self.path)]
         for node_acl_dir in node_acl_dirs:
             node_acls.append(NodeACL(self, node_acl_dir, 'lookup'))
@@ -973,7 +973,7 @@ class TPG(CFSNode):
     def _list_luns(self):
         self._check_self()
         luns = []
-        lun_dirs = [os.path.basename(path) 
+        lun_dirs = [os.path.basename(path)
                     for path in os.listdir("%s/lun" % self.path)]
         for lun_dir in lun_dirs:
             lun = lun_dir.split('_')[1]
@@ -1001,7 +1001,7 @@ class TPG(CFSNode):
     def delete(self):
         '''
         Recursively deletes a TPG object.
-        This will delete all attached LUN, NetworkPortal and Node ACL objects 
+        This will delete all attached LUN, NetworkPortal and Node ACL objects
         and then the TPG itself. Before starting the actual deletion process,
         all sessions will be disconnected.
         '''
@@ -1082,12 +1082,12 @@ class Target(CFSNode):
         '''
         @param fabric_module: The target's fabric module.
         @type fabric_module: FabricModule
-        @param wwn: The optionnal Target's wwn. 
-            If no wwn or an empty wwn is specified, one will be generated 
+        @param wwn: The optionnal Target's wwn.
+            If no wwn or an empty wwn is specified, one will be generated
             for you.
         @type wwn: string
         @param mode:An optionnal string containing the object creation mode:
-            - I{'any'} means the configFS object will be either looked up 
+            - I{'any'} means the configFS object will be either looked up
               or created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.

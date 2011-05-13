@@ -22,7 +22,7 @@ import stat
 from utils import fread, fwrite, RTSLibError
 
 class CFSNode(object):
-    
+
     # Where do we store the fabric modules spec files ?
     spec_dir = "/var/target/fabric"
     # Where is the configfs base LIO directory ?
@@ -50,12 +50,12 @@ class CFSNode(object):
 
     def _create_in_cfs_ine(self, mode):
         '''
-        Creates the configFS node if it does not already exists depending on 
+        Creates the configFS node if it does not already exists depending on
         the mode.
         any -> makes sure it exists, also works if the node already does exists
         lookup -> make sure it does NOT exists
         create -> create the node which must not exists beforehand
-        Upon success (no exception raised), self._fresh is True if a node was 
+        Upon success (no exception raised), self._fresh is True if a node was
         created, else self._fresh is False.
         '''
         if mode not in ['any', 'lookup', 'create']:
@@ -139,7 +139,7 @@ class CFSNode(object):
 
     def set_attribute(self, attribute, value):
         '''
-        Sets the value of a named attribute. 
+        Sets the value of a named attribute.
         The attribute must exist in configFS.
         @param attribute: The attribute's name. It is case-sensitive.
         @type attribute: string
@@ -208,7 +208,7 @@ class CFSNode(object):
 
     def delete(self):
         '''
-        If the underlying configFS object does not exists, this method does 
+        If the underlying configFS object does not exists, this method does
         nothing. If the underlying configFS object exists, this method attempts
         to delete it.
         '''

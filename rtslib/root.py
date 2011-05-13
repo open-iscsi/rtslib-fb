@@ -31,7 +31,7 @@ class RTSRoot(CFSNode):
     '''
     This is an interface to the root of the configFS object tree.
     Is allows one to start browsing Target and Backstore objects,
-    as well as helper methods to return arbitrary objects from the 
+    as well as helper methods to return arbitrary objects from the
     configFS tree.
 
     >>> import rtslib.root as root

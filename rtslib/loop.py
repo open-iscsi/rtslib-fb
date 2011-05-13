@@ -40,13 +40,13 @@ class LUN(CFSNode):
     def __init__(self, parent_nexus, lun, storage_object=None, alias=None):
         '''
         A LUN object can be instanciated in two ways:
-            - B{Creation mode}: If I{storage_object} is specified, the 
-              underlying configFS object will be created with that parameter. 
+            - B{Creation mode}: If I{storage_object} is specified, the
+              underlying configFS object will be created with that parameter.
               No LUN with the same I{lun} index can pre-exist in the parent
               Nexus in that mode, or instanciation will fail.
-            - B{Lookup mode}: If I{storage_object} is not set, then the LUN 
-              will be bound to the existing configFS LUN object of the parent 
-              Nexus having the specified I{lun} index. The underlying configFS 
+            - B{Lookup mode}: If I{storage_object} is not set, then the LUN
+              will be bound to the existing configFS LUN object of the parent
+              Nexus having the specified I{lun} index. The underlying configFS
               object must already exist in that mode.
 
         @param parent_nexus: The parent Nexus object.
@@ -82,7 +82,7 @@ class LUN(CFSNode):
         if storage_object is None and alias is not None:
             raise RTSLibError("The alias parameter has no meaning "
                               + "without the storage_object parameter.")
-    
+
         if storage_object is not None:
             self._create_in_cfs_ine('create')
             try:
@@ -153,7 +153,7 @@ class LUN(CFSNode):
             if os.path.islink("%s/%s" % (self.path, path)):
                 alias_path = os.path.realpath("%s/%s" % (self.path, path))
                 break
-        if alias_path is None: 
+        if alias_path is None:
             raise RTSLibBrokenLink("Broken LUN in configFS, no " \
                                          + "storage object attached.")
         rtsroot = RTSRoot()
@@ -175,7 +175,7 @@ class LUN(CFSNode):
 
     def delete(self):
         '''
-        If the underlying configFS object does not exists, this method does 
+        If the underlying configFS object does not exists, this method does
         nothing. If the underlying configFS object exists, this method attempts
         to delete it.
         '''
@@ -219,7 +219,7 @@ class Nexus(CFSNode):
         @param tag: The Nexus Tag (TPGT).
         @type tag: int > 0
         @param mode:An optionnal string containing the object creation mode:
-            - I{'any'} means the configFS object will be either looked up or 
+            - I{'any'} means the configFS object will be either looked up or
               created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
@@ -303,7 +303,7 @@ class Nexus(CFSNode):
     def _list_luns(self):
         self._check_self()
         luns = []
-        lun_dirs = [os.path.basename(path) 
+        lun_dirs = [os.path.basename(path)
                     for path in os.listdir("%s/lun" % self.path)]
         for lun_dir in lun_dirs:
             lun = lun_dir.split('_')[1]
@@ -326,7 +326,7 @@ class Nexus(CFSNode):
     def delete(self):
         '''
         Recursively deletes a Nexus object.
-        This will delete all attached LUN, and then the Nexus itself. 
+        This will delete all attached LUN, and then the Nexus itself.
         '''
         self._check_self()
         for lun in self.luns:
@@ -386,12 +386,12 @@ class Target(CFSNode):
 
     def __init__(self, naa=None, mode='any'):
         '''
-        @param naa: The optionnal Target's address. 
-            If no address or an empty address is specified, one will be 
+        @param naa: The optionnal Target's address.
+            If no address or an empty address is specified, one will be
             generated for you.
         @type naa: string
         @param mode:An optionnal string containing the object creation mode:
-            - I{'any'} means the configFS object will be either looked up 
+            - I{'any'} means the configFS object will be either looked up
               or created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
