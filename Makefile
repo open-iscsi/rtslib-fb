@@ -17,20 +17,22 @@ NAME = rtslib
 LIB = /usr/share
 DOC = ${LIB}/doc/
 SETUP = ./setup.py
-CLEAN = ./bin/clean
 GENDOC = ./bin/gendoc
+RPMVERSION = $$(grep Version: redhat/python-rtslib.spec | awk '{print $$2}')
 
 all: usage
 usage:
 	@echo "Usage:"
-	@echo "  make install - Install rtslib"
-	@echo "  make installdocs - Install the documentation"
+	@echo "  make deb         - Builds debian packages."
+	@echo "  make rpm         - Builds redhat packages."
+	@echo "  make clean       - Cleanup the local repository"
+	@echo "  make cleanall    - Cleanup the local repository and packages"
 	@echo "Developer targets:"
-	@echo "  make packages - Generate the Debian and RPM packages"
-	@echo "  make doc      - Generate the documentation"
-	@echo "  make clean    - Cleanup the local repository"
-	@echo "  make sdist    - Build the source tarball"
-	@echo "  make bdist    - Build the installable tarball"
+	@echo "  make doc         - Generate the documentation"
+	@echo "  make sdist       - Build the source tarball"
+	@echo "  make bdist       - Build the installable tarball"
+	@echo "  make install     - Install rtslib"
+	@echo "  make installdocs - Install the documentation"
 
 install:
 	${SETUP} install
@@ -46,10 +48,27 @@ installdocs: doc
 	cp -r doc/* ${DOC}/${NAME}/
 
 clean:
-	${CLEAN}
+	rm -fv rtslib/*.pyc rtslib/*.html
+	rm -frv doc doc/*.pdf doc/html doc/pdf doc/*.html
+	rm -frv rtslib.egg-info MANIFEST build
+	rm -frv pdf html
+	rm -frv debian/tmp
+	rm -fv build-stamp
+	rm -fv dpkg-buildpackage.log dpkg-buildpackage.version
+	rm -frv *.rpm
+	rm -fv debian/files debian/*.log debian/*.substvars
+	rm -frv debian/rtslib-doc/ debian/python2.5-rtslib/
+	rm -frv debian/python2.6-rtslib/ debian/python-rtslib/
+	rm -frv results
+	rm -fv redhat/*.spec *.spec
 	./bin/gen_changelog_cleanup
+	echo "Finished cleanup."
 
-packages: clean doc
+cleanall: clean
+	rm -frv dist
+
+deb: doc
+	./bin/gen_changelog
 	dpkg-buildpackage -rfakeroot | tee dpkg-buildpackage.log
 	./bin/gen_changelog_cleanup
 	grep "source version" dpkg-buildpackage.log | awk '{print $$4}' > dpkg-buildpackage.version
@@ -58,24 +77,18 @@ packages: clean doc
 	mv ../${NAME}_$$(cat dpkg-buildpackage.version)_*.changes dist
 	mv ../${NAME}_$$(cat dpkg-buildpackage.version).tar.gz dist
 	mv ../*${NAME}*$$(cat dpkg-buildpackage.version)*.deb dist
-	@test -e build || mkdir build
-	cd build; alien --scripts -k -g -r ../dist/rtslib-doc_$$(cat ../dpkg-buildpackage.version)_all.deb
-	cd build/rtslib-doc-*; mkdir usr/share/doc/packages
-	cd build/rtslib-doc-*; mv usr/share/doc/rtslib-doc usr/share/doc/packages/
-	cd build/rtslib-doc-*; perl -pi -e "s,/usr/share/doc/rtslib-doc,/usr/share/doc/packages/rtslib-doc,g" *.spec
-	cd build/rtslib-doc-*; perl -pi -e "s,%%{ARCH},noarch,g" *.spec
-	cd build/rtslib-doc-*; perl -pi -e "s,%post,%posttrans,g" *.spec
-	cd build/rtslib-doc-*; rpmbuild --buildroot $$PWD -bb *.spec
-	cd build; alien --scripts -k -g -r ../dist/python-rtslib_$$(cat ../dpkg-buildpackage.version)_all.deb; cd ..
-	cd build/python-rtslib-*; mkdir usr/share/doc/packages
-	cd build/python-rtslib-*; mv usr/share/doc/python-rtslib usr/share/doc/packages/
-	cd build/python-rtslib-*; perl -pi -e "s,/usr/share/doc/python-rtslib,/usr/share/doc/packages/python-rtslib,g" *.spec
-	cd build/python-rtslib-*; perl -pi -e 's/Group:/Requires: python >= 2.5\nGroup:/g' *.spec
-	cd build/python-rtslib-*; perl -pi -e "s,%%{ARCH},noarch,g" *.spec
-	cd build/python-rtslib-*; perl -pi -e "s,%post,%posttrans,g" *.spec
-	cd build/python-rtslib-*; rpmbuild --buildroot $$PWD -bb *.spec
-	mv build/*.rpm dist
-	rm dpkg-buildpackage.log dpkg-buildpackage.version
+	./bin/gen_changelog_cleanup
+
+rpm:
+	./bin/gen_changelog
+	echo Building RPM version ${RPMVERSION}
+	mkdir -p ~/rpmbuild/SOURCES/
+	git archive master --prefix rtslib-${RPMVERSION}/ | gzip > ~/rpmbuild/SOURCES/rtslib-${RPMVERSION}.tar.gz
+	rpmbuild -ba redhat/*.spec
+	@test -e dist || mkdir dist
+	mv ~/rpmbuild/SRPMS/python-rtslib-${RPMVERSION}*.src.rpm dist/
+	mv ~/rpmbuild/RPMS/noarch/python-rtslib-${RPMVERSION}*.rpm dist/
+	./bin/gen_changelog_cleanup
 
 sdist: clean doc
 	${SETUP} sdist

@@ -16,5 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SRCPKG=$(cat debian/control | grep ^Source | awk '{print $2}')
+RH_SPEC="redhat/python-rtslib.spec"
 rm -f debian/changelog
 sed -i "s/__version__ = .*/__version__ = 'GIT_VERSION'/g" ${SRCPKG}/__init__.py
+rm -f $RH_SPEC
