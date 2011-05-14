@@ -16,6 +16,14 @@ Vendor:         RisingTide Systems
 %description
 API for RisingTide Systems generic SCSI target.
 
+%package doc
+Summary:       PDF and HTML API reference for python-rtslib.
+Group:         Documentation
+BuildRequires: epydoc
+
+%description doc
+PDF and HTML API reference for python-rtslib.
+
 %prep
 %setup -q -n %{oname}-%{version}
 
@@ -27,6 +35,8 @@ rm -rf %{buildroot}
 %{__python} setup.py install --skip-build --root %{buildroot}
 mkdir -p %{buildroot}/var/target/fabric
 cp specs/* %{buildroot}/var/target/fabric
+mkdir -p %{buildroot}/usr/share/doc/%{oname}-%{version}
+cp -r doc/* %{buildroot}/usr/share/doc/%{oname}-%{version}/
 
 %clean
 rm -rf %{buildroot}
@@ -36,5 +46,9 @@ rm -rf %{buildroot}
 %{python_sitelib}
 /var/target
 %doc COPYING README
+
+%files doc
+%defattr(-,root,root,-)
+/usr/share/doc/%{oname}-%{version}
 
 %changelog

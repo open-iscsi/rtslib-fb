@@ -61,6 +61,7 @@ clean:
 	rm -frv debian/python2.6-rtslib/ debian/python-rtslib/
 	rm -frv results
 	rm -fv redhat/*.spec *.spec
+	rm -frv rtslib-*
 	./bin/gen_changelog_cleanup
 	echo "Finished cleanup."
 
@@ -79,15 +80,22 @@ deb: doc
 	mv ../*${NAME}*$$(cat dpkg-buildpackage.version)*.deb dist
 	./bin/gen_changelog_cleanup
 
-rpm:
+rpm: doc
 	./bin/gen_changelog
 	echo Building RPM version ${RPMVERSION}
 	mkdir -p ~/rpmbuild/SOURCES/
-	git archive master --prefix rtslib-${RPMVERSION}/ | gzip > ~/rpmbuild/SOURCES/rtslib-${RPMVERSION}.tar.gz
+	mkdir -p build
+	git archive master --prefix rtslib/ > build/rtslib.tar
+	cd build; tar mxf rtslib.tar; rm rtslib.tar
+	cp rtslib/__init__.py build/rtslib/rtslib
+	cp -r doc build/rtslib/
+	mv build/rtslib rtslib-${RPMVERSION}
+	tar zcf ~/rpmbuild/SOURCES/rtslib-${RPMVERSION}.tar.gz rtslib-${RPMVERSION}
 	rpmbuild -ba redhat/*.spec
 	@test -e dist || mkdir dist
 	mv ~/rpmbuild/SRPMS/python-rtslib-${RPMVERSION}*.src.rpm dist/
 	mv ~/rpmbuild/RPMS/noarch/python-rtslib-${RPMVERSION}*.rpm dist/
+	mv ~/rpmbuild/RPMS/noarch/python-rtslib-doc-${RPMVERSION}*.rpm dist/
 	./bin/gen_changelog_cleanup
 
 sdist: clean doc

@@ -20,3 +20,4 @@ debian/python-rtslib.substvars
 debian/rtslib-doc.debhelper.log
 debian/tmp/
 *.spec
+rtslib-*
