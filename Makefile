@@ -63,7 +63,7 @@ clean:
 	rm -fv redhat/*.spec *.spec
 	rm -frv rtslib-*
 	./bin/gen_changelog_cleanup
-	echo "Finished cleanup."
+	@echo "Finished cleanup."
 
 cleanall: clean
 	rm -frv dist
@@ -82,7 +82,7 @@ deb: doc
 
 rpm: doc
 	./bin/gen_changelog
-	echo Building RPM version ${RPMVERSION}
+	@echo Building RPM version ${RPMVERSION}
 	mkdir -p ~/rpmbuild/SOURCES/
 	mkdir -p build
 	git archive master --prefix rtslib/ > build/rtslib.tar
@@ -91,6 +91,7 @@ rpm: doc
 	cp -r doc build/rtslib/
 	mv build/rtslib rtslib-${RPMVERSION}
 	tar zcf ~/rpmbuild/SOURCES/rtslib-${RPMVERSION}.tar.gz rtslib-${RPMVERSION}
+	rm -fr rtslib-${RPMVERSION}
 	rpmbuild -ba redhat/*.spec
 	@test -e dist || mkdir dist
 	mv ~/rpmbuild/SRPMS/python-rtslib-${RPMVERSION}*.src.rpm dist/
