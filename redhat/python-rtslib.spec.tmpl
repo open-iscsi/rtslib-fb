@@ -35,8 +35,8 @@ rm -rf %{buildroot}
 %{__python} setup.py install --skip-build --root %{buildroot}
 mkdir -p %{buildroot}/var/target/fabric
 cp specs/* %{buildroot}/var/target/fabric
-mkdir -p %{buildroot}/usr/share/doc/%{oname}-%{version}
-cp -r doc/* %{buildroot}/usr/share/doc/%{oname}-%{version}/
+mkdir -p %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}
+cp -r doc/* %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}/
 
 %clean
 rm -rf %{buildroot}
@@ -49,6 +49,6 @@ rm -rf %{buildroot}
 
 %files doc
 %defattr(-,root,root,-)
-/usr/share/doc/%{oname}-%{version}
+/usr/share/doc/python-rtslib-doc-%{version}
 
 %changelog
