@@ -445,7 +445,7 @@ class StorageObject(CFSNode):
                 if self.status != 'activated':
                     break
                 else:
-                    gen.next().delete()
+                    lun.delete()
 
         super(StorageObject, self).delete()
 
