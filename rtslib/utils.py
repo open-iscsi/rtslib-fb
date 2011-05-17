@@ -612,9 +612,9 @@ def modprobe(module):
         if module in list_available_kernel_modules():
             try:
                 exec_argv(["modprobe", module])
-            except:
+            except Exception, msg:
                 raise RTSLibError("Kernel module %s exists "
-                                  % module + "but fails to load: %s")
+                                  % module + "but fails to load: %s" % msg)
             else:
                 return True
         else:
