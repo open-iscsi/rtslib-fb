@@ -60,7 +60,7 @@ clean:
 	rm -frv debian/rtslib-doc/ debian/python2.5-rtslib/
 	rm -frv debian/python2.6-rtslib/ debian/python-rtslib/
 	rm -frv results
-	rm -fv redhat/*.spec *.spec
+	rm -fv redhat/*.spec *.spec redhat/sed* sed*
 	rm -frv rtslib-*
 	./bin/gen_changelog_cleanup
 	@echo "Finished cleanup."
