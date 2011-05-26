@@ -19,7 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import stat
-from utils import fread, fwrite, RTSLibError
+from utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
+
 
 class CFSNode(object):
 
@@ -64,8 +65,8 @@ class CFSNode(object):
             raise RTSLibError("This %s already exists in configFS."
                               % self.__class__.__name__)
         elif not self and mode == 'lookup':
-            raise RTSLibError("No such %s in configfs: %s."
-                              % (self.__class__.__name__, self.path))
+            raise RTSLibNotInCFS("No such %s in configfs: %s."
+                                 % (self.__class__.__name__, self.path))
         if not self:
             os.mkdir(self.path)
             self._fresh = True
@@ -77,8 +78,8 @@ class CFSNode(object):
 
     def _check_self(self):
         if not self:
-            raise RTSLibError("This %s does not exist in configFS."
-                              % self.__class__.__name__)
+            raise RTSLibNotInCFS("This %s does not exist in configFS."
+                                 % self.__class__.__name__)
 
     def _is_fresh(self):
         return self._fresh

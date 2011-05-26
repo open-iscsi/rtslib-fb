@@ -41,6 +41,15 @@ class RTSLibBrokenLink(RTSLibError):
     '''
     pass
 
+class RTSLibNotInCFS(RTSLibError):
+    '''
+    The underlying configfs object does not exist. Happens when
+    calling methods of an object that is instanciated but have
+    been deleted from congifs, or when trying to lookup an
+    object that does not exist.
+    '''
+    pass
+
 def flatten_nested_list(nested_list):
     '''
     Function to flatten a nested list.

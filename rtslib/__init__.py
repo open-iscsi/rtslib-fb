@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import utils
 
 from root import RTSRoot
-from utils import RTSLibError, RTSLibBrokenLink
+from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 
 from target import LUN, MappedLUN
 from target import NodeACL, NetworkPortal, TPG, Target, FabricModule
