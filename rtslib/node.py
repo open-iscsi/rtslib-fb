@@ -155,9 +155,10 @@ class CFSNode(object):
         else:
             try:
                 fwrite(path, "%s\n" % str(value))
-            except IOError:
-                raise RTSLibError("Cannot set attribute %s."
-                                  % str(attribute))
+            except IOError, msg:
+                msg = msg[1]
+                raise RTSLibError("Cannot set attribute %s: %s"
+                                  % (str(attribute), str(msg)))
 
     def get_attribute(self, attribute):
         '''
@@ -189,9 +190,10 @@ class CFSNode(object):
         else:
             try:
                 fwrite(path, "%s \n" % str(value))
-            except IOError:
-                raise RTSLibError("Cannot set parameter %s."
-                                  % str(parameter))
+            except IOError, msg:
+                msg = msg[1]
+                raise RTSLibError("Cannot set parameter %s: %s"
+                                  % (str(parameter), str(msg)))
 
     def get_parameter(self, parameter):
         '''
