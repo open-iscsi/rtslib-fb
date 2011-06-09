@@ -7,7 +7,7 @@ Standards-Version: 3.8.1
 
 Package: python-rtslib
 Architecture: all
-Depends: python (>= 2.5)|python2.5|python2.6, python-configobj
+Depends: python (>= 2.5)|python2.5|python2.6, python-configobj, python-netifaces, python-ipaddr
 Suggests: rtslib-doc
 Conflicts: rtsadmin-frozen
 Description: RisingTide Systems generic SCSI target API in python.

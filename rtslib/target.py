@@ -25,6 +25,7 @@ import shutil
 
 from node import CFSNode
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
 
 class FabricModule(CFSNode):
@@ -901,12 +902,9 @@ class NetworkPortal(CFSNode):
         @type mode:string
         @return: A NetworkPortal object.
         '''
-
         super(NetworkPortal, self).__init__()
-        if not re.match("^(25[0-5]|2[0-4]\d|[01]\d{2}|\d{1,2})"
-                        + "(\.(25[0-5]|2[0-4]\d|[01]\d{2}|\d{1,2})){3}$",
-                        str(ip_address)):
-            raise RTSLibError("Invalid IP address.")
+        if not (is_ipv4_address(ip_address) or is_ipv6_address(ip_address)):
+            raise RTSLibError("Invalid IP address: %s" % ip_address)
         else:
             self._ip_address = str(ip_address)
 
@@ -920,8 +918,12 @@ class NetworkPortal(CFSNode):
         else:
             raise RTSLibError("Invalid parent TPG.")
 
-        self._path = "%s/np/%s:%d" \
-                % (self.parent_tpg.path, self.ip_address, self.port)
+        if is_ipv4_address(ip_address):
+            self._path = "%s/np/%s:%d" \
+                    % (self.parent_tpg.path, self.ip_address, self.port)
+        else:
+            self._path = "%s/np/[%s]:%d" \
+                    % (self.parent_tpg.path, self.ip_address, self.port)
         try:
             self._create_in_cfs_ine(mode)
         except OSError, msg:
@@ -1013,8 +1015,15 @@ class TPG(CFSNode):
         network_portals = []
         network_portal_dirs = os.listdir("%s/np" % self.path)
         for network_portal_dir in network_portal_dirs:
-            (ip_address, port) = \
-                    os.path.basename(network_portal_dir).split(":")
+            if network_portal_dir.startswith('['):
+                # IPv6 portals are [IPv6]:PORT
+                (ip_address, port) = \
+                        os.path.basename(network_portal_dir)[1:].split("]")
+                port = port[1:]
+            else:
+                # IPv4 portals are IPv4:PORT
+                (ip_address, port) = \
+                        os.path.basename(network_portal_dir).split(":")
             port = int(port)
             network_portals.append(
                 NetworkPortal(self, ip_address, port, 'lookup'))

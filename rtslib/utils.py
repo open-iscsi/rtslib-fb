@@ -23,6 +23,8 @@ import stat
 import uuid
 import glob
 import socket
+import ipaddr
+import netifaces
 import subprocess
 
 from array import array
@@ -681,20 +683,37 @@ def list_eth_names(max_eth=1024):
 
 def list_eth_ips(ifnames=None):
     '''
-    List the IP addresses of a list of ethernet interfaces from the SIOCGIFADDR
-    struct.  If ifname is omitted, list all IPs of all ifaces excepted for lo.
+    List the IPv4 and IPv6 non-loopback, non link-local addresses of a list of
+    ethernet interfaces from the SIOCGIFADDR struct. If ifname is omitted, list
+    all IPs of all ifaces excepted for lo.
     '''
-    SIOCGIFADDR = 0x8915
     if ifnames is None:
         ifnames = [iface for iface in list_eth_names() if iface != 'lo']
-    ips = []
-    for ifname in ifnames:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        packed = pack('256s', ifname[:15])
-        ips.append(socket.inet_ntoa(ioctl(sock.fileno(),
-                                          SIOCGIFADDR,
-                                          packed)[20:24]))
-    return flatten_nested_list(ips)
+    addrs = []
+    for iface in list_eth_names():
+        ifaddresses = netifaces.ifaddresses(iface)
+        addrs.extend(addr['addr'] for addr in ifaddresses[netifaces.AF_INET]
+                     if not addr['addr'].startswith('127.'))
+        addrs.extend(addr['addr'] for addr in ifaddresses[netifaces.AF_INET6]
+                     if not '%' in addr['addr']
+                     if not addr['addr'].startswith('::'))
+    return sorted(set(addrs))
+
+def is_ipv4_address(addr):
+    try:
+        ipaddr.IPv4Address(addr)
+    except:
+        return False
+    else:
+        return True
+
+def is_ipv6_address(addr):
+    try:
+        ipaddr.IPv6Address(addr)
+    except:
+        return False
+    else:
+        return True
 
 def get_main_ip():
     '''
