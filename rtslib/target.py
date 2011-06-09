@@ -824,6 +824,11 @@ class NodeACL(CFSNode):
         return mapped_luns
 
     # NodeACL public stuff
+    def has_feature(self, feature):
+        '''
+        Whether or not this NodeACL has a certain feature.
+        '''
+        return self.parent_tpg.has_feature(feature)
 
     def delete(self):
         '''
