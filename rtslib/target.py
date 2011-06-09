@@ -219,6 +219,121 @@ class FabricModule(CFSNode):
         '''
         return is_valid_wwn(self.spec['wwn_type'], wwn, self.spec['wwn_list'])
 
+    def _assert_feature(self, feature):
+        if not self.has_feature(feature):
+            raise RTSLibError("This fabric module does not implement "
+                              + "the %s feature." % feature)
+
+    def _get_discovery_mutual_password(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/password_mutual" % self.path
+        value = fread(path).strip()
+        if value == "NULL":
+            return ''
+        else:
+            return value
+
+    def _set_discovery_mutual_password(self, password):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/password_mutual" % self.path
+        if password.strip() == '':
+            password = "NULL"
+        fwrite(path, "%s" % password)
+
+    def _get_discovery_mutual_userid(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/userid_mutual" % self.path
+        value = fread(path).strip()
+        if value == "NULL":
+            return ''
+        else:
+            return value
+
+    def _set_discovery_mutual_userid(self, userid):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/userid_mutual" % self.path
+        if userid.strip() == '':
+            userid = "NULL"
+        fwrite(path, "%s" % userid)
+
+    def _get_discovery_password(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/password" % self.path
+        value = fread(path).strip()
+        if value == "NULL":
+            return ''
+        else:
+            return value
+
+    def _set_discovery_password(self, password):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/password" % self.path
+        if password.strip() == '':
+            password = "NULL"
+        fwrite(path, "%s" % password)
+
+    def _get_discovery_userid(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/userid" % self.path
+        value = fread(path).strip()
+        if value == "NULL":
+            return ''
+        else:
+            return value
+
+    def _set_discovery_userid(self, userid):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/userid" % self.path
+        if userid.strip() == '':
+            userid = "NULL"
+        fwrite(path, "%s" % userid)
+
+    def _get_discovery_enable_auth(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/enforce_discovery_auth" % self.path
+        value = fread(path).strip()
+        return value
+
+    def _set_discovery_enable_auth(self, enable):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/enforce_discovery_auth" % self.path
+        if enable:
+            enable = 1
+        else:
+            enable = 0
+        fwrite(path, "%s" % enable)
+
+    discovery_userid = \
+            property(_get_discovery_userid,
+                     _set_discovery_userid,
+                     doc="Set or get the initiator discovery userid.")
+    discovery_password = \
+            property(_get_discovery_password,
+                     _set_discovery_password,
+                     doc="Set or get the initiator discovery password.")
+    discovery_mutual_userid = \
+            property(_get_discovery_mutual_userid,
+                     _set_discovery_mutual_userid,
+                     doc="Set or get the mutual discovery userid.")
+    discovery_mutual_password = \
+            property(_get_discovery_mutual_password,
+                     _set_discovery_mutual_password,
+                     doc="Set or get the mutual discovery password.")
+    discovery_enable_auth = \
+            property(_get_discovery_enable_auth,
+                     _set_discovery_enable_auth,
+                     doc="Set or get the discovery enable_auth flag.")
+
     targets = property(_list_targets,
                        doc="Get the list of target objects.")
 
