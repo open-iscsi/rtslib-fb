@@ -802,7 +802,10 @@ class NetworkPortal(CFSNode):
 
         self._path = "%s/np/%s:%d" \
                 % (self.parent_tpg.path, self.ip_address, self.port)
-        self._create_in_cfs_ine(mode)
+        try:
+            self._create_in_cfs_ine(mode)
+        except OSError, msg:
+            raise RTSLibError(msg[1])
 
     def _get_ip_address(self):
         return self._ip_address
