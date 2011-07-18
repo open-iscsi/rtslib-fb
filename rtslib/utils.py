@@ -692,11 +692,15 @@ def list_eth_ips(ifnames=None):
     addrs = []
     for iface in list_eth_names():
         ifaddresses = netifaces.ifaddresses(iface)
-        addrs.extend(addr['addr'] for addr in ifaddresses[netifaces.AF_INET]
-                     if not addr['addr'].startswith('127.'))
-        addrs.extend(addr['addr'] for addr in ifaddresses[netifaces.AF_INET6]
-                     if not '%' in addr['addr']
-                     if not addr['addr'].startswith('::'))
+        if netifaces.AF_INET in ifaddresses:
+            addrs.extend(addr['addr'] 
+                         for addr in ifaddresses[netifaces.AF_INET]
+                         if not addr['addr'].startswith('127.'))
+        if netifaces.AF_INET6 in ifaddresses:
+            addrs.extend(addr['addr']
+                         for addr in ifaddresses[netifaces.AF_INET6]
+                         if not '%' in addr['addr']
+                         if not addr['addr'].startswith('::'))
     return sorted(set(addrs))
 
 def is_ipv4_address(addr):
