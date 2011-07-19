@@ -19,6 +19,7 @@ DOC = ${LIB}/doc/
 SETUP = ./setup.py
 GENDOC = ./bin/gendoc
 RPMVERSION = $$(grep Version: redhat/python-rtslib.spec | awk '{print $$2}')
+GIT_BRANCH = $$(git branch | grep \* | tr -d \*)
 
 all: usage
 usage:
@@ -85,7 +86,7 @@ rpm: doc
 	@echo Building RPM version ${RPMVERSION}
 	mkdir -p ~/rpmbuild/SOURCES/
 	mkdir -p build
-	git archive master --prefix rtslib/ > build/rtslib.tar
+	git archive $(GIT_BRANCH) --prefix rtslib/ > build/rtslib.tar
 	cd build; tar mxf rtslib.tar; rm rtslib.tar
 	cp rtslib/__init__.py build/rtslib/rtslib
 	cp -r doc build/rtslib/
