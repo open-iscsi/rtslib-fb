@@ -24,6 +24,8 @@ import uuid
 import shutil
 
 from node import CFSNode
+from doctest import testmod
+from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
@@ -98,8 +100,6 @@ class FabricModule(CFSNode):
         '''
         Parses the fabric module spec file.
         '''
-        import configobj
-
         # Recognized options and their default values
         defaults = dict(features=['discovery_auth', 'acls', 'acls_auth', 'nps',
                                   'tpgts'],
@@ -112,7 +112,7 @@ class FabricModule(CFSNode):
                         wwn_type='free')
 
         spec_file = "%s/%s.spec" % (self.spec_dir, self.name)
-        spec = configobj.ConfigObj(spec_file).dict()
+        spec = ConfigObj(spec_file).dict()
         if spec:
             self.spec_file = spec_file
         else:
@@ -1282,8 +1282,7 @@ class Target(CFSNode):
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
 
 def _test():
-    import doctest
-    doctest.testmod()
+    testmod()
 
 if __name__ == "__main__":
     _test()
