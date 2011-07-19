@@ -29,6 +29,8 @@ import subprocess
 
 from array import array
 from fcntl import ioctl
+from threading import Thread
+from Queue import Queue, Empty
 from struct import pack, unpack
 
 class RTSLibError(Exception):
@@ -728,9 +730,6 @@ def get_main_ip():
     '''
     # socket.gethostbyname does no have a timeout parameter
     # Let's use a thread to implement that in the background
-    from threading import Thread
-    from Queue import Queue, Empty
-
     def start_thread(func):
         thread = Thread(target = func)
         thread.setDaemon(True)
