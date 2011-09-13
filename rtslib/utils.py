@@ -692,7 +692,7 @@ def list_eth_ips(ifnames=None):
     if ifnames is None:
         ifnames = [iface for iface in list_eth_names() if iface != 'lo']
     addrs = []
-    for iface in list_eth_names():
+    for iface in ifnames:
         ifaddresses = netifaces.ifaddresses(iface)
         if netifaces.AF_INET in ifaddresses:
             addrs.extend(addr['addr'] 
