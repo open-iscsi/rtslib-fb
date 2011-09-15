@@ -685,9 +685,10 @@ def list_eth_names(max_eth=1024):
 
 def list_eth_ips(ifnames=None):
     '''
-    List the IPv4 and IPv6 non-loopback, non link-local addresses of a list of
-    ethernet interfaces from the SIOCGIFADDR struct. If ifname is omitted, list
-    all IPs of all ifaces excepted for lo.
+    List the IPv4 and IPv6 non-loopback, non link-local addresses (in the
+    RFC3330 sense, not addresses attached to lo) of a list of ethernet
+    interfaces from the SIOCGIFADDR struct. If ifname is omitted, list all IPs
+    of all ifaces excepted for lo.
     '''
     if ifnames is None:
         ifnames = [iface for iface in list_eth_names() if iface != 'lo']
