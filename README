@@ -20,6 +20,10 @@ modules written for it and backend storage objects.
 The latest version of this program might be obtained at:
 http://www.risingtidesystems.com/git/
 
+The git reposirory can be directly accessed from:
+git://risingtidesystems.com/rtslib.git
+git://linux-iscsi.org/rtslib.git
+
 It is useful for developing 3rd-party applications, as well as serving as a
 foundation for RisingTide Systems userspace tools.
 
