@@ -24,7 +24,7 @@ import uuid
 import glob
 import socket
 import ipaddr
-import netifaces
+import ethtool
 import subprocess
 
 from array import array
@@ -697,19 +697,18 @@ def list_eth_ips(ifnames=None):
     of all ifaces excepted for lo.
     '''
     if ifnames is None:
-        ifnames = [iface for iface in list_eth_names() if iface != 'lo']
+        ifnames = [name for name in ethtool.get_devices() if name != 'lo']
+    devcfgs = ethtool.get_interfaces_info(ifnames)
+
     addrs = []
-    for iface in ifnames:
-        ifaddresses = netifaces.ifaddresses(iface)
-        if netifaces.AF_INET in ifaddresses:
-            addrs.extend(addr['addr'] 
-                         for addr in ifaddresses[netifaces.AF_INET]
-                         if not addr['addr'].startswith('127.'))
-        if netifaces.AF_INET6 in ifaddresses:
-            addrs.extend(addr['addr']
-                         for addr in ifaddresses[netifaces.AF_INET6]
-                         if not '%' in addr['addr']
-                         if not addr['addr'].startswith('::'))
+    for d in devcfgs:
+        if d.ipv4_address:
+            addrs.append(d.ipv4_address)
+        # For IPv6 addresses, we might have more of them on the same device,
+        # and only grab global (universe) addresses.
+        for ip6 in [a for a in d.get_ipv6_addresses() if a.scope == 'universe']:
+            addrs.append(ip6.address)
+
     return sorted(set(addrs))
 
 def is_ipv4_address(addr):
