@@ -28,14 +28,13 @@ LICENSE = PKG.__license__
 SCRIPTS = []
 DESCRIPTION = PKG.__description__
 
-setup(
-        name=PKG.__name__,
-        description=DESCRIPTION,
-        version=VERSION,
-        author=AUTHOR,
-        author_email=EMAIL,
-        license=LICENSE,
-        url=URL,
-        scripts=SCRIPTS,
-        packages=[PKG.__name__],
-        package_data = {'':[]})
+setup(name=PKG.__name__,
+      description=DESCRIPTION,
+      version=VERSION,
+      author=AUTHOR,
+      author_email=EMAIL,
+      license=LICENSE,
+      url=URL,
+      scripts=SCRIPTS,
+      packages=[PKG.__name__],
+      package_data = {'':[]})
