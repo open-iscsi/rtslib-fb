@@ -29,19 +29,19 @@ all:
 	@echo "  make cleanall    - Also remove dist/*"
 
 clean:
-	@rm -fv rtslib/*.pyc rtslib/*.html
+	@rm -fv ${NAME}/*.pyc ${NAME}/*.html
 	@rm -frv doc
-	@rm -frv rtslib.egg-info MANIFEST build
+	@rm -frv ${NAME}.egg-info MANIFEST build
 	@rm -frv debian/tmp
 	@rm -fv build-stamp
 	@rm -fv dpkg-buildpackage.log dpkg-buildpackage.version
 	@rm -frv *.rpm
 	@rm -fv debian/files debian/*.log debian/*.substvars
-	@rm -frv debian/rtslib-doc/ debian/python2.5-rtslib/
-	@rm -frv debian/python2.6-rtslib/ debian/python-rtslib/
+	@rm -frv debian/${NAME}-doc/ debian/python2.5-${NAME}/
+	@rm -frv debian/python2.6-${NAME}/ debian/python-${NAME}/
 	@rm -frv results
 	@rm -fv redhat/*.spec *.spec redhat/sed* sed*
-	@rm -frv rtslib-*
+	@rm -frv ${NAME}-*
 	@echo "Finished cleanup."
 
 cleanall: clean
