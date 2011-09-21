@@ -20,7 +20,6 @@ VERSION = $$(basename $$(git describe --tags | tr - .))
 all:
 	@echo "Usage:"
 	@echo
-	@echo "  make doc         - Generates the documentation"
 	@echo "  make deb         - Builds debian packages."
 	@echo "  make rpm         - Builds redhat packages."
 	@echo "  make release     - Generates the release tarball."
@@ -47,29 +46,12 @@ clean:
 cleanall: clean
 	@rm -frv dist
 
-doc:
-	@echo "Generating pdf and html documentation files..."
-	@mkdir -p doc/pdf build
-	@cd build; epydoc --no-sourcecode --pdf -n ${NAME} --exclude configobj \
-		../${NAME}/*.py
-	@cp build/pdf/api.pdf doc/pdf/${NAME}-${VERSION}_API_Documentation.pdf
-	@cd build; epydoc --no-sourcecode --html -n ${NAME} --exclude configobj \
-		../${NAME}/*.py
-	@sed -i "s/<\?/<!/g" build/html/*.html
-	@sed -i "s/\?>/>/g" build/html/*.html
-	@cp -r build/html doc/
-	@cp README COPYING doc/
-	@echo "Generated the docs:"
-	@for doc in $$(ls doc); do echo "  doc/$${doc}"; done
-
-release: doc build/release-stamp
+release: build/release-stamp
 build/release-stamp:
 	@mkdir -p build
 	@echo "Exporting the repository files..."
 	@git archive ${GIT_BRANCH} --prefix ${NAME}-${VERSION}/ \
 		| (cd build; tar xf -)
-	@echo "Copying the docs..."
-	@cp -r doc/ build/${NAME}-${VERSION}/
 	@echo "Cleaning up the target tree..."
 	@rm -f build/${NAME}-${VERSION}/Makefile
 	@rm -f build/${NAME}-${VERSION}/.gitignore
