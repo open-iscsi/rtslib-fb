@@ -79,7 +79,7 @@ build/release-stamp:
 	@echo "Generating rpm specfile from template..."
 	@cd build/${NAME}-${VERSION}; \
 		for spectmpl in redhat/*.spec.tmpl; do \
-			sed -i "s/Version:\( *\).*/Version: ${VERSION}/g" $${spectmpl}; \
+			sed -i "s/Version:\( *\).*/Version:\1${VERSION}/g" $${spectmpl}; \
 			mv $${spectmpl} $$(basename $${spectmpl} .tmpl); \
 		done; \
 		rm -r redhat
