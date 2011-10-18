@@ -17,22 +17,12 @@ Vendor:         RisingTide Systems
 %description
 API for RisingTide Systems generic SCSI target.
 
-%package doc
-Summary:       PDF and HTML API reference for python-rtslib.
-Group:         Documentation
-BuildRequires: epydoc
-
-%description doc
-PDF and HTML API reference for python-rtslib.
-
 %prep
 %setup -q -n %{oname}-%{version}
 
 %build
 %{__python} setup.py build
-mkdir -p doc/pdf
-epydoc --no-sourcecode --pdf -n %{oname} --exclude configobj %{oname}/*.py
-mv pdf/api.pdf doc/pdf/%{oname}_API_Documentation.pdf
+mkdir -p doc
 epydoc --no-sourcecode --html -n %{oname} --exclude configobj %{oname}/*.py
 sed -i "s/<\?/<!/g" html/*.html
 sed -i "s/\?>/>/g" html/*.html
@@ -40,7 +30,7 @@ mv html doc/
 
 %install
 rm -rf %{buildroot}
-%{__python} setup.py install --skip-build --root %{buildroot}
+%{__python} setup.py install --skip-build --root %{buildroot} --prefix usr
 mkdir -p %{buildroot}/var/target/fabric
 cp specs/* %{buildroot}/var/target/fabric
 mkdir -p %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}
@@ -53,10 +43,7 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %{python_sitelib}
 /var/target
-%doc COPYING README
-
-%files doc
-%defattr(-,root,root,-)
 /usr/share/doc/python-rtslib-doc-%{version}
+%doc COPYING README
 
 %changelog

@@ -21,7 +21,7 @@ all:
 	@echo "Usage:"
 	@echo
 	@echo "  make deb         - Builds debian packages."
-	@echo "  make rpm         - Builds redhat packages."
+	@echo "  make rpm         - Builds rpm packages."
 	@echo "  make release     - Generates the release tarball."
 	@echo
 	@echo "  make clean       - Cleanup the local repository build files."
@@ -39,7 +39,7 @@ clean:
 	@rm -frv debian/${NAME}-doc/ debian/python2.5-${NAME}/
 	@rm -frv debian/python2.6-${NAME}/ debian/python-${NAME}/
 	@rm -frv results
-	@rm -fv redhat/*.spec *.spec redhat/sed* sed*
+	@rm -fv rpm/*.spec *.spec rpm/sed* sed*
 	@rm -frv ${NAME}-*
 	@echo "Finished cleanup."
 
@@ -60,11 +60,11 @@ build/release-stamp:
 		build/${NAME}-${VERSION}/${NAME}/__init__.py
 	@echo "Generating rpm specfile from template..."
 	@cd build/${NAME}-${VERSION}; \
-		for spectmpl in redhat/*.spec.tmpl; do \
+		for spectmpl in rpm/*.spec.tmpl; do \
 			sed -i "s/Version:\( *\).*/Version:\1${VERSION}/g" $${spectmpl}; \
 			mv $${spectmpl} $$(basename $${spectmpl} .tmpl); \
 		done; \
-		rm -r redhat
+		rm -r rpm
 	@echo "Generating rpm changelog..."
 	@for commit in $$(git log --date=iso  | grep -e ^commit -e ^Date: \
 		| tr -d '\n' | sed 's/commit /\n/g' | sed 's/Date:  //g' \

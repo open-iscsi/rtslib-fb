@@ -11,9 +11,3 @@ Depends: python (>= 2.5)|python2.5|python2.6, python-configobj, python-netifaces
 Suggests: rtslib-doc
 Conflicts: rtsadmin-frozen
 Description: RisingTide Systems generic SCSI target API in python.
-
-Package: rtslib-doc
-Section: doc
-Architecture: all
-Recommends: iceweasel | www-browser
-Description: RisingTide Systems generic SCSI target API documentation.

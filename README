@@ -27,5 +27,5 @@ git://linux-iscsi.org/rtslib.git
 It is useful for developing 3rd-party applications, as well as serving as a
 foundation for RisingTide Systems userspace tools.
 
-For more information, see the rtslib API reference, available in both html 
-and pdf formats as a separate package.
+For more information, see the rtslib API reference, available in html 
+format as a separate package.
