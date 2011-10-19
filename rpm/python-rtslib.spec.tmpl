@@ -24,8 +24,6 @@ API for RisingTide Systems generic SCSI target.
 %{__python} setup.py build
 mkdir -p doc
 epydoc --no-sourcecode --html -n %{oname} --exclude configobj %{oname}/*.py
-sed -i "s/<\?/<!/g" html/*.html
-sed -i "s/\?>/>/g" html/*.html
 mv html doc/
 
 %install

@@ -39,8 +39,6 @@ build-stamp:
 	mkdir -p $(build_dir) doc
 	cd $(build_dir); epydoc --no-sourcecode --html -n $(name) \
 		--exclude configobj ../$(name)/*.py
-	sed -i "s/<\?/<!/g" $(build_dir)/html/*.html
-	sed -i "s/\?>/>/g" $(build_dir)/html/*.html
 	cp -r $(build_dir)/html doc/
 	touch build-stamp
 
