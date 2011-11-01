@@ -24,6 +24,7 @@ import uuid
 import shutil
 
 from node import CFSNode
+from os.path import isdir
 from doctest import testmod
 from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
@@ -483,11 +484,13 @@ class LUN(CFSNode):
             return []
         else:
             base = "%s/acls/" % tpg.path
-            xmlun = ["param", "info", "cmdsn_depth", "auth", "attrib"]
+            xmlun = ["param", "info", "cmdsn_depth", "auth", "attrib",
+                     "node_name", "port_name"]
             return [MappedLUN(NodeACL(tpg, nodeacl), mapped_lun.split('_')[1])
                     for nodeacl in listdir(base)
                     for mapped_lun in listdir("%s/%s" % (base, nodeacl))
                     if mapped_lun not in xmlun
+                    if isdir("%s/%s/%s" % (base, nodeacl, mapped_lun))
                     for link in listdir("%s/%s/%s" \
                                         % (base, nodeacl, mapped_lun))
                     if realpath("%s/%s/%s/%s" \
