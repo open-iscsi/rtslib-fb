@@ -604,8 +604,14 @@ def list_available_kernel_modules():
     '''
     kver = os.uname()[2]
     depfile = "/lib/modules/%s/modules.dep" % kver
-    return [module.split(".")[0] for module in
-            re.findall(r"[a-zA-Z0-9_-]+\.ko:", fread(depfile))]
+    handle = open(depfile)
+    try:
+        lines = handle.readlines()
+    finally:
+        handle.close()
+
+    return [os.path.basename(line.partition(":")[0]).partition(".")[0]
+            for line in lines]
 
 def list_loaded_kernel_modules():
     '''
