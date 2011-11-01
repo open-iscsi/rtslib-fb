@@ -150,7 +150,9 @@ class FabricModule(CFSNode):
         if spec['wwn_from_files']:
             for wwn_pattern in spec['wwn_from_files']:
                 for wwn_file in glob.iglob(wwn_pattern):
-                    wwns_in_file = re.split('\t|\0|\n| ', fread(wwn_file))
+                    wwns_in_file = [wwn for wwn in
+                                    re.split('\t|\0|\n| ', fread(wwn_file))
+                                    if wwn.strip()]
                     if spec['wwn_from_files_filter']:
                         wwns_filtered = []
                         for wwn in wwns_in_file:
@@ -169,7 +171,9 @@ class FabricModule(CFSNode):
         if spec['wwn_from_cmds']:
             for wwn_cmd in spec['wwn_from_cmds']:
                 cmd_result = exec_argv(wwn_cmd, shell=True)
-                wwns_from_cmd = re.split('\t|\0|\n| ', cmd_result)
+                wwns_from_cmd = [wwn for wwn in
+                                 re.split('\t|\0|\n| ', cmd_result)
+                                 if wwn.strip()]
                 if spec['wwn_from_cmds_filter']:
                     wwns_filtered = []
                     for wwn in wwns_from_cmd:
