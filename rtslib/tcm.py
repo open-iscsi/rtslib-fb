@@ -843,9 +843,12 @@ class FileIOStorageObject(StorageObject):
             wwn = generate_wwn('unit_serial')
         self.wwn = wwn
 
-    def _get_mode(self):
+    def _get_buffered_mode(self):
         self._check_self()
-        return self._parse_info('Mode')
+        if self._parse_info('Mode') == 'buffered':
+            return True
+        else:
+            return False
 
     def _get_size(self):
         self._check_self()
@@ -864,8 +867,8 @@ class FileIOStorageObject(StorageObject):
 
     # FileIOStorageObject public stuff
 
-    mode = property(_get_mode,
-            doc="Get the current FileIOStorage mode, buffered or synchronous")
+    buffered_mode = property(_get_buffered_mode,
+            doc="True if buffered, False if synchronous (O_SYNC)")
     size = property(_get_size,
             doc="Get the current FileIOStorage size in bytes")
 
