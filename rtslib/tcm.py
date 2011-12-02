@@ -238,13 +238,13 @@ class FileIOBackstore(Backstore):
                                    size=size, wwn=wwn,
                                    buffered_mode=buffered_mode)
 
-class IBlockBackstore(Backstore):
+class BlockBackstore(Backstore):
     '''
     This is an interface to iblock backstore plugin objects in configFS.
-    An IBlockBackstore object is identified by its backstore index.
+    A BlockBackstore object is identified by its backstore index.
     '''
 
-    # IBlockBackstore private stuff
+    # BlockBackstore private stuff
 
     def __init__(self, index, mode='any'):
         '''
@@ -255,20 +255,20 @@ class IBlockBackstore(Backstore):
             - I{'lookup'} the object MUST already exist configFS.
             - I{'create'} the object must NOT already exist in configFS.
         @type mode:string
-        @return: An IBlockBackstore object.
+        @return: A BlockBackstore object.
         '''
 
-        super(IBlockBackstore, self).__init__("block", IBlockStorageObject,
+        super(BlockBackstore, self).__init__("block", BlockStorageObject,
                                                index, mode, alt_dirprefix="iblock")
 
-    # IBlockBackstore public stuff
+    # BlockBackstore public stuff
 
     def storage_object(self, name, dev=None, wwn=None):
         '''
-        Same as IBlockStorageObject() without specifying the backstore
+        Same as BlockStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return IBlockStorageObject(self, name=name, dev=dev, wwn=wwn)
+        return BlockStorageObject(self, name=name, dev=dev, wwn=wwn)
 
 class StorageObject(CFSNode):
     '''
@@ -871,12 +871,12 @@ class FileIOStorageObject(StorageObject):
     size = property(_get_size,
             doc="Get the current FileIOStorage size in bytes")
 
-class IBlockStorageObject(StorageObject):
+class BlockStorageObject(StorageObject):
     '''
-    An interface to configFS storage objects for iblock backstore.
+    An interface to configFS storage objects for block backstore.
     '''
 
-    # IBlockStorageObject private stuff
+    # BlockStorageObject private stuff
 
     def __init__(self, backstore, name, dev=None, wwn=None):
         '''
@@ -906,20 +906,20 @@ class IBlockStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(IBlockStorageObject, self).__init__(backstore,
-                                                      IBlockBackstore,
-                                                      name,
-                                                      'create')
+            super(BlockStorageObject, self).__init__(backstore,
+                                                     BlockBackstore,
+                                                     name,
+                                                     'create')
             try:
                 self._configure(dev, wwn)
             except:
                 self.delete()
                 raise
         else:
-            super(IBlockStorageObject, self).__init__(backstore,
-                                                      IBlockBackstore,
-                                                      name,
-                                                      'lookup')
+            super(BlockStorageObject, self).__init__(backstore,
+                                                     BlockBackstore,
+                                                     name,
+                                                     'lookup')
 
     def _configure(self, dev, wwn):
         self._check_self()
@@ -952,7 +952,7 @@ class IBlockStorageObject(StorageObject):
         self._check_self()
         return int(self._parse_info('Minor'))
 
-    # IblockStorageObject public stuff
+    # BlockStorageObject public stuff
 
     major = property(_get_major,
             doc="Get the block device major number")

@@ -23,8 +23,8 @@ from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 from target import LUN, MappedLUN
 from target import NodeACL, NetworkPortal, TPG, Target, FabricModule
 
-from tcm import FileIOBackstore, IBlockBackstore
-from tcm import FileIOStorageObject, IBlockStorageObject
+from tcm import FileIOBackstore, BlockBackstore
+from tcm import FileIOStorageObject, BlockStorageObject
 from tcm import PSCSIBackstore, RDMCPBackstore
 from tcm import PSCSIStorageObject, RDMCPStorageObject
 
