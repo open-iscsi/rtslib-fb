@@ -47,9 +47,6 @@ class Backstore(CFSNode):
                                         self._index)
         self._create_in_cfs_ine(mode)
 
-    def _get_plugin(self):
-        return self._plugin
-
     def _get_index(self):
         return self._index
 
@@ -113,8 +110,6 @@ class Backstore(CFSNode):
             doc="Get the list of StorageObjects attached to the backstore.")
     version = property(_get_version,
             doc="Get the Backstore plugin version string.")
-    plugin = property(_get_plugin,
-            doc="Get the Backstore plugin name.")
     name = property(_get_name,
             doc="Get the backstore name.")
 
