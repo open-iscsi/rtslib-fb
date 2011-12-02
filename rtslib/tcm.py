@@ -31,7 +31,7 @@ class Backstore(CFSNode):
 
     # Backstore private stuff
 
-    def __init__(self, plugin, storage_class, index, mode):
+    def __init__(self, plugin, storage_class, index, mode, alt_dirprefix=None):
         super(Backstore, self).__init__()
         if issubclass(storage_class, StorageObject):
             self._storage_object_class = storage_class
@@ -42,8 +42,12 @@ class Backstore(CFSNode):
             self._index = int(index)
         except ValueError:
             raise RTSLibError("Invalid backstore index: %s" % index)
+        if alt_dirprefix:
+            dirp = alt_dirprefix
+        else:
+            dirp = plugin
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
-                                        self._plugin,
+                                        dirp,
                                         self._index)
         self._create_in_cfs_ine(mode)
 
@@ -81,7 +85,7 @@ class Backstore(CFSNode):
 
     def _get_plugin(self):
         self._check_self()
-        return self._parse_info("plugin")
+        return self._plugin
 
     def _get_name(self):
         self._check_self()
@@ -254,8 +258,8 @@ class IBlockBackstore(Backstore):
         @return: An IBlockBackstore object.
         '''
 
-        super(IBlockBackstore, self).__init__("iblock", IBlockStorageObject,
-                                               index, mode)
+        super(IBlockBackstore, self).__init__("block", IBlockStorageObject,
+                                               index, mode, alt_dirprefix="iblock")
 
     # IBlockBackstore public stuff
 
