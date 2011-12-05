@@ -354,7 +354,7 @@ class LUN(CFSNode):
 
     # LUN private stuff
 
-    def __init__(self, parent_tpg, lun, storage_object=None, alias=None):
+    def __init__(self, parent_tpg, lun=None, storage_object=None, alias=None):
         '''
         A LUN object can be instanciated in two ways:
             - B{Creation mode}: If I{storage_object} is specified, the
@@ -384,15 +384,20 @@ class LUN(CFSNode):
         else:
             raise RTSLibError("Invalid parent TPG.")
 
-        try:
-            lun = int(lun)
-        except ValueError:
-            raise RTSLibError("Invalid LUN index: %s" % str(lun))
+        if lun is None:
+            luns = [lun.lun for lun in self.parent_tpg.luns]
+            for index in xrange(255):
+                if index not in luns:
+                    lun = index
+                    break
+            if lun is None:
+                raise RTSLibError("Cannot find an available LUN.")
         else:
-            if lun > 255 or lun < 0:
-                raise RTSLibError("Invalid LUN index, it must be " \
-                                  + "between 0 and 255: %d" % lun)
-            self._lun = lun
+            lun = int(lun)
+            if lun < 0 or lun > 255:
+                raise RTSLibError("LUN must be 0 to 255")
+
+        self._lun = lun
 
         self._path = "%s/lun/lun_%d" % (self.parent_tpg.path, self.lun)
 
@@ -965,7 +970,7 @@ class TPG(CFSNode):
 
     # TPG private stuff
 
-    def __init__(self, parent_target, tag, mode='any'):
+    def __init__(self, parent_target, tag=None, mode='any'):
         '''
         @param parent_target: The parent Target object of the TPG.
         @type parent_target: Target
@@ -982,13 +987,19 @@ class TPG(CFSNode):
 
         super(TPG, self).__init__()
 
-        try:
-            self._tag = int(tag)
-        except ValueError:
-            raise RTSLibError("Invalid Tag.")
-
-        if tag < 1:
-            raise RTSLibError("Invalig Tag, it must be >0.")
+        if tag is None:
+            tags = [tpg.tag for tpg in parent_target.tpgs]
+            for index in xrange(1048576):
+                if index not in tags and index > 0:
+                    tag = index
+                    break
+            if tag is None:
+                raise RTSLibError("Cannot find an available TPG Tag.")
+        else:
+            tag = int(tag)
+            if not tag > 0:
+                raise RTSLibError("The TPG Tag must be >0.")
+        self._tag = tag
 
         if isinstance(parent_target, Target):
             self._parent_target = parent_target
