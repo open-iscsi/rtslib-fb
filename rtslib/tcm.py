@@ -196,13 +196,13 @@ class RDMCPBackstore(Backstore):
 
     # RDMCPBackstore public stuff
 
-    def storage_object(self, name, size=None, gen_wwn=True):
+    def storage_object(self, name, size=None, wwn=None):
         '''
         Same as RDMCPStorageObject() without specifying the backstore
         '''
         self._check_self()
         return RDMCPStorageObject(self, name=name,
-                                  size=size, gen_wwn=gen_wwn)
+                                  size=size, wwn=wwn)
 
 class FileIOBackstore(Backstore):
     '''
@@ -230,13 +230,13 @@ class FileIOBackstore(Backstore):
     # FileIOBackstore public stuff
 
     def storage_object(self, name, dev=None, size=None,
-                       gen_wwn=True, buffered_mode=False):
+                       wwn=None, buffered_mode=False):
         '''
         Same as FileIOStorageObject() without specifying the backstore
         '''
         self._check_self()
         return FileIOStorageObject(self, name=name, dev=dev,
-                                   size=size, gen_wwn=gen_wwn,
+                                   size=size, wwn=wwn,
                                    buffered_mode=buffered_mode)
 
 class IBlockBackstore(Backstore):
@@ -264,13 +264,12 @@ class IBlockBackstore(Backstore):
 
     # IBlockBackstore public stuff
 
-    def storage_object(self, name, dev=None, gen_wwn=True):
+    def storage_object(self, name, dev=None, wwn=None):
         '''
         Same as IBlockStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return IBlockStorageObject(self, name=name, dev=dev,
-                                   gen_wwn=gen_wwn)
+        return IBlockStorageObject(self, name=name, dev=dev, wwn=wwn)
 
 class StorageObject(CFSNode):
     '''
@@ -632,7 +631,7 @@ class RDMCPStorageObject(StorageObject):
 
     # RDMCPStorageObject private stuff
 
-    def __init__(self, backstore, name, size=None, gen_wwn=True):
+    def __init__(self, backstore, name, size=None, wwn=None):
         '''
         A RDMCPStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{size} is specified, the underlying
@@ -664,8 +663,8 @@ class RDMCPStorageObject(StorageObject):
                 - The base value for kilo is 1024, aka 1kB = 1024B.
                   Strictly speaking, we use kiB, MiB, etc.
         @type size: string or int
-        @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
-        @type gen_wwn: bool
+        @param wwn: T10 WWN Unit Serial, will generate if None
+        @type wwn: string
         @return: A RDMCPStorageObject object.
         '''
 
@@ -675,7 +674,7 @@ class RDMCPStorageObject(StorageObject):
                                                      name,
                                                      'create')
             try:
-                self._configure(size, gen_wwn)
+                self._configure(size, wwn)
             except:
                 self.delete()
                 raise
@@ -695,8 +694,9 @@ class RDMCPStorageObject(StorageObject):
 
         self._control("rd_pages=%d" % size)
         self._enable()
-        if wwn:
-            self.wwn = generate_wwn('unit_serial')
+        if not wwn:
+            wwn = generate_wwn('unit_serial')
+        self.wwn = wwn
 
     def _get_page_size(self):
         self._check_self()
@@ -729,7 +729,7 @@ class FileIOStorageObject(StorageObject):
     # FileIOStorageObject private stuff
 
     def __init__(self, backstore, name, dev=None, size=None,
-                 gen_wwn=True, buffered_mode=False):
+                 wwn=None, buffered_mode=False):
         '''
         A FileIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} and I{size} are specified, the
@@ -765,8 +765,8 @@ class FileIOStorageObject(StorageObject):
                 - The base value for kilo is 1024, aka 1kB = 1024B.
                   Strictly speaking, we use kiB, MiB, etc.
         @type size: string or int
-        @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
-        @type gen_wwn: bool
+        @param wwn: T10 WWN Unit Serial, will generate if None
+        @type wwn: string
         @param buffered_mode: Should we create the StorageObject in buffered
         mode or not ? Byt default, we create it in synchronous mode
         (non-buffered). This cannot be changed later.
@@ -780,7 +780,7 @@ class FileIOStorageObject(StorageObject):
                                                       name,
                                                       'create')
             try:
-                self._configure(dev, size, gen_wwn, buffered_mode)
+                self._configure(dev, size, wwn, buffered_mode)
             except:
                 self.delete()
                 raise
@@ -839,8 +839,9 @@ class FileIOStorageObject(StorageObject):
 
         self._enable()
 
-        if wwn:
-            self.wwn = generate_wwn('unit_serial')
+        if not wwn:
+            wwn = generate_wwn('unit_serial')
+        self.wwn = wwn
 
     def _get_mode(self):
         self._check_self()
@@ -875,7 +876,7 @@ class IBlockStorageObject(StorageObject):
 
     # IBlockStorageObject private stuff
 
-    def __init__(self, backstore, name, dev=None, gen_wwn=True):
+    def __init__(self, backstore, name, dev=None, wwn=None):
         '''
         A BlockIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -897,9 +898,8 @@ class IBlockStorageObject(StorageObject):
             - The only device type that is accepted I{TYPE_DISK}.
               For other device types, use pscsi.
         @type dev: string
-        @param gen_wwn: Should we generate a T10 WWN Unit Serial when
-        creating the object ?
-        @type gen_wwn: bool
+        @param wwn: T10 WWN Unit Serial, will generate if None
+        @type wwn: string
         @return: A BlockIOStorageObject object.
         '''
 
@@ -909,7 +909,7 @@ class IBlockStorageObject(StorageObject):
                                                       name,
                                                       'create')
             try:
-                self._configure(dev, gen_wwn)
+                self._configure(dev, wwn)
             except:
                 self.delete()
                 raise
@@ -938,8 +938,9 @@ class IBlockStorageObject(StorageObject):
             # For 4.x and above, use the generic udev_path method
             self._control("udev_path=%s" % dev)
             self._enable()
-        if wwn:
-            self.wwn = generate_wwn('unit_serial')
+        if not wwn:
+            wwn = generate_wwn('unit_serial')
+        self.wwn = wwn
 
     def _get_major(self):
         self._check_self()
