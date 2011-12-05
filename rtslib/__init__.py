@@ -25,8 +25,8 @@ from target import NodeACL, NetworkPortal, TPG, Target, FabricModule
 
 from tcm import FileIOBackstore, IBlockBackstore
 from tcm import FileIOStorageObject, IBlockStorageObject
-from tcm import PSCSIBackstore, RDDRBackstore, RDMCPBackstore
-from tcm import PSCSIStorageObject, RDDRStorageObject, RDMCPStorageObject
+from tcm import PSCSIBackstore, RDMCPBackstore
+from tcm import PSCSIStorageObject, RDMCPStorageObject
 
 __version__ = 'GIT_VERSION'
 __author__ = "Jerome Martin <jxm@risingtidesystems.com>"
