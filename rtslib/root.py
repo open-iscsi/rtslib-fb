@@ -22,10 +22,17 @@ import os
 import glob
 
 from node import CFSNode
-from target import Target, FabricModule
+from target import Target, FabricModule, TPG, MappedLUN, LUN, NetworkPortal, NodeACL
 from tcm import FileIOBackstore, BlockBackstore
 from tcm import PSCSIBackstore, RDMCPBackstore
 from utils import RTSLibError, RTSLibBrokenLink, flatten_nested_list, modprobe
+
+backstores = dict(
+    fileio=FileIOBackstore,
+    block=BlockBackstore,
+    pscsi=PSCSIBackstore,
+    rd_mcp=RDMCPBackstore,
+    )
 
 class RTSRoot(CFSNode):
     '''
@@ -96,7 +103,6 @@ class RTSRoot(CFSNode):
                         backstores.add(
                             RDMCPBackstore(int(regex.group(3)), 'lookup'))
         return backstores
-
     def _list_storage_objects(self):
         self._check_self()
         return set(flatten_nested_list([backstore.storage_objects
@@ -132,6 +138,90 @@ class RTSRoot(CFSNode):
         return "rtsadmin"
 
     # RTSRoot public stuff
+
+    def dump(self):
+        d = super(RTSRoot, self).dump()
+        # backstores:storage_object is *usually* 1:1. In any case, they're an
+        # implementation detail that the user doesn't need to care about.
+        # Return an array of storageobject info with the crucial plugin name
+        # added from backstore, instead of a list of sos for each bs.
+        d['storage_objects'] = []
+        for bs in self.backstores:
+            for so in bs.storage_objects:
+                so_dump = so.dump()
+                so_dump['plugin'] = bs.plugin
+                d['storage_objects'].append(so_dump)
+        d['targets'] = [t.dump() for t in self.targets]
+        return d
+
+    def restore(self, config, clear_existing=False):
+
+        if clear_existing:
+            for so in self.storage_objects:
+                so.delete()
+            for t in self.targets:
+                t.delete()
+
+        if not clear_existing and (self.backstores or self.targets):
+            raise RTSLibError("backstores or targets present, not restoring." +
+                              " Set clear_existing=True?")
+
+        def del_if_there(d, items):
+            for item in items:
+                if item in d:
+                    del d[item]
+
+        def set_attributes(obj, attr_dict):
+            for name, value in attr_dict.iteritems():
+                try:
+                    obj.set_attribute(name, value)
+                except RTSLibError:
+                    # Setting some attributes may return an error, before kernel 3.3
+                    pass
+
+        for index, so in enumerate(config['storage_objects']):
+            # We need to create a Backstore object for each StorageObject
+            bs_obj = backstores[so['plugin']](index)
+
+            # Instantiate storageobject
+            kwargs = so.copy()
+            del_if_there(kwargs, ('exists', 'attributes', 'plugin'))
+            so_obj = bs_obj._storage_object_class(bs_obj, **kwargs)
+            set_attributes(so_obj, so['attributes'])
+
+        for t in config['targets']:
+            fm = FabricModule(t['fabric'])
+
+            # Instantiate target
+            t_obj = Target(fm, t.get('wwn'))
+
+            for tpg in t['tpgs']:
+                tpg_obj = TPG(t_obj)
+                set_attributes(tpg_obj, tpg['attributes'])
+
+                for lun in tpg['luns']:
+                    bs_name, so_name = lun['storage_object'].split('/')[2:]
+                    match_so = [x for x in self.storage_objects if so_name == x.name]
+                    match_so = [x for x in match_so if bs_name == x.backstore.plugin]
+                    if len(match_so) != 1:
+                        raise RTSLibError("Can't find storage object %s" %
+                                          lun['storage_object'])
+                    lun_obj = LUN(tpg_obj, lun.get('index'), storage_object=match_so[0])
+
+                for p in tpg['portals']:
+                    NetworkPortal(tpg_obj, p['ip_address'], p['port'])
+
+                for acl in tpg['node_acls']:
+                    acl_obj = NodeACL(tpg_obj, acl['node_wwn'])
+                    set_attributes(tpg_obj, tpg['attributes'])
+                    for mlun in acl['mapped_luns']:
+                        mlun_obj = MappedLUN(acl_obj, mlun['index'],
+                                             mlun['index'], mlun.get('write_protect'))
+
+                    del_if_there(acl, ('attributes', 'mapped_luns', 'node_wwn'))
+                    for name, value in acl.iteritems():
+                        if value:
+                            setattr(acl_obj, name, value)
 
     backstores = property(_list_backstores,
             doc="Get the list of Backstore objects.")

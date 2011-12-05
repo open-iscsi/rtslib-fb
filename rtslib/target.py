@@ -536,6 +536,14 @@ class LUN(CFSNode):
     mapped_luns = property(_list_mapped_luns,
             doc="List all MappedLUN objects referencing this LUN.")
 
+    def dump(self):
+        d = super(LUN, self).dump()
+        d['storage_object'] = "/backstores/%s/%s" % \
+            (self.storage_object.backstore.plugin,  self.storage_object.name)
+        d['index'] = self.lun
+        return d
+
+
 class MappedLUN(CFSNode):
     '''
     This is an interface to RTS Target Mapped LUNs.
@@ -703,6 +711,13 @@ class MappedLUN(CFSNode):
             doc="Get the TPG LUN object the MappedLUN is pointing at.")
     node_wwn = property(_get_node_wwn,
             doc="Get the wwn of the node for which the TPG LUN is mapped.")
+
+    def dump(self):
+        d = super(MappedLUN, self).dump()
+        d['write_protect'] = self.write_protect
+        d['index'] = self.mapped_lun
+        return d
+
 
 class NodeACL(CFSNode):
     '''
@@ -887,6 +902,18 @@ class NodeACL(CFSNode):
     mapped_luns = property(_list_mapped_luns,
             doc="Get the list of all MappedLUN objects in this NodeACL.")
 
+    def dump(self):
+        d = super(NodeACL, self).dump()
+        d['chap_userid'] = self.chap_userid
+        d['chap_password'] = self.chap_password
+        d['chap_mutual_userid'] = self.chap_mutual_userid
+        d['chap_mutual_password'] = self.chap_mutual_password
+        d['tcq_depth'] = int(self.tcq_depth)
+        d['node_wwn'] = self.node_wwn
+        d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
+        return d
+
+
 class NetworkPortal(CFSNode):
     '''
     This is an interface to NetworkPortals in configFS.  A NetworkPortal is
@@ -958,6 +985,13 @@ class NetworkPortal(CFSNode):
             doc="Get the NetworkPortal's TCP port as an int.")
     ip_address = property(_get_ip_address,
             doc="Get the NetworkPortal's IP address as a string.")
+
+    def dump(self):
+        d = super(NetworkPortal, self).dump()
+        d['port'] = self.port
+        d['ip_address'] = self.ip_address
+        return d
+
 
 class TPG(CFSNode):
     '''
@@ -1219,6 +1253,15 @@ class TPG(CFSNode):
     nexus = property(_get_nexus, _set_nexus,
                      doc="Get or set (once) the TPG's Nexus is used.")
 
+    def dump(self):
+        d = super(TPG, self).dump()
+        d['tag'] = self.tag
+        d['luns'] = [lun.dump() for lun in self.luns]
+        d['portals'] = [portal.dump() for portal in self.network_portals]
+        d['node_acls'] =  [acl.dump() for acl in self.node_acls]
+        return d
+
+
 class Target(CFSNode):
     '''
     This is an interface to Targets in configFS.
@@ -1298,6 +1341,14 @@ class Target(CFSNode):
         super(Target, self).delete()
 
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
+
+    def dump(self):
+        d = super(Target, self).dump()
+        d['wwn'] = self.wwn
+        d['fabric'] = self.fabric_module.name
+        d['tpgs'] = [tpg.dump() for tpg in self.tpgs]
+        return d
+
 
 def _test():
     testmod()

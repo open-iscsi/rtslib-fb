@@ -231,6 +231,15 @@ class CFSNode(object):
                         + "False if this object instanciation just looked " \
                         + "up the underlying configFS object.")
 
+    def dump(self):
+        d = {}
+        attrs = {}
+        for item in self.list_attributes(writable=True):
+            attrs[item] = int(self.get_attribute(item))
+        if attrs:
+            d['attributes'] = attrs
+        return d
+
 def _test():
     import doctest
     doctest.testmod()

@@ -117,6 +117,14 @@ class Backstore(CFSNode):
     name = property(_get_name,
             doc="Get the backstore name.")
 
+    def dump(self):
+        d = super(Backstore, self).dump()
+        d['storage_objects'] = [so.dump() for so in self.storage_objects]
+        d['plugin'] = self.plugin
+        d['name'] = self.name
+        return d
+
+
 class PSCSIBackstore(Backstore):
     '''
     This is an interface to pscsi backstore plugin objects in configFS.
@@ -168,6 +176,11 @@ class PSCSIBackstore(Backstore):
     legacy_mode = property(_get_legacy,
             doc="Get the legacy mode flag. If True, the Vitualbackstore "
                 + " index must match the StorageObjects real HBAs.")
+
+    def dump(self):
+        d = super(PSCSIBackstore, self).dump()
+        d['legacy_mode'] = self.legacy_mode
+        return d
 
 
 class RDMCPBackstore(Backstore):
@@ -442,6 +455,13 @@ class StorageObject(CFSNode):
                 + "is used by any LUN")
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
+
+    def dump(self):
+        d = super(StorageObject, self).dump()
+        d['name'] = self.name
+        d['wwn'] = self.wwn
+        return d
+
 
 class PSCSIStorageObject(StorageObject):
     '''
@@ -719,6 +739,11 @@ class RDMCPStorageObject(StorageObject):
     size = property(_get_size,
             doc="Get the ramdisk size in bytes.")
 
+    def dump(self):
+        d = super(RDMCPStorageObject, self).dump()
+        d['size'] = self.size
+        return d
+
 
 class FileIOStorageObject(StorageObject):
     '''
@@ -871,6 +896,14 @@ class FileIOStorageObject(StorageObject):
     size = property(_get_size,
             doc="Get the current FileIOStorage size in bytes")
 
+    def dump(self):
+        d = super(FileIOStorageObject, self).dump()
+        d['buffered_mode'] = self.buffered_mode
+        d['dev'] = self.udev_path
+        d['size'] = self.size
+        return d
+
+
 class BlockStorageObject(StorageObject):
     '''
     An interface to configFS storage objects for block backstore.
@@ -958,6 +991,12 @@ class BlockStorageObject(StorageObject):
             doc="Get the block device major number")
     minor = property(_get_minor,
             doc="Get the block device minor number")
+
+    def dump(self):
+        d = super(BlockStorageObject, self).dump()
+        d['dev'] = self.udev_path
+        return d
+
 
 def _test():
     import doctest
