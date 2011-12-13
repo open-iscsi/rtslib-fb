@@ -25,7 +25,7 @@ from node import CFSNode
 from target import Target, FabricModule, TPG, MappedLUN, LUN, NetworkPortal, NodeACL
 from tcm import FileIOBackstore, BlockBackstore
 from tcm import PSCSIBackstore, RDMCPBackstore
-from utils import RTSLibError, RTSLibBrokenLink, flatten_nested_list, modprobe
+from utils import RTSLibError, RTSLibBrokenLink, modprobe
 
 backstores = dict(
     fileio=FileIOBackstore,
@@ -77,12 +77,11 @@ class RTSRoot(CFSNode):
         self._check_self()
         targets = set([])
         for fabric_module in self.fabric_modules:
-            targets.update(fabric_module.targets)
-        return targets
+            for target in fabric_module.targets:
+                yield target
 
     def _list_backstores(self):
         self._check_self()
-        backstores = set([])
         if os.path.isdir("%s/core" % self.path):
             backstore_dirs = glob.glob("%s/core/*_*" % self.path)
             for backstore_dir in [os.path.basename(path)
@@ -91,48 +90,55 @@ class RTSRoot(CFSNode):
                                   backstore_dir)
                 if regex:
                     if regex.group(1) == "fileio":
-                        backstores.add(
-                            FileIOBackstore(int(regex.group(3)), 'lookup'))
+                        yield FileIOBackstore(int(regex.group(3)), 'lookup')
                     elif regex.group(1) == "pscsi":
-                        backstores.add(
-                            PSCSIBackstore(int(regex.group(3)), 'lookup'))
+                        yield PSCSIBackstore(int(regex.group(3)), 'lookup')
                     elif regex.group(1) == "iblock":
-                        backstores.add(
-                            BlockBackstore(int(regex.group(3)), 'lookup'))
+                        yield BlockBackstore(int(regex.group(3)), 'lookup')
                     elif regex.group(1) == "rd_mcp":
-                        backstores.add(
-                            RDMCPBackstore(int(regex.group(3)), 'lookup'))
-        return backstores
+                        yield RDMCPBackstore(int(regex.group(3)), 'lookup')
+
     def _list_storage_objects(self):
         self._check_self()
-        return set(flatten_nested_list([backstore.storage_objects
-                                        for backstore in self.backstores]))
+        for bs in self.backstores:
+            for so in bs.storage_objects:
+                yield so
 
     def _list_tpgs(self):
         self._check_self()
-        return set(flatten_nested_list([t.tpgs for t in self.targets]))
+        for t in self.targets:
+            for tpg in t.tpgs:
+                yield tpg
 
     def _list_node_acls(self):
         self._check_self()
-        return set(flatten_nested_list([t.node_acls for t in self.tpgs]))
+        for t in self.tpgs:
+            for node_acl in t.node_acls:
+                yield node_acl
 
     def _list_network_portals(self):
         self._check_self()
-        return set(flatten_nested_list([t.network_portals for t in self.tpgs]))
+        for t in self.tpgs:
+            for p in t.network_portals:
+                yield p
 
     def _list_luns(self):
         self._check_self()
-        return set(flatten_nested_list([t.luns for t in self.tpgs]))
+        for t in self.tpgs:
+            for lun in t.luns:
+                yield lun
 
     def _list_fabric_modules(self):
         self._check_self()
         mod_names = [mod_name[:-5] for mod_name in os.listdir(self.spec_dir)
                      if mod_name.endswith('.spec')]
-        modules = [FabricModule(mod_name) for mod_name in mod_names]
-        return modules
+        for name in mod_names:
+            yield FabricModule(name)
 
     def _list_loaded_fabric_modules(self):
-        return [fm for fm in self._list_fabric_modules() if fm.exists]
+        for module in self._list_fabric_modules():
+            if module.exists:
+                yield module
 
     def __str__(self):
         return "rtsadmin"
@@ -180,7 +186,7 @@ class RTSRoot(CFSNode):
         if clear_existing:
             self.clear_existing(confirm=True)
 
-        if not clear_existing and (self.storage_objects or self.targets):
+        if not clear_existing and (list(self.storage_objects) or list(self.targets)):
             raise RTSLibError("backstores or targets present, not restoring." +
                               " Set clear_existing=True?")
 

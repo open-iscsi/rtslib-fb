@@ -56,16 +56,12 @@ class Backstore(CFSNode):
 
     def _list_storage_objects(self):
         self._check_self()
-        storage_objects = []
         storage_object_names = [os.path.basename(s)
                                 for s in os.listdir(self.path)
                                 if s not in set(["hba_info", "hba_mode"])]
 
         for storage_object_name in storage_object_names:
-            storage_objects.append(self._storage_object_class(
-                self, storage_object_name))
-
-        return storage_objects
+            yield self._storage_object_class(self, storage_object_name)
 
     def _create_in_cfs_ine(self, mode):
         try:
@@ -399,13 +395,11 @@ class StorageObject(CFSNode):
 
     def _list_attached_luns(self):
         '''
-        Just returns a set of all luns attached to a storage object.
+        Generates all luns attached to a storage object.
         '''
         self._check_self()
-        luns = set([])
         for lun in self._gen_attached_luns():
-            luns.add(lun)
-        return luns
+            yield lun
 
     # StorageObject public stuff
 
