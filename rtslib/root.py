@@ -141,7 +141,7 @@ class RTSRoot(CFSNode):
                 yield module
 
     def __str__(self):
-        return "rtsadmin"
+        return "rtslib"
 
     # RTSRoot public stuff
 
