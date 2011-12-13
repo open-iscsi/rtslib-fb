@@ -677,25 +677,6 @@ def exec_argv(argv, strip=True, shell=False):
     else:
         return stdoutdata
 
-def list_eth_names(max_eth=1024):
-    '''
-    List the max_eth first local ethernet interfaces names from SIOCGIFCONF
-    struct.
-    '''
-    SIOCGIFCONF = 0x8912
-    if os.uname()[4].endswith("_64"):
-        offset = 40
-    else:
-        offset = 32
-    bytes = 32 * max_eth
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    ifaces = array('B', '\0' * bytes)
-    packed = pack('iL', bytes, ifaces.buffer_info()[0])
-    outbytes = unpack('iL', ioctl(sock.fileno(), SIOCGIFCONF, packed))[0]
-    names = ifaces.tostring()
-    return [names[i:i+offset].split('\0', 1)[0]
-            for i in range(0, outbytes, offset)]
-
 def list_eth_ips(ifnames=None):
     '''
     List the IPv4 and IPv6 non-loopback, non link-local addresses (in the
@@ -733,53 +714,6 @@ def is_ipv6_address(addr):
         return False
     else:
         return True
-
-def get_main_ip():
-    '''
-    Try to guess the local machine non-loopback IP.
-    If available, local hostname resolution is used (if non-loopback),
-    else try to find an other non-loopback IP on configured NICs.
-    If no usable IP address is found, returns None.
-    '''
-    # socket.gethostbyname does no have a timeout parameter
-    # Let's use a thread to implement that in the background
-    def start_thread(func):
-        thread = Thread(target = func)
-        thread.setDaemon(True)
-        thread.start()
-
-    def gethostbyname_timeout(hostname, timeout = 1):
-        queue = Queue(1)
-
-        def try_gethostbyname(hostname):
-            try:
-                hostname = socket.gethostbyname(hostname)
-            except socket.gaierror:
-                hostname = None
-            return hostname
-
-        def queue_try_gethostbyname():
-            queue.put(try_gethostbyname(hostname))
-
-        start_thread(queue_try_gethostbyname)
-
-        try:
-            result = queue.get(block = True, timeout = timeout)
-        except Empty:
-            result = None
-        return result
-
-    local_ips = list_eth_ips()
-    # try to get a resolution in less than 1 second
-    host_ip = gethostbyname_timeout(socket.gethostname())
-    # Put the host IP in first position of the IP list if it exists
-    if host_ip in local_ips:
-        local_ips.remove(host_ip)
-        local_ips.insert(0, host_ip)
-    for ip_addr in local_ips:
-        if not ip_addr.startswith("127.") and ip_addr.strip():
-            return ip_addr
-    return None
 
 def _test():
     '''Run the doctests'''
