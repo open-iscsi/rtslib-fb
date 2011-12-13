@@ -196,13 +196,10 @@ class FabricModule(CFSNode):
 
     def _list_targets(self):
         if self.exists:
-            return set(
-                [Target(self, wwn, 'lookup')
-                 for wwn in os.listdir(self.path)
-                 if os.path.isdir("%s/%s" % (self.path, wwn))
-                 if wwn not in self.target_names_excludes])
-        else:
-            return set([])
+            for wwn in os.listdir(self.path):
+                if os.path.isdir("%s/%s" % (self.path, wwn)) and \
+                        wwn not in self.target_names_excludes:
+                    yield Target(self, wwn, 'lookup')
 
     def _get_version(self):
         if self.exists:
@@ -757,12 +754,9 @@ class NodeACL(CFSNode):
 
     def _list_mapped_luns(self):
         self._check_self()
-        mapped_luns = []
-        mapped_lun_dirs = glob.glob("%s/lun_*" % self.path)
-        for mapped_lun_dir in mapped_lun_dirs:
+        for mapped_lun_dir in glob.glob("%s/lun_*" % self.path):
             mapped_lun = int(os.path.basename(mapped_lun_dir).split("_")[1])
-            mapped_luns.append(MappedLUN(self, mapped_lun))
-        return mapped_luns
+            yield MappedLUN(self, mapped_lun)
 
     # NodeACL public stuff
     def has_feature(self, feature):
@@ -968,10 +962,9 @@ class TPG(CFSNode):
     def _list_network_portals(self):
         self._check_self()
         if not self.has_feature('nps'):
-            return []
-        network_portals = []
-        network_portal_dirs = os.listdir("%s/np" % self.path)
-        for network_portal_dir in network_portal_dirs:
+            return
+
+        for network_portal_dir in os.listdir("%s/np" % self.path):
             if network_portal_dir.startswith('['):
                 # IPv6 portals are [IPv6]:PORT
                 (ip_address, port) = \
@@ -982,9 +975,7 @@ class TPG(CFSNode):
                 (ip_address, port) = \
                         os.path.basename(network_portal_dir).split(":")
             port = int(port)
-            network_portals.append(
-                NetworkPortal(self, ip_address, port, 'lookup'))
-        return network_portals
+            yield NetworkPortal(self, ip_address, port, 'lookup')
 
     def _get_enable(self):
         self._check_self()
@@ -1051,24 +1042,21 @@ class TPG(CFSNode):
     def _list_node_acls(self):
         self._check_self()
         if not self.has_feature('acls'):
-            return []
-        node_acls = []
+            return
+
         node_acl_dirs = [os.path.basename(path)
                          for path in os.listdir("%s/acls" % self.path)]
         for node_acl_dir in node_acl_dirs:
-            node_acls.append(NodeACL(self, node_acl_dir, 'lookup'))
-        return node_acls
+            yield NodeACL(self, node_acl_dir, 'lookup')
 
     def _list_luns(self):
         self._check_self()
-        luns = []
         lun_dirs = [os.path.basename(path)
                     for path in os.listdir("%s/lun" % self.path)]
         for lun_dir in lun_dirs:
             lun = lun_dir.split('_')[1]
             lun = int(lun)
-            luns.append(LUN(self, lun))
-        return luns
+            yield LUN(self, lun)
 
     def _control(self, command):
         self._check_self()
@@ -1210,13 +1198,10 @@ class Target(CFSNode):
 
     def _list_tpgs(self):
         self._check_self()
-        tpgs = []
-        tpg_dirs = glob.glob("%s/tpgt*" % self.path)
-        for tpg_dir in tpg_dirs:
+        for tpg_dir in glob.glob("%s/tpgt*" % self.path):
             tag = os.path.basename(tpg_dir).split('_')[1]
             tag = int(tag)
-            tpgs.append(TPG(self, tag, 'lookup'))
-        return tpgs
+            yield TPG(self, tag, 'lookup')
 
     # Target public stuff
 
