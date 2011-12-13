@@ -166,11 +166,12 @@ class RTSRoot(CFSNode):
         if not confirm:
             raise RTSLibError("As a precaution, confirm=True needs to be set")
 
-        # targets depend on storage objects, delete them first
+        # Targets depend on storage objects, delete them first.
+        # Deleting backstores deletes associated storageobjects.
         for t in self.targets:
             t.delete()
-        for so in self.storage_objects:
-            so.delete()
+        for bs in self.backstores:
+            bs.delete()
 
     def restore(self, config, clear_existing=False):
         '''
