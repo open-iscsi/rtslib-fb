@@ -487,7 +487,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
     else:
         return ''
 
-def convert_human_to_bytes(hsize, kilo=1024):
+def human_to_bytes(hsize, kilo=1024):
     '''
     This function converts human-readable amounts of bytes to bytes.
     It understands the following units :
@@ -504,13 +504,13 @@ def convert_human_to_bytes(hsize, kilo=1024):
     Example:
 
     >>> import rtslib.utils as utils
-    >>> utils.convert_human_to_bytes("1k")
+    >>> utils.human_to_bytes("1k")
     1024
-    >>> utils.convert_human_to_bytes("1k", 1000)
+    >>> utils.human_to_bytes("1k", 1000)
     1000
-    >>> utils.convert_human_to_bytes("1MB")
+    >>> utils.human_to_bytes("1MB")
     1048576
-    >>> utils.convert_human_to_bytes("12kB")
+    >>> utils.human_to_bytes("12kB")
     12288
 
     @param hsize: The human-readable version of the Bytes amount to convert
@@ -535,8 +535,15 @@ def convert_human_to_bytes(hsize, kilo=1024):
     else:
         size = int(size[:-1])
 
-    size = size * int(kilo) ** power
-    return size
+    return size * int(kilo) ** power
+
+def bytes_to_human(size):
+    if not size:
+        return ""
+    for x in ['bytes','K','M','G','T']:
+        if size < 1024.0:
+            return "(%3.1f%s) " % (size, x)
+        size /= 1024.0
 
 def generate_wwn(wwn_type):
     '''
