@@ -1305,10 +1305,9 @@ class Target(CFSNode):
 
         self.wwn = wwn
         self._path = "%s/%s" % (self.fabric_module.path, self.wwn)
-        if not self:
-            if not self.fabric_module.is_valid_wwn(self.wwn):
-                raise RTSLibError("Invalid %s wwn: %s"
-                                  % (self.wwn_type, self.wwn))
+        if not self.fabric_module.is_valid_wwn(self.wwn):
+            raise RTSLibError("Invalid %s wwn: %s"
+                              % (self.wwn_type, self.wwn))
         self._create_in_cfs_ine(mode)
 
     def _list_tpgs(self):
