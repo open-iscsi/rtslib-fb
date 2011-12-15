@@ -740,70 +740,6 @@ class NodeACL(CFSNode):
     def _get_parent_tpg(self):
         return self._parent_tpg
 
-    def _get_chap_mutual_password(self):
-        self._check_self()
-        path = "%s/auth/password_mutual" % self.path
-        value = fread(path).strip()
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_mutual_password(self, password):
-        self._check_self()
-        path = "%s/auth/password_mutual" % self.path
-        if password.strip() == '':
-            password = "NULL"
-        fwrite(path, "%s" % password)
-
-    def _get_chap_mutual_userid(self):
-        self._check_self()
-        path = "%s/auth/userid_mutual" % self.path
-        value = fread(path).strip()
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_mutual_userid(self, userid):
-        self._check_self()
-        path = "%s/auth/userid_mutual" % self.path
-        if userid.strip() == '':
-            userid = "NULL"
-        fwrite(path, "%s" % userid)
-
-    def _get_chap_password(self):
-        self._check_self()
-        path = "%s/auth/password" % self.path
-        value = fread(path).strip()
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_password(self, password):
-        self._check_self()
-        path = "%s/auth/password" % self.path
-        if password.strip() == '':
-            password = "NULL"
-        fwrite(path, "%s" % password)
-
-    def _get_chap_userid(self):
-        self._check_self()
-        path = "%s/auth/userid" % self.path
-        value = fread(path).strip()
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_userid(self, userid):
-        self._check_self()
-        path = "%s/auth/userid" % self.path
-        if userid.strip() == '':
-            userid = "NULL"
-        fwrite(path, "%s" % userid)
-
     def _get_tcq_depth(self):
         self._check_self()
         path = "%s/cmdsn_depth" % self.path
@@ -813,14 +749,6 @@ class NodeACL(CFSNode):
         self._check_self()
         path = "%s/cmdsn_depth" % self.path
         fwrite(path, "%s" % depth)
-
-    def _get_authenticate_target(self):
-        self._check_self()
-        path = "%s/auth/authenticate_target" % self.path
-        if fread(path).strip() == "1":
-            return True
-        else:
-            return False
 
     def _list_mapped_luns(self):
         self._check_self()
@@ -857,19 +785,6 @@ class NodeACL(CFSNode):
         return MappedLUN(self, mapped_lun=mapped_lun, tpg_lun=tpg_lun,
                          write_protect=write_protect)
 
-    chap_userid = property(_get_chap_userid, _set_chap_userid,
-                           doc="Set or get the initiator CHAP auth userid.")
-    chap_password = property(_get_chap_password, _set_chap_password,
-                             doc=\
-                             "Set or get the initiator CHAP auth password.")
-    chap_mutual_userid = property(_get_chap_mutual_userid,
-                                  _set_chap_mutual_userid,
-                                  doc=\
-                                  "Set or get the mutual CHAP auth userid.")
-    chap_mutual_password = property(_get_chap_mutual_password,
-                                    _set_chap_mutual_password,
-                                    doc=\
-                                    "Set or get the mutual CHAP password.")
     tcq_depth = property(_get_tcq_depth, _set_tcq_depth,
                          doc="Set or get the TCQ depth for the initiator " \
                          + "sessions matching this NodeACL.")
@@ -877,8 +792,6 @@ class NodeACL(CFSNode):
             doc="Get the parent TPG object.")
     node_wwn = property(_get_node_wwn,
             doc="Get the node wwn.")
-    authenticate_target = property(_get_authenticate_target,
-            doc="Get the boolean authenticate target flag.")
     mapped_luns = property(_list_mapped_luns,
             doc="Get the list of all MappedLUN objects in this NodeACL.")
 
