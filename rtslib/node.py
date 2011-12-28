@@ -237,7 +237,7 @@ class CFSNode(object):
                               % str(auth_attr))
         else:
             try:
-                fwrite(path, "%s\n" % str(value))
+                fwrite(path, "%s" % str(value))
             except IOError, msg:
                 msg = msg[1]
                 raise RTSLibError("Cannot set auth attribute %s: %s"
