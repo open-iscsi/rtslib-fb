@@ -350,6 +350,17 @@ class FabricModule(CFSNode):
     version = property(_get_version,
                        doc="Get the fabric module version string.")
 
+    def dump(self):
+        d = super(FabricModule, self).dump()
+        d['name'] = self.name
+        for attr in ("userid", "password", "mutual_userid", "mutual_password"):
+            val = getattr(self, "discovery_" + attr, None)
+            if val:
+                d["discovery_" + attr] = val
+        d['discovery_enable_auth'] = bool(int(self.discovery_enable_auth))
+        return d
+
+
 class LUN(CFSNode):
     '''
     This is an interface to RTS Target LUNs in configFS.

@@ -163,6 +163,9 @@ class RTSRoot(CFSNode):
                 so_dump['plugin'] = bs.plugin
                 d['storage_objects'].append(so_dump)
         d['targets'] = [t.dump() for t in self.targets]
+        d['fabric_modules'] = [f.dump() for f in self.fabric_modules
+                               if f.has_feature("discovery_auth")
+                               if f.discovery_enable_auth]
         return d
 
     def clear_existing(self, confirm=False):
@@ -213,11 +216,18 @@ class RTSRoot(CFSNode):
             so_obj = bs_obj._storage_object_class(bs_obj, **kwargs)
             set_attributes(so_obj, so['attributes'])
 
+        for fm in config['fabric_modules']:
+            # will not have config for FMs that don't support discovery_auth
+            fm_obj = FabricModule(fm['name'])
+            del fm['name']
+            for name, value in fm.iteritems():
+                setattr(fm_obj, name, value)
+
         for t in config['targets']:
-            fm = FabricModule(t['fabric'])
+            fm_obj = FabricModule(t['fabric'])
 
             # Instantiate target
-            t_obj = Target(fm, t.get('wwn'))
+            t_obj = Target(fm_obj, t.get('wwn'))
 
             for tpg in t['tpgs']:
                 tpg_obj = TPG(t_obj)
