@@ -234,6 +234,15 @@ class FabricModule(CFSNode):
             raise RTSLibError("This fabric module does not implement "
                               + "the %s feature." % feature)
 
+    def clear_discovery_auth_settings(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        self.discovery_mutual_password = ''
+        self.discovery_mutual_userid = ''
+        self.discovery_password = ''
+        self.discovery_userid = ''
+        self.discovery_enable_auth = False
+
     def _get_discovery_mutual_password(self):
         self._check_self()
         self._assert_feature('discovery_auth')
@@ -311,7 +320,7 @@ class FabricModule(CFSNode):
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/enforce_discovery_auth" % self.path
         value = fread(path).strip()
-        return value
+        return int(value)
 
     def _set_discovery_enable_auth(self, enable):
         self._check_self()

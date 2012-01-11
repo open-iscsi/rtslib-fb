@@ -179,6 +179,8 @@ class RTSRoot(CFSNode):
         # Deleting backstores deletes associated storageobjects.
         for t in self.targets:
             t.delete()
+        for fm in (f for f in self.fabric_modules if f.has_feature("discovery_auth")):
+            fm.clear_discovery_auth_settings()
         for bs in self.backstores:
             bs.delete()
 
