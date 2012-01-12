@@ -30,6 +30,7 @@ from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
+from utils import dict_remove, set_attributes
 
 class FabricModule(CFSNode):
     '''
@@ -358,6 +359,11 @@ class FabricModule(CFSNode):
 
     version = property(_get_version,
                        doc="Get the fabric module version string.")
+
+    def setup(self, **fm):
+            del fm['name']
+            for name, value in fm.iteritems():
+                setattr(fm_obj, name, value)
 
     def dump(self):
         d = super(FabricModule, self).dump()
@@ -1356,6 +1362,66 @@ class Target(CFSNode):
         super(Target, self).delete()
 
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
+
+    @classmethod
+    def setup(cls, fm_obj, storage_objects, t):
+        '''
+        Set up target objects based upon t dict, from saved config.
+        Guard against missing or bad dict items, but keep going.
+        Returns how many recoverable errors happened.
+        '''
+
+        try:
+            t_obj = Target(fm_obj, t.get('wwn'))
+        except RTSLibError:
+            return 1
+
+        errors = 0
+
+        for tpg in t.get('tpgs', []):
+            tpg_obj = TPG(t_obj)
+            set_attributes(tpg_obj, tpg.get('attributes', {}))
+
+            for lun in tpg.get('luns', []):
+                try:
+                    bs_name, so_name = lun['storage_object'].split('/')[2:]
+                except:
+                    errors += 1
+                    continue
+
+                match_so = [x for x in storage_objects
+                            if so_name == x.name
+                            if bs_name == x.backstore.plugin]
+                try:
+                    LUN(tpg_obj, lun.get('index'), storage_object=match_so[0])
+                except RTSLibError:
+                    errors += 1
+
+                for p in tpg.get('portals', []):
+                    try:
+                        NetworkPortal(tpg_obj, p['ip_address'], p['port'])
+                    except RTSLibError:
+                        errors += 1
+
+                for acl in tpg.get('node_acls', []):
+                    try:
+                        acl_obj = NodeACL(tpg_obj, acl['node_wwn'])
+                        set_attributes(tpg_obj, tpg.get('attributes', {}))
+                        for mlun in acl.get('mapped_luns', []):
+                            try:
+                                mlun_obj = MappedLUN(acl_obj, mlun['index'],
+                                                     mlun['index'], mlun.get('write_protect'))
+                            except RTSLibError:
+                                errors += 1
+
+                        dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
+                        for name, value in acl.iteritems():
+                            if value:
+                                setattr(acl_obj, name, value)
+                    except RTSLibError:
+                        errors += 1
+
+        return errors
 
     def dump(self):
         d = super(Target, self).dump()

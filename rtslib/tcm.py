@@ -26,6 +26,7 @@ from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from utils import human_to_bytes, is_dev_in_use, get_block_type
 from utils import is_disk_partition, get_disk_size
+from utils import dict_remove, set_attributes
 
 class Backstore(CFSNode):
 
@@ -449,6 +450,23 @@ class StorageObject(CFSNode):
                 + "is used by any LUN")
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
+
+    @classmethod
+    def setup(cls, bs_obj, **so):
+        '''
+        Set up storage objects based upon so dict, from saved config.
+        Guard against missing or bad dict items, but keep going.
+        Returns how many recoverable errors happened.
+        '''
+        errors = 0
+        kwargs = so.copy()
+        dict_remove(kwargs, ('exists', 'attributes', 'plugin'))
+        try:
+            so_obj = bs_obj._storage_object_class(bs_obj, **kwargs)
+            set_attributes(so_obj, so.get('attributes', {}))
+        except (RTSLibError, TypeError):
+            errors += 1 # config was broken, but keep going
+        return errors
 
     def dump(self):
         d = super(StorageObject, self).dump()

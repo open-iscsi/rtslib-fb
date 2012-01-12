@@ -650,6 +650,20 @@ def exec_argv(argv, strip=True, shell=False):
     else:
         return stdoutdata
 
+def dict_remove(d, items):
+    for item in items:
+        if item in d:
+            del d[item]
+
+def set_attributes(obj, attr_dict):
+    for name, value in attr_dict.iteritems():
+        try:
+            obj.set_attribute(name, value)
+        except RTSLibError:
+            # Setting some attributes may return an error, before kernel 3.3
+            pass
+
+
 def list_eth_ips(ifnames=None):
     '''
     List the IPv4 and IPv6 non-loopback, non link-local addresses (in the
