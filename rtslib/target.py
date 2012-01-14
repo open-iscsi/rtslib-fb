@@ -360,10 +360,15 @@ class FabricModule(CFSNode):
     version = property(_get_version,
                        doc="Get the fabric module version string.")
 
-    def setup(self, **fm):
-            del fm['name']
-            for name, value in fm.iteritems():
-                setattr(fm_obj, name, value)
+    def setup(self, fm):
+        '''
+        Setup fabricmodule with settings from fm dict.
+        Returns int of how many nonfatal errors were encountered
+        '''
+        del fm['name']
+        for name, value in fm.iteritems():
+            setattr(self, name, value)
+        return 0
 
     def dump(self):
         d = super(FabricModule, self).dump()
