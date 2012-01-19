@@ -24,6 +24,6 @@ wwn_type = free
 # Convoluted kernel module name. Default would be example_target_mod
 kernel_module = my_complex_kernel_module_name
 
-# The configfs group name. Defauklt would be "example"
+# The configfs group name. Default would be "example"
 configfs_group = "example_group"
 
