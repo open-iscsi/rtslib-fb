@@ -222,7 +222,7 @@ class RTSRoot(CFSNode):
             fm_obj = FabricModule(t['fabric'])
 
             # Instantiate target
-            errors += Target.setup(fm_obj, self.storage_objects, t)
+            errors += Target.setup(fm_obj, list(self.storage_objects), t)
 
         return errors
 

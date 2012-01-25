@@ -753,6 +753,7 @@ class MappedLUN(CFSNode):
         d = super(MappedLUN, self).dump()
         d['write_protect'] = self.write_protect
         d['index'] = self.mapped_lun
+        d['tpg_lun'] = self.tpg_lun.lun
         return d
 
 
@@ -1396,37 +1397,53 @@ class Target(CFSNode):
                     errors += 1
                     continue
 
-                match_so = [x for x in storage_objects
-                            if so_name == x.name
-                            if bs_name == x.backstore.plugin]
+                for so in storage_objects:
+                    if so_name == so.name and bs_name == so.backstore.plugin:
+                        match_so = so
+                        break
+                else:
+                    errors += 1
+                    continue
+
                 try:
-                    LUN(tpg_obj, lun.get('index'), storage_object=match_so[0])
-                except RTSLibError:
+                    LUN(tpg_obj, lun['index'], storage_object=match_so)
+                except (RTSLibError, KeyError):
                     errors += 1
 
-                for p in tpg.get('portals', []):
-                    try:
-                        NetworkPortal(tpg_obj, p['ip_address'], p['port'])
-                    except RTSLibError:
-                        errors += 1
+            for p in tpg.get('portals', []):
+                try:
+                    NetworkPortal(tpg_obj, p['ip_address'], p['port'])
+                except (RTSLibError, KeyError):
+                    errors += 1
 
-                for acl in tpg.get('node_acls', []):
-                    try:
-                        acl_obj = NodeACL(tpg_obj, acl['node_wwn'])
-                        set_attributes(tpg_obj, tpg.get('attributes', {}))
-                        for mlun in acl.get('mapped_luns', []):
-                            try:
-                                mlun_obj = MappedLUN(acl_obj, mlun['index'],
-                                                     mlun['index'], mlun.get('write_protect'))
-                            except RTSLibError:
-                                errors += 1
+            for acl in tpg.get('node_acls', []):
+                try:
+                    acl_obj = NodeACL(tpg_obj, acl['node_wwn'])
+                    set_attributes(tpg_obj, tpg.get('attributes', {}))
+                    for mlun in acl.get('mapped_luns', []):
+                        # mapped lun needs to correspond with already-created
+                        # TPG lun
+                        for lun in tpg_obj.luns:
+                            if lun.lun == mlun['tpg_lun']:
+                                tpg_lun_obj = lun
+                                break
+                        else:
+                            errors += 1
+                            continue
 
-                        dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
-                        for name, value in acl.iteritems():
-                            if value:
-                                setattr(acl_obj, name, value)
-                    except RTSLibError:
-                        errors += 1
+                        try:
+                            mlun_obj = MappedLUN(acl_obj, mlun['index'],
+                                                 tpg_lun_obj, mlun.get('write_protect'))
+                        except (RTSLibError, KeyError):
+                            errors += 1
+                            continue
+
+                    dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
+                    for name, value in acl.iteritems():
+                        if value:
+                            setattr(acl_obj, name, value)
+                except (RTSLibError, KeyError):
+                    errors += 1
 
         return errors
 
