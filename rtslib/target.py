@@ -387,6 +387,8 @@ class LUN(CFSNode):
     A LUN is identified by its parent TPG and LUN index.
     '''
 
+    MAX_LUN = 255
+
     # LUN private stuff
 
     def __init__(self, parent_tpg, lun=None, storage_object=None, alias=None):
@@ -421,7 +423,7 @@ class LUN(CFSNode):
 
         if lun is None:
             luns = [lun.lun for lun in self.parent_tpg.luns]
-            for index in xrange(255):
+            for index in xrange(self.MAX_LUN):
                 if index not in luns:
                     lun = index
                     break
@@ -429,8 +431,8 @@ class LUN(CFSNode):
                 raise RTSLibError("Cannot find an available LUN.")
         else:
             lun = int(lun)
-            if lun < 0 or lun > 255:
-                raise RTSLibError("LUN must be 0 to 255")
+            if lun < 0 or lun > self.MAX_LUN:
+                raise RTSLibError("LUN must be 0 to %d" % self.MAX_LUN)
 
         self._lun = lun
 
