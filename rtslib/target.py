@@ -365,9 +365,9 @@ class FabricModule(CFSNode):
         Setup fabricmodule with settings from fm dict.
         Returns int of how many nonfatal errors were encountered
         '''
-        del fm['name']
         for name, value in fm.iteritems():
-            setattr(self, name, value)
+            if name != 'name':
+                setattr(self, name, value)
         return 0
 
     def dump(self):

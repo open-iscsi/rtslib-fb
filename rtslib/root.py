@@ -210,6 +210,7 @@ class RTSRoot(CFSNode):
             for fm in config.get('fabric_modules', []):
                 if fm['name'] == fm_obj.name:
                     errors += fm_obj.setup(fm)
+                    break
 
         for t in config.get('targets', []):
             if 'fabric' not in t:
