@@ -154,7 +154,7 @@ class CFSNode(object):
                               % str(attribute))
         else:
             try:
-                fwrite(path, "%s\n" % str(value))
+                fwrite(path, "%s" % str(value))
             except IOError, msg:
                 msg = msg[1]
                 raise RTSLibError("Cannot set attribute %s: %s"
