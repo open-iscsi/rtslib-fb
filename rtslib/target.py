@@ -1388,6 +1388,7 @@ class Target(CFSNode):
 
         for tpg in t.get('tpgs', []):
             tpg_obj = TPG(t_obj)
+            tpg_obj.enable = True
             set_attributes(tpg_obj, tpg.get('attributes', {}))
 
             for lun in tpg.get('luns', []):
