@@ -143,6 +143,8 @@ class FabricModule(CFSNode):
         wwn_type = spec['wwn_type']
 
         if spec['wwn_from_files']:
+            if wwn_list is None:
+                wwn_list = set([])
             for wwn_pattern in spec['wwn_from_files']:
                 for wwn_file in glob.iglob(wwn_pattern):
                     wwns_in_file = [wwn for wwn in
@@ -157,13 +159,13 @@ class FabricModule(CFSNode):
                     else:
                         wwns_filtered = wwns_in_file
 
-                    if wwn_list is None:
-                        wwn_list = set([])
                     wwn_list.update(set([wwn for wwn in wwns_filtered
                                          if is_valid_wwn(wwn_type, wwn)
                                          if wwn]
                                        ))
         if spec['wwn_from_cmds']:
+            if wwn_list is None:
+                wwn_list = set([])
             for wwn_cmd in spec['wwn_from_cmds']:
                 cmd_result = exec_argv(wwn_cmd, shell=True)
                 wwns_from_cmd = [wwn for wwn in
@@ -178,8 +180,6 @@ class FabricModule(CFSNode):
                 else:
                     wwns_filtered = wwns_from_cmd
 
-                if wwn_list is None:
-                    wwn_list = set([])
                 wwn_list.update(set([wwn for wwn in wwns_filtered
                                      if is_valid_wwn(wwn_type, wwn)
                                      if wwn]
