@@ -57,7 +57,7 @@ class RTSLibNotInCFS(RTSLibError):
 def fwrite(path, string):
     '''
     This function writes a string to a file, and takes care of
-    opening it and closing it. If the file does not exists, it
+    opening it and closing it. If the file does not exist, it
     will be created.
 
     >>> from rtslib.utils import *
@@ -617,7 +617,7 @@ def modprobe(module):
             else:
                 return True
         else:
-            raise RTSLibError("Kernel module %s does not exists on disk "
+            raise RTSLibError("Kernel module %s does not exist on disk "
                                   % module + "and is not loaded.")
     else:
         return False
