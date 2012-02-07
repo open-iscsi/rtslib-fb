@@ -1322,6 +1322,9 @@ class Target(CFSNode):
 
         if wwn is not None:
             wwn = str(wwn).strip()
+            if not fabric_module.is_valid_wwn(wwn):
+                raise RTSLibError("Invalid wwn %s for %s fabric" %
+                                  (wwn, self.fabric_module.name))
         elif fabric_module.spec['wwn_list']:
             existing_wwns = set([child.wwn for child in fabric_module.targets])
             free_wwns = fabric_module.spec['wwn_list'] - existing_wwns
