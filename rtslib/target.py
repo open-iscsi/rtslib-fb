@@ -60,6 +60,11 @@ class FabricModule(CFSNode):
                                 self.spec['configfs_group'])
     # FabricModule public stuff
 
+    def _check_self(self):
+        if not self.exists:
+            self._load()
+        super(FabricModule, self)._check_self()
+
     def has_feature(self, feature):
         '''
         Whether or not this FabricModule has a certain feature.
@@ -69,24 +74,15 @@ class FabricModule(CFSNode):
         else:
             return False
 
-    def load(self, yield_steps=False):
+    def _load(self):
         '''
         Attempt to load the target fabric kernel module as defined in the
         specfile.
-        @param yield_steps: Whether or not to yield an (action, taken, desc)
-        tuple at each step: action is either 'load_module' or
-        'create_cfs_group', 'taken' is a bool indicating whether the action was
-        taken (if needed) or not, and desc is a text description of the step
-        suitable for logging.
-        @type yield_steps: bool
         @raises RTSLibError: For failure to load kernel module and/or create
         configfs group.
         '''
         module = self.spec['kernel_module']
         load_module = modprobe(module)
-        if yield_steps:
-            yield ('load_module', load_module,
-                   "Loaded %s kernel module." % module)
 
         # TODO: Also load saved targets and config if needed. For that, support
         #  XXX: from the configfs side would be nice: have a config ID present
@@ -94,9 +90,6 @@ class FabricModule(CFSNode):
 
         # Create the configfs group
         self._create_in_cfs_ine('any')
-        if yield_steps:
-            yield ('create_cfs_group', self._fresh,
-                   "Created '%s'." % self.path)
 
     def _parse_spec(self):
         '''
@@ -1320,6 +1313,8 @@ class Target(CFSNode):
         super(Target, self).__init__()
         self.fabric_module = fabric_module
         self.wwn_type = fabric_module.spec['wwn_type']
+
+        fabric_module._check_self()
 
 	if not wwn and self.fabric_module.needs_wwn():
             raise RTSLibError("Must specify wwn for %s fabric" %
