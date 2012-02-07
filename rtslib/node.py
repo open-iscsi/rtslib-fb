@@ -37,12 +37,6 @@ class CFSNode(object):
     def __init__(self):
         self._path = self.configfs_dir
 
-    def __nonzero__(self):
-        if os.path.isdir(self.path):
-            return True
-        else:
-            return False
-
     def __str__(self):
         return self.path
 
@@ -61,23 +55,23 @@ class CFSNode(object):
         '''
         if mode not in ['any', 'lookup', 'create']:
             raise RTSLibError("Invalid mode: %s" % mode)
-        if self and mode == 'create':
+        if self.exists and mode == 'create':
             raise RTSLibError("This %s already exists in configFS."
                               % self.__class__.__name__)
-        elif not self and mode == 'lookup':
+        elif not self.exists and mode == 'lookup':
             raise RTSLibNotInCFS("No such %s in configfs: %s."
                                  % (self.__class__.__name__, self.path))
-        if not self:
+        if not self.exists:
             os.mkdir(self.path)
             self._fresh = True
         else:
             self._fresh = False
 
     def _exists(self):
-        return bool(self)
+        return os.path.isdir(self.path)
 
     def _check_self(self):
-        if not self:
+        if not self.exists:
             raise RTSLibNotInCFS("This %s does not exist in configFS."
                                  % self.__class__.__name__)
 
@@ -211,11 +205,11 @@ class CFSNode(object):
 
     def delete(self):
         '''
-        If the underlying configFS object does not exists, this method does
+        If the underlying configFS object does not exist, this method does
         nothing. If the underlying configFS object exists, this method attempts
         to delete it.
         '''
-        if self:
+        if self.exists:
             os.rmdir(self.path)
 
     path = property(_get_path,

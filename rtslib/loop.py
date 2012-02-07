@@ -407,7 +407,7 @@ class Target(CFSNode):
             naa = str(naa).lower().strip()
         self._naa = naa
         self._path = "%s/loopback/%s" % (self.configfs_dir, self._naa)
-        if not self:
+        if not self.exists:
             if not re.match(
                 "naa\.[0-9]+", naa) \
                or re.search(' ', naa) \
