@@ -200,8 +200,8 @@ class RDMCPBackstore(Backstore):
         @return: A RDMCPBackstore object.
         '''
 
-        super(RDMCPBackstore, self).__init__("rd_mcp", RDMCPStorageObject,
-                                              index, mode)
+        super(RDMCPBackstore, self).__init__("ramdisk", RDMCPStorageObject,
+                                               index, mode, alt_dirprefix="rd_mcp")
 
     # RDMCPBackstore public stuff
 
