@@ -31,7 +31,7 @@ backstores = dict(
     fileio=FileIOBackstore,
     block=BlockBackstore,
     pscsi=PSCSIBackstore,
-    rd_mcp=RDMCPBackstore,
+    ramdisk=RDMCPBackstore,
     )
 
 class RTSRoot(CFSNode):
