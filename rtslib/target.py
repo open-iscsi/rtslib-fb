@@ -310,7 +310,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/enforce_discovery_auth" % self.path
-        if enable:
+        if int(enable):
             enable = 1
         else:
             enable = 0
