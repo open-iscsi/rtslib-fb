@@ -116,7 +116,7 @@ class LUN(CFSNode):
             if '/' in alias:
                 raise RTSLibError("Invalid alias: %s", alias)
         destination = "%s/%s" % (self.path, alias)
-        from tcm import StorageObject
+        from rtslib.tcm import StorageObject
         if isinstance(storage_object, StorageObject):
             if storage_object.exists:
                 source = storage_object.path
@@ -151,7 +151,7 @@ class LUN(CFSNode):
         if alias_path is None:
             raise RTSLibBrokenLink("Broken LUN in configFS, no "
                                    + "storage object attached.")
-        from root import RTSRoot
+        from rtslib.root import RTSRoot
         rtsroot = RTSRoot()
         for storage_object in rtsroot.storage_objects:
             if storage_object.path == alias_path:
