@@ -409,10 +409,10 @@ class LUN(CFSNode):
         '''
         super(LUN, self).__init__()
 
-        if isinstance(parent_tpg, TPG):
-            self._parent_tpg = parent_tpg
-        else:
+        if parent_tpg.luns is None:
             raise RTSLibError("Invalid parent TPG.")
+        else:
+            self._parent_tpg = parent_tpg
 
         if lun is None:
             luns = [lun.lun for lun in self.parent_tpg.luns]
@@ -776,10 +776,10 @@ class NodeACL(CFSNode):
 
         super(NodeACL, self).__init__()
 
-        if isinstance(parent_tpg, TPG):
-            self._parent_tpg = parent_tpg
-        else:
+        if parent_tpg.luns is None:
             raise RTSLibError("Invalid parent TPG.")
+        else:
+            self._parent_tpg = parent_tpg
 
         self._node_wwn = str(node_wwn).lower()
         self._path = "%s/acls/%s" % (self.parent_tpg.path, self.node_wwn)
@@ -980,10 +980,10 @@ class NetworkPortal(CFSNode):
         except ValueError:
             raise RTSLibError("Invalid port.")
 
-        if isinstance(parent_tpg, TPG):
-            self._parent_tpg = parent_tpg
-        else:
+        if parent_tpg.luns is None:
             raise RTSLibError("Invalid parent TPG.")
+        else:
+            self._parent_tpg = parent_tpg
 
         if is_ipv4_address(ip_address):
             self._path = "%s/np/%s:%d" \
@@ -1063,10 +1063,10 @@ class TPG(CFSNode):
                 raise RTSLibError("The TPG Tag must be >0.")
         self._tag = tag
 
-        if isinstance(parent_target, Target):
-            self._parent_target = parent_target
-        else:
+        if parent_target.wwn is None:
             raise RTSLibError("Invalid parent Target.")
+        else:
+            self._parent_target = parent_target
 
         self._path = "%s/tpgt_%d" % (self.parent_target.path, self.tag)
 
