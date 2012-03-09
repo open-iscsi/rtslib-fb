@@ -942,6 +942,105 @@ class NodeACL(CFSNode):
         return d
 
 
+class Session(object):
+    '''
+    This is an interface to sessions, which are associated to L{NodeACL}s.
+    A session has one or more L{Connection}s.
+    The information is taken from the info field in the configfs of the ACL.
+    '''
+
+    def __init__(self, parent_nodeacl):
+        '''
+        Instantiate a Session object from configfs information at
+        C{parent_nodeacl}.
+        This takes a snapshot of the current sessions.
+        If you want to get fresh information, recreate the Session object.
+
+        @param parent_nodeacl: The parent acl
+        @type parent_nodeacl: L{NodeACL}
+        '''
+        # default values, if none are found in the info
+        self.alias = ""         # initiator alias
+        '''initiator alias
+        @type: C{str}
+        '''
+        self.id = ""
+        '''LIO session id
+        @type: C{int}
+        '''
+        self.type = ""
+        '''session type
+        @type: C{str}
+        '''
+        self.state = ""
+        '''session state
+        @type: C{str}
+        '''
+        self.connections = []
+        '''list of open connections
+        @type: list of L{Connection}s
+        '''
+
+        if isinstance(parent_nodeacl, NodeACL):
+            self._parent_nodeacl = parent_nodeacl
+            if not parent_nodeacl.exists:
+                raise RTSLibError("The parent_nodeacl does not exist.")
+        else:
+            raise RTSLibError("The parent_nodeacl parameter must be " \
+                              + "a NodeACL object.")
+
+        info = fread("%s/info" % self._parent_nodeacl.path)
+        for line in info.splitlines():
+            if line.startswith("No active"):
+                return None
+
+            if line.startswith("InitiatorName:"):
+                pass    # the same as in the acl already
+            elif line.startswith("InitiatorAlias:"):
+                self.alias = line.split(":")[1].strip()
+            elif line.startswith("LIO Session ID:"):
+                self.id = int(line.split(":")[1].split()[0])
+                self.type = line.split("SessionType:")[1].split()[0].strip()
+            elif "TARG_SESS_STATE_" in line:
+                self.state = line.split("_STATE_")[1].split()[0]
+            elif "TARG_CONN_STATE_" in line:
+                self._add_connection()
+                self.connections[-1].cid = int(line.split(":")[1].split()[0])
+                self.connections[-1].cstate = \
+                                        line.split("_STATE_")[1].split()[0]
+            elif "Address" in line:
+                self.connections[-1].address = \
+                                        line.split("Address")[1].split()[0]
+
+    def _add_connection(self):
+        self.connections.append(Connection())
+
+
+class Connection(object):
+    '''
+    This is an interface to connections, which are part of a L{Session}.
+    The information is taken from the info field in the configfs of the ACL.
+    '''
+
+    def __init__(self):
+        '''
+        This creates an empty Connection object.
+        The attributes are populated by the parent Session object.
+        '''
+        self.cid = ""
+        '''connection id
+        @type: C{int}
+        '''
+        self.address = ""
+        '''ip address of the initiator
+        @type: C{str}
+        '''
+        self.cstate = ""
+        '''connection state
+        @type: C{str}
+        '''
+
+
 class NetworkPortal(CFSNode):
     '''
     This is an interface to NetworkPortals in configFS.  A NetworkPortal is
