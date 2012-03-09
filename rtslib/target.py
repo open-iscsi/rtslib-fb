@@ -879,6 +879,9 @@ class NodeACL(CFSNode):
             mapped_lun = int(os.path.basename(mapped_lun_dir).split("_")[1])
             yield MappedLUN(self, mapped_lun)
 
+    def _get_session(self):
+        return Session(self)
+
     # NodeACL public stuff
     def has_feature(self, feature):
         '''
@@ -929,6 +932,9 @@ class NodeACL(CFSNode):
             doc="Get the boolean authenticate target flag.")
     mapped_luns = property(_list_mapped_luns,
             doc="Get the list of all MappedLUN objects in this NodeACL.")
+    session = property(_get_session,
+            doc="Gives a snapshot of the current session or C{None}")
+    '''@type: L{Session}'''
 
     def dump(self):
         d = super(NodeACL, self).dump()
