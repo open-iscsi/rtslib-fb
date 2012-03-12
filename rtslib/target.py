@@ -880,7 +880,10 @@ class NodeACL(CFSNode):
             yield MappedLUN(self, mapped_lun)
 
     def _get_session(self):
-        return Session(self)
+        sess = Session(self)
+        if sess.exists:
+            return sess
+        return None
 
     # NodeACL public stuff
     def has_feature(self, feature):
@@ -988,18 +991,20 @@ class Session(object):
         '''
 
         if isinstance(parent_nodeacl, NodeACL):
-            self._parent_nodeacl = parent_nodeacl
+            self.parent_nodeacl = parent_nodeacl
             if not parent_nodeacl.exists:
                 raise RTSLibError("The parent_nodeacl does not exist.")
         else:
             raise RTSLibError("The parent_nodeacl parameter must be " \
                               + "a NodeACL object.")
 
-        info = fread("%s/info" % self._parent_nodeacl.path)
+        info = fread("%s/info" % self.parent_nodeacl.path)
         for line in info.splitlines():
             if line.startswith("No active"):
-                return None
+                self.exists = False
+                return
 
+            self.exists = True
             if line.startswith("InitiatorName:"):
                 pass    # the same as in the acl already
             elif line.startswith("InitiatorAlias:"):
@@ -1010,16 +1015,12 @@ class Session(object):
             elif "TARG_SESS_STATE_" in line:
                 self.state = line.split("_STATE_")[1].split()[0]
             elif "TARG_CONN_STATE_" in line:
-                self._add_connection()
-                self.connections[-1].cid = int(line.split(":")[1].split()[0])
-                self.connections[-1].cstate = \
-                                        line.split("_STATE_")[1].split()[0]
+                cid = int(line.split(":")[1].split()[0])
+                cstate = line.split("_STATE_")[1].split()[0]
+                self.connections.append(Connection(cid, cstate))
             elif "Address" in line:
-                self.connections[-1].address = \
-                                        line.split("Address")[1].split()[0]
-
-    def _add_connection(self):
-        self.connections.append(Connection())
+                self.connections[-1].address = line.split()[1]
+                self.connections[-1].transport = line.split()[2]
 
 
 class Connection(object):
@@ -1028,21 +1029,21 @@ class Connection(object):
     The information is taken from the info field in the configfs of the ACL.
     '''
 
-    def __init__(self):
+    def __init__(self, cid, cstate):
         '''
         This creates an empty Connection object.
         The attributes are populated by the parent Session object.
         '''
-        self.cid = ""
+        self.cid = cid
         '''connection id
         @type: C{int}
         '''
-        self.address = ""
-        '''ip address of the initiator
+        self.cstate = cstate
+        '''connection state
         @type: C{str}
         '''
-        self.cstate = ""
-        '''connection state
+        self.address = None
+        '''ip address of the initiator
         @type: C{str}
         '''
 
