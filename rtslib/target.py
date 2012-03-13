@@ -326,6 +326,12 @@ class FabricModule(CFSNode):
             enable = 0
         fwrite(path, "%s" % enable)
 
+    def _check_for_sessions(self):
+        for target in self.targets:
+            if target.has_sessions:
+                return True
+        return False
+
     discovery_userid = \
             property(_get_discovery_userid,
                      _set_discovery_userid,
@@ -352,6 +358,12 @@ class FabricModule(CFSNode):
 
     version = property(_get_version,
                        doc="Get the fabric module version string.")
+
+    has_sessions = \
+            property(_check_for_sessions,
+                     doc="Whether or not this FabricModule has open sessions.")
+    '''@type: C{bool}'''
+
 
     def setup(self, fm):
         '''
@@ -1302,6 +1314,12 @@ class TPG(CFSNode):
         return "%s/%s+%d"  \
                 % (self.alua_metadata_dir, self.parent_target.wwn, self.tag)
 
+    def _check_for_sessions(self):
+        for acl in self.node_acls:
+            if acl.session is not None:
+                return True
+        return False
+
     # TPG public stuff
 
     def has_feature(self, feature):
@@ -1381,6 +1399,10 @@ class TPG(CFSNode):
     nexus = property(_get_nexus, _set_nexus,
                      doc="Get or set (once) the TPG's Nexus is used.")
 
+    has_sessions = property(_check_for_sessions,
+            doc="Whether or not this TPG has open sessions.")
+    '''@type: C{bool}'''
+
     def dump(self):
         d = super(TPG, self).dump()
         d['tag'] = self.tag
@@ -1455,6 +1477,12 @@ class Target(CFSNode):
             tag = int(tag)
             yield TPG(self, tag, 'lookup')
 
+    def _check_for_sessions(self):
+        for tpg in self.tpgs:
+            if tpg.has_sessions:
+                return True
+        return False
+
     # Target public stuff
 
     def has_feature(self, feature):
@@ -1474,6 +1502,10 @@ class Target(CFSNode):
         super(Target, self).delete()
 
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
+
+    has_sessions = property(_check_for_sessions,
+            doc="Whether or not this Target has open sessions.")
+    '''@type: C{bool}'''
 
     @classmethod
     def setup(cls, fm_obj, storage_objects, t):
