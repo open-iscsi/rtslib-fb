@@ -128,6 +128,12 @@ class RTSRoot(CFSNode):
             for lun in t.luns:
                 yield lun
 
+    def _list_sessions(self):
+        self._check_self()
+        for na in self.node_acls:
+            if na.session:
+                yield na.session
+
     def _list_fabric_modules(self):
         self._check_self()
         mod_names = [mod_name[:-5] for mod_name in os.listdir(self.spec_dir)
@@ -230,6 +236,8 @@ class RTSRoot(CFSNode):
             doc="Get the list of all the existing TPG objects.")
     node_acls = property(_list_node_acls,
             doc="Get the list of all the existing NodeACL objects.")
+    sessions = property(_list_sessions,
+            doc="Get the list of all the existing sessions.")
     network_portals = property(_list_network_portals,
             doc="Get the list of all the existing Network Portal objects.")
     storage_objects = property(_list_storage_objects,
