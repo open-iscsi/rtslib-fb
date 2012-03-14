@@ -968,20 +968,26 @@ class Session(object):
         @param parent_nodeacl: The parent acl
         @type parent_nodeacl: L{NodeACL}
         '''
+
         # default values, if none are found in the info
-        self.alias = ""         # initiator alias
+        self.exists = True
+        '''existence of session info in the configfs
+        @type: C{bool}
+        '''
+
+        self.alias = None
         '''initiator alias
         @type: C{str}
         '''
-        self.id = ""
+        self.id = None
         '''LIO session id
         @type: C{int}
         '''
-        self.type = ""
+        self.type = None
         '''session type
         @type: C{str}
         '''
-        self.state = ""
+        self.state = None
         '''session state
         @type: C{str}
         '''
@@ -992,6 +998,9 @@ class Session(object):
 
         if isinstance(parent_nodeacl, NodeACL):
             self.parent_nodeacl = parent_nodeacl
+            '''parent acl
+            @type: L{NodeACL}
+            '''
             if not parent_nodeacl.exists:
                 raise RTSLibError("The parent_nodeacl does not exist.")
         else:
@@ -1004,7 +1013,6 @@ class Session(object):
                 self.exists = False
                 return
 
-            self.exists = True
             if line.startswith("InitiatorName:"):
                 pass    # the same as in the acl already
             elif line.startswith("InitiatorAlias:"):
@@ -1044,6 +1052,10 @@ class Connection(object):
         '''
         self.address = None
         '''ip address of the initiator
+        @type: C{str}
+        '''
+        self.transport = None
+        '''transport protocol used
         @type: C{str}
         '''
 
