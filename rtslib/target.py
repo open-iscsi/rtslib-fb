@@ -880,10 +880,33 @@ class NodeACL(CFSNode):
             yield MappedLUN(self, mapped_lun)
 
     def _get_session(self):
-        sess = Session(self)
-        if sess.exists:
-            return sess
-        return None
+        lines = fread("%s/info" % self.path).splitlines()
+
+        if lines[0].startswith("No active"):
+            return None
+
+        session = {}
+
+        for line in lines:
+            if line.startswith("InitiatorName:"):
+                session['parent_nodeacl'] = self
+                session['connections'] = []
+            elif line.startswith("InitiatorAlias:"):
+                session['alias'] = line.split(":")[1].strip()
+            elif line.startswith("LIO Session ID:"):
+                session['id'] = int(line.split(":")[1].split()[0])
+                session['type'] = line.split("SessionType:")[1].split()[0].strip()
+            elif "TARG_SESS_STATE_" in line:
+                session['state'] = line.split("_STATE_")[1].split()[0]
+            elif "TARG_CONN_STATE_" in line:
+                cid = int(line.split(":")[1].split()[0])
+                cstate = line.split("_STATE_")[1].split()[0]
+                session['connections'].append(dict(cid=cid, cstate=cstate))
+            elif "Address" in line:
+                session['connections'][-1]['address'] = line.split()[1]
+                session['connections'][-1]['transport'] = line.split()[2]
+
+        return session
 
     # NodeACL public stuff
     def has_feature(self, feature):
@@ -949,115 +972,6 @@ class NodeACL(CFSNode):
         d['node_wwn'] = self.node_wwn
         d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
         return d
-
-
-class Session(object):
-    '''
-    This is an interface to sessions, which are associated to L{NodeACL}s.
-    A session has one or more L{Connection}s.
-    The information is taken from the info field in the configfs of the ACL.
-    '''
-
-    def __init__(self, parent_nodeacl):
-        '''
-        Instantiate a Session object from configfs information at
-        C{parent_nodeacl}.
-        This takes a snapshot of the current sessions.
-        If you want to get fresh information, recreate the Session object.
-
-        @param parent_nodeacl: The parent acl
-        @type parent_nodeacl: L{NodeACL}
-        '''
-
-        # default values, if none are found in the info
-        self.exists = True
-        '''existence of session info in the configfs
-        @type: C{bool}
-        '''
-
-        self.alias = None
-        '''initiator alias
-        @type: C{str}
-        '''
-        self.id = None
-        '''LIO session id
-        @type: C{int}
-        '''
-        self.type = None
-        '''session type
-        @type: C{str}
-        '''
-        self.state = None
-        '''session state
-        @type: C{str}
-        '''
-        self.connections = []
-        '''list of open connections
-        @type: list of L{Connection}s
-        '''
-
-        if isinstance(parent_nodeacl, NodeACL):
-            self.parent_nodeacl = parent_nodeacl
-            '''parent acl
-            @type: L{NodeACL}
-            '''
-            if not parent_nodeacl.exists:
-                raise RTSLibError("The parent_nodeacl does not exist.")
-        else:
-            raise RTSLibError("The parent_nodeacl parameter must be " \
-                              + "a NodeACL object.")
-
-        info = fread("%s/info" % self.parent_nodeacl.path)
-        for line in info.splitlines():
-            if line.startswith("No active"):
-                self.exists = False
-                return
-
-            if line.startswith("InitiatorName:"):
-                pass    # the same as in the acl already
-            elif line.startswith("InitiatorAlias:"):
-                self.alias = line.split(":")[1].strip()
-            elif line.startswith("LIO Session ID:"):
-                self.id = int(line.split(":")[1].split()[0])
-                self.type = line.split("SessionType:")[1].split()[0].strip()
-            elif "TARG_SESS_STATE_" in line:
-                self.state = line.split("_STATE_")[1].split()[0]
-            elif "TARG_CONN_STATE_" in line:
-                cid = int(line.split(":")[1].split()[0])
-                cstate = line.split("_STATE_")[1].split()[0]
-                self.connections.append(Connection(cid, cstate))
-            elif "Address" in line:
-                self.connections[-1].address = line.split()[1]
-                self.connections[-1].transport = line.split()[2]
-
-
-class Connection(object):
-    '''
-    This is an interface to connections, which are part of a L{Session}.
-    The information is taken from the info field in the configfs of the ACL.
-    '''
-
-    def __init__(self, cid, cstate):
-        '''
-        This creates an empty Connection object.
-        The attributes are populated by the parent Session object.
-        '''
-        self.cid = cid
-        '''connection id
-        @type: C{int}
-        '''
-        self.cstate = cstate
-        '''connection state
-        @type: C{str}
-        '''
-        self.address = None
-        '''ip address of the initiator
-        @type: C{str}
-        '''
-        self.transport = None
-        '''transport protocol used
-        @type: C{str}
-        '''
 
 
 class NetworkPortal(CFSNode):
