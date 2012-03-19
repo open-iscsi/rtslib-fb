@@ -960,7 +960,6 @@ class NodeACL(CFSNode):
             doc="Get the list of all MappedLUN objects in this NodeACL.")
     session = property(_get_session,
             doc="Gives a snapshot of the current session or C{None}")
-    '''@type: L{Session}'''
 
     def dump(self):
         d = super(NodeACL, self).dump()
