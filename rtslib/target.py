@@ -30,7 +30,7 @@ from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
-from utils import dict_remove, set_attributes
+from utils import dict_remove, set_attributes, set_parameters
 
 class FabricModule(CFSNode):
     '''
@@ -1309,6 +1309,7 @@ class TPG(CFSNode):
     def dump(self):
         d = super(TPG, self).dump()
         d['tag'] = self.tag
+        d['enable'] = self.enable
         d['luns'] = [lun.dump() for lun in self.luns]
         d['portals'] = [portal.dump() for portal in self.network_portals]
         d['node_acls'] =  [acl.dump() for acl in self.node_acls]
@@ -1417,8 +1418,9 @@ class Target(CFSNode):
 
         for tpg in t.get('tpgs', []):
             tpg_obj = TPG(t_obj)
-            tpg_obj.enable = True
-            set_attributes(tpg_obj, tpg.get('attributes', {}))
+            tpg_obj.enable = tpg.get('enable', True)
+            set_attributes(tpg_obj, tpg.get('attributes', {})) 
+            set_parameters(tpg_obj, tpg.get('parameters', {}))
 
             for lun in tpg.get('luns', []):
                 try:
