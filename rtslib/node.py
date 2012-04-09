@@ -228,10 +228,15 @@ class CFSNode(object):
     def dump(self):
         d = {}
         attrs = {}
+        params = {}
         for item in self.list_attributes(writable=True):
             attrs[item] = int(self.get_attribute(item))
         if attrs:
             d['attributes'] = attrs
+        for item in self.list_parameters(writable=True):
+            params[item] = self.get_parameter(item)
+        if params:
+            d['parameters'] = params
         return d
 
 def _test():

@@ -663,6 +663,14 @@ def set_attributes(obj, attr_dict):
             # Setting some attributes may return an error, before kernel 3.3
             pass
 
+def set_parameters(obj, param_dict): 
+    for name, value in param_dict.iteritems():
+        try: 
+            obj.set_parameter(name, value)
+        except RTSLibError:
+            # Setting some parameters may return an error, before kernel 3.3
+            pass
+
 
 def list_eth_ips(ifnames=None):
     '''
