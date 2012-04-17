@@ -3,7 +3,7 @@
 build_dir   = build
 install_dir = debian/tmp
 setup       = /usr/bin/python ./setup.py --quiet
-name 		= rtslib
+name        = rtslib
 
 binary: binary-indep
 
