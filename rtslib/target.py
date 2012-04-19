@@ -963,11 +963,11 @@ class NodeACL(CFSNode):
 
     def dump(self):
         d = super(NodeACL, self).dump()
-        for attr in ("userid", "password", "mutual_userid", "mutual_password"):
-            val = getattr(self, "chap_" + attr, None)
-            if val:
-                d["chap_" + attr] = val
-        d['tcq_depth'] = int(self.tcq_depth)
+        if self.has_feature("acls_auth"):
+            for attr in ("userid", "password", "mutual_userid", "mutual_password"):
+                val = getattr(self, "chap_" + attr, None)
+                if val:
+                    d["chap_" + attr] = val
         d['node_wwn'] = self.node_wwn
         d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
         return d
