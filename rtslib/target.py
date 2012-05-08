@@ -748,7 +748,11 @@ class NodeACL(CFSNode):
     def _set_tcq_depth(self, depth):
         self._check_self()
         path = "%s/cmdsn_depth" % self.path
-        fwrite(path, "%s" % depth)
+        try:
+            fwrite(path, "%s" % depth)
+        except IOError, msg:
+            msg = msg[1]
+            raise RTSLibError("Cannot set tcq_depth: %s" % str(msg))
 
     def _list_mapped_luns(self):
         self._check_self()
