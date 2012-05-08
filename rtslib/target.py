@@ -810,15 +810,15 @@ class NetworkPortal(CFSNode):
 
     # NetworkPortal private stuff
 
-    def __init__(self, parent_tpg, ip_address, port, mode='any'):
+    def __init__(self, parent_tpg, ip_address, port=3260, mode='any'):
         '''
         @param parent_tpg: The parent TPG object.
         @type parent_tpg: TPG
         @param ip_address: The ipv4 IP address of the NetworkPortal.
         @type ip_address: string
-        @param port: The NetworkPortal TCP/IP port.
+        @param port: The optional (defaults to 3260) NetworkPortal TCP/IP port.
         @type port: int
-        @param mode:An optionnal string containing the object creation mode:
+        @param mode: An optionnal string containing the object creation mode:
             - I{'any'} means the configFS object will be either looked up or
               created.
             - I{'lookup'} means the object MUST already exist configFS.
