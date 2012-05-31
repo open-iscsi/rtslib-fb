@@ -132,6 +132,18 @@ class CFSNode(object):
         path = "%s/attrib" % self.path
         return self._list_files(path, writable)
 
+    def list_auth_attrs(self, writable=None):
+        '''
+        @param writable: If None (default), returns all auth attrs, if True,
+        returns read-write auth attrs, if False, returns just the read-only
+        auth attrs.
+        @type writable: bool or None
+        @return: A list of existing attribute names as strings.
+        '''
+        self._check_self()
+        path = "%s/auth" % self.path
+        return self._list_files(path, writable)
+
     def set_attribute(self, attribute, value):
         '''
         Sets the value of a named attribute.
@@ -202,6 +214,41 @@ class CFSNode(object):
                               % str(parameter))
         else:
             return fread(path).rstrip()
+
+    def set_auth_attr(self, auth_attr, value):
+        '''
+        Sets the value of a named auth_attr.
+        The auth_attr must exist in configFS.
+        @param auth_attr: The auth_attr's name. It is case-sensitive.
+        @type auth_attr: string
+        @param value: The auth_attr's value.
+        @type value: string
+        '''
+        self._check_self()
+        path = "%s/auth/%s" % (self.path, str(auth_attr))
+        if not os.path.isfile(path):
+            raise RTSLibError("Cannot find auth attribute: %s."
+                              % str(auth_attr))
+        else:
+            try:
+                fwrite(path, "%s" % str(value))
+            except IOError, msg:
+                msg = msg[1]
+                raise RTSLibError("Cannot set auth attribute %s: %s"
+                                  % (str(auth_attr), str(msg)))
+
+    def get_auth_attr(self, auth_attr):
+        '''
+        @param auth_attr: The auth_attr's name. It is case-sensitive.
+        @return: The named auth_attr's value, as a string.
+        '''
+        self._check_self()
+        path = "%s/auth/%s" % (self.path, str(auth_attr))
+        if not os.path.isfile(path):
+            raise RTSLibError("Cannot find auth attribute: %s."
+                              % str(auth_attr))
+        else:
+            return fread(path).strip()
 
     def delete(self):
         '''
