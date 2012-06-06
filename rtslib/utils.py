@@ -461,64 +461,6 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
     else:
         return ''
 
-def human_to_bytes(hsize, kilo=1024):
-    '''
-    This function converts human-readable amounts of bytes to bytes.
-    It understands the following units :
-        - I{B} or no unit present for Bytes
-        - I{k}, I{K}, I{kB}, I{KB} for kB (kilobytes)
-        - I{m}, I{M}, I{mB}, I{MB} for MB (megabytes)
-        - I{g}, I{G}, I{gB}, I{GB} for GB (gigabytes)
-        - I{t}, I{T}, I{tB}, I{TB} for TB (terabytes)
-
-    Note: The definition of I{kilo} defaults to 1kB = 1024Bytes.
-    Strictly speaking, those should not be called I{kB} but I{kiB}.
-    You can override that with the optional kilo parameter.
-
-    Example:
-
-    >>> import rtslib.utils as utils
-    >>> utils.human_to_bytes("1k")
-    1024
-    >>> utils.human_to_bytes("1k", 1000)
-    1000
-    >>> utils.human_to_bytes("1MB")
-    1048576
-    >>> utils.human_to_bytes("12kB")
-    12288
-
-    @param hsize: The human-readable version of the Bytes amount to convert
-    @type hsize: string or int
-    @param kilo: Optionnal base for the kilo prefix
-    @type kilo: int
-    @return: An int representing the human-readable string converted to bytes
-    '''
-    size = str(hsize).replace("g","G").replace("K","k")
-    size = size.replace("m","M").replace("t","T")
-    if not re.match("^[0-9]+[T|G|M|k]?[B]?$", size):
-        raise RTSLibError("Cannot interpret size, wrong format: %s" % hsize)
-
-    size = size.rstrip('B')
-
-    units = ['k', 'M', 'G', 'T']
-    try:
-        power = units.index(size[-1]) + 1
-    except ValueError:
-        power = 0
-        size = int(size)
-    else:
-        size = int(size[:-1])
-
-    return size * int(kilo) ** power
-
-def bytes_to_human(size):
-    if not size:
-        return ""
-    for x in ['bytes','K','M','G','T']:
-        if size < 1024.0:
-            return "(%3.1f%s) " % (size, x)
-        size /= 1024.0
-
 def generate_wwn(wwn_type):
     '''
     Generates a random WWN of the specified type:
