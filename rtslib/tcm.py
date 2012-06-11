@@ -24,7 +24,7 @@ from target import LUN, TPG, Target, FabricModule
 from node import CFSNode
 from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
-from utils import human_to_bytes, is_dev_in_use, get_block_type
+from utils import is_dev_in_use, get_block_type
 from utils import is_disk_partition, get_disk_size
 from utils import dict_remove, set_attributes
 
@@ -716,7 +716,6 @@ class RDMCPStorageObject(StorageObject):
 
     def _configure(self, size, wwn):
         self._check_self()
-        size = human_to_bytes(size)
         # convert to 4k pages
         size = round(float(size)/4096)
         if size == 0:
@@ -846,7 +845,6 @@ class FileIOStorageObject(StorageObject):
             if size is None:
                 raise RTSLibError("The size parameter is mandatory "
                                   + "when using a file.")
-            size = human_to_bytes(size)
             self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
         else:
             # it is a block device or a disk partition
