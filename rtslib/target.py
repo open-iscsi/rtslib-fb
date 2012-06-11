@@ -66,7 +66,7 @@ class FabricModule(CFSNode):
         '''
         super(FabricModule, self).__init__()
         self.name = str(name)
-        self.spec = self._parse_spec(spec_dir+name+".spec")
+        self.spec = self._parse_spec(spec_dir+"/"+name+".spec")
         self._path = "%s/%s" % (self.configfs_dir,
                                 self.spec['configfs_group'])
     # FabricModule public stuff
