@@ -136,10 +136,8 @@ class RTSRoot(CFSNode):
 
     def _list_fabric_modules(self):
         self._check_self()
-        mod_names = [mod_name[:-5] for mod_name in os.listdir(self.spec_dir)
-                     if mod_name.endswith('.spec')]
-        for name in mod_names:
-            yield FabricModule(name)
+        for mod in FabricModule.all():
+            yield mod
 
     def __str__(self):
         return "rtslib"
