@@ -28,9 +28,6 @@ class CFSNode(object):
     spec_dir = "/var/lib/target/fabric"
     # Where is the configfs base LIO directory ?
     configfs_dir = '/sys/kernel/config/target'
-    # TODO: Make the ALUA path generic, not iscsi-centric
-    # What is the ALUA directory ?
-    alua_metadata_dir = "/var/lib/target/alua/iSCSI"
 
     # CFSNode private stuff
 

@@ -505,9 +505,6 @@ class LUN(CFSNode):
     def _get_lun(self):
         return self._lun
 
-    def _get_alua_metadata_path(self):
-        return "%s/lun_%d" % (self.parent_tpg.alua_metadata_path, self.lun)
-
     def _list_mapped_luns(self):
         self._check_self()
         listdir = os.listdir
@@ -550,11 +547,7 @@ class LUN(CFSNode):
                 os.unlink("%s/%s" % (self.path, link))
 
         super(LUN, self).delete()
-        if os.path.isdir(self.alua_metadata_path):
-            shutil.rmtree(self.alua_metadata_path)
 
-    alua_metadata_path = property(_get_alua_metadata_path,
-            doc="Get the ALUA metadata directory path for the LUN.")
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
     lun = property(_get_lun,
@@ -1198,11 +1191,6 @@ class TPG(CFSNode):
                                   % (nexus_wwn, self.parent_target.wwn_type))
         fwrite("%s/nexus" % self.path, nexus_wwn)
 
-    def _create_in_cfs_ine(self, mode):
-        super(TPG, self)._create_in_cfs_ine(mode)
-        if not os.path.isdir(self.alua_metadata_path):
-            os.makedirs(self.alua_metadata_path)
-
     def _list_node_acls(self):
         self._check_self()
         if not self.has_feature('acls'):
@@ -1226,10 +1214,6 @@ class TPG(CFSNode):
         self._check_self()
         path = "%s/control" % self.path
         fwrite(path, "%s\n" % str(command))
-
-    def _get_alua_metadata_path(self):
-        return "%s/%s+%d"  \
-                % (self.alua_metadata_dir, self.parent_target.wwn, self.tag)
 
     # TPG public stuff
 
@@ -1259,9 +1243,6 @@ class TPG(CFSNode):
         for portal in self.network_portals:
             portal.delete()
         super(TPG, self).delete()
-        # TODO: check that ALUA MD removal works while removing TPG
-        if os.path.isdir(self.alua_metadata_path):
-            shutil.rmtree(self.alua_metadata_path)
 
     def node_acl(self, node_wwn, mode='any'):
         '''
@@ -1284,9 +1265,6 @@ class TPG(CFSNode):
         self._check_self()
         return LUN(self, lun=lun, storage_object=storage_object, alias=alias)
 
-    alua_metadata_path = property(_get_alua_metadata_path,
-                                  doc="Get the ALUA metadata directory path " \
-                                  + "for the TPG.")
     tag = property(_get_tag,
             doc="Get the TPG Tag as an int.")
     parent_target = property(_get_parent_target,
