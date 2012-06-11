@@ -19,11 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import os
-import glob
 
 from node import CFSNode
 from target import Target, FabricModule
-from tcm import FileIOBackstore, BlockBackstore
+from tcm import Backstore, FileIOBackstore, BlockBackstore
 from tcm import PSCSIBackstore, RDMCPBackstore
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 
@@ -82,21 +81,8 @@ class RTSRoot(CFSNode):
 
     def _list_backstores(self):
         self._check_self()
-        if os.path.isdir("%s/core" % self.path):
-            backstore_dirs = glob.glob("%s/core/*_*" % self.path)
-            for backstore_dir in [os.path.basename(path)
-                                  for path in backstore_dirs]:
-                regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
-                                  backstore_dir)
-                if regex:
-                    if regex.group(1) == "fileio":
-                        yield FileIOBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "pscsi":
-                        yield PSCSIBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "iblock":
-                        yield BlockBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "rd_mcp":
-                        yield RDMCPBackstore(int(regex.group(3)), 'lookup')
+        for bs in Backstore.all(self.path):
+            yield bs
 
     def _list_storage_objects(self):
         self._check_self()

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import re
+import glob
 
 from target import LUN, TPG, Target, FabricModule
 from node import CFSNode
@@ -51,6 +52,25 @@ class Backstore(CFSNode):
                                         dirp,
                                         self._index)
         self._create_in_cfs_ine(mode)
+
+    @classmethod
+    def all(cls, path):
+        if os.path.isdir("%s/core" % path):
+            backstore_dirs = glob.glob("%s/core/*_*" % path)
+            for backstore_dir in [os.path.basename(path)
+                                  for path in backstore_dirs]:
+                regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
+                                  backstore_dir)
+                if regex:
+                    if regex.group(1) == "fileio":
+                        yield FileIOBackstore(int(regex.group(3)), 'lookup')
+                    elif regex.group(1) == "pscsi":
+                        yield PSCSIBackstore(int(regex.group(3)), 'lookup')
+                    elif regex.group(1) == "iblock":
+                        yield BlockBackstore(int(regex.group(3)), 'lookup')
+                    elif regex.group(1) == "rd_mcp":
+                        yield RDMCPBackstore(int(regex.group(3)), 'lookup')
+
 
     def _get_index(self):
         return self._index
