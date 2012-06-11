@@ -61,11 +61,16 @@ class CFSNode(object):
         elif not self.exists and mode == 'lookup':
             raise RTSLibNotInCFS("No such %s in configfs: %s."
                                  % (self.__class__.__name__, self.path))
-        if not self.exists:
+        if self.exists:
+            self._fresh = False
+            return
+
+        try:
             os.mkdir(self.path)
             self._fresh = True
-        else:
-            self._fresh = False
+        except:
+            raise RTSLibError("Could not create %s in configFS."
+                              % self.__class__.__name__)
 
     def _exists(self):
         return os.path.isdir(self.path)
