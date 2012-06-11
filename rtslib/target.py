@@ -31,6 +31,9 @@ from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
 
+# Where do we store the fabric modules spec files ?
+spec_dir = "/var/target/fabric"
+
 class FabricModule(CFSNode):
     '''
     This is an interface to RTS Target Fabric Modules.
@@ -44,6 +47,14 @@ class FabricModule(CFSNode):
     discovery_auth_attributes = set(["discovery_auth"])
     target_names_excludes = version_attributes | discovery_auth_attributes
 
+    @classmethod
+    def all(cls):
+        mod_names = [mod_name[:-5] for mod_name in os.listdir(spec_dir)
+                     if mod_name.endswith('.spec')]
+        for name in mod_names:
+            yield FabricModule(name)
+
+
     # FabricModule private stuff
     def __init__(self, name):
         '''
@@ -53,8 +64,8 @@ class FabricModule(CFSNode):
         @type name: str
         '''
         super(FabricModule, self).__init__()
-        self.name = name
-        self.spec = self._parse_spec()
+        self.name = str(name)
+        self.spec = self._parse_spec("%s/%s.spec" % (spec_dir, name))
         self._path = "%s/%s" % (self.configfs_dir,
                                 self.spec['configfs_group'])
     # FabricModule public stuff
@@ -97,7 +108,7 @@ class FabricModule(CFSNode):
             yield ('create_cfs_group', self._fresh,
                    "Created '%s'." % self.path)
 
-    def _parse_spec(self):
+    def _parse_spec(self, spec_file):
         '''
         Parses the fabric module spec file.
         '''
@@ -112,7 +123,6 @@ class FabricModule(CFSNode):
                         wwn_from_cmds_filter='',
                         wwn_type='free')
 
-        spec_file = "%s/%s.spec" % (self.spec_dir, self.name)
         spec = ConfigObj(spec_file).dict()
         if spec:
             self.spec_file = spec_file

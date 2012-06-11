@@ -24,8 +24,6 @@ from utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
 
 class CFSNode(object):
 
-    # Where do we store the fabric modules spec files ?
-    spec_dir = "/var/target/fabric"
     # Where is the configfs base LIO directory ?
     configfs_dir = '/sys/kernel/config/target'
     # TODO: Make the ALUA path generic, not iscsi-centric
