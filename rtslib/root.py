@@ -22,15 +22,16 @@ import os
 
 from node import CFSNode
 from target import Target, FabricModule
-from tcm import Backstore, FileIOBackstore, BlockBackstore
-from tcm import PSCSIBackstore, RDMCPBackstore
+from tcm import (StorageObject, FileIOStorageObject, BlockStorageObject,
+                 PSCSIStorageObject, RDMCPStorageObject)
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import dict_remove, set_attributes
 
-backstores = dict(
-    fileio=FileIOBackstore,
-    block=BlockBackstore,
-    pscsi=PSCSIBackstore,
-    ramdisk=RDMCPBackstore,
+storageobjects = dict(
+    fileio=FileIOStorageObject,
+    block=BlockStorageObject,
+    pscsi=PSCSIStorageObject,
+    ramdisk=RDMCPStorageObject,
     )
 
 class RTSRoot(CFSNode):
@@ -79,16 +80,10 @@ class RTSRoot(CFSNode):
             for target in fabric_module.targets:
                 yield target
 
-    def _list_backstores(self):
-        self._check_self()
-        for bs in Backstore.all(self.path):
-            yield bs
-
     def _list_storage_objects(self):
         self._check_self()
-        for bs in self.backstores:
-            for so in bs.storage_objects:
-                yield so
+        for so in StorageObject.all(self.path):
+            yield so
 
     def _list_tpgs(self):
         self._check_self()
@@ -141,12 +136,7 @@ class RTSRoot(CFSNode):
         # implementation detail that the user doesn't need to care about.
         # Return an array of storageobject info with the crucial plugin name
         # added from backstore, instead of a list of sos for each bs.
-        d['storage_objects'] = []
-        for bs in self.backstores:
-            for so in bs.storage_objects:
-                so_dump = so.dump()
-                so_dump['plugin'] = bs.plugin
-                d['storage_objects'].append(so_dump)
+        d['storage_objects'] = [so.dump() for so in self.storage_objects]
         d['targets'] = [t.dump() for t in self.targets]
         d['fabric_modules'] = [f.dump() for f in self.fabric_modules
                                if f.has_feature("discovery_auth")
@@ -166,8 +156,8 @@ class RTSRoot(CFSNode):
             t.delete()
         for fm in (f for f in self.fabric_modules if f.has_feature("discovery_auth")):
             fm.clear_discovery_auth_settings()
-        for bs in self.backstores:
-            bs.delete()
+        for so in self.storage_objects:
+            so.delete()
 
     def restore(self, config, clear_existing=False):
         '''
@@ -182,13 +172,18 @@ class RTSRoot(CFSNode):
 
         errors = 0
 
-        for index, so in enumerate(config.get('storage_objects', [])):
-            # We need to create a Backstore object for each StorageObject
+        for so in config.get('storage_objects', []):
             if 'plugin' not in so:
                 errors += 1
                 continue
-            bs_obj = backstores[so['plugin']](index)
-            errors += bs_obj._storage_object_class.setup(bs_obj, **so)
+            so_cls = storageobjects[so['plugin']]
+            kwargs = so.copy()
+            dict_remove(kwargs, ('exists', 'attributes', 'plugin'))
+            try:
+                so_obj = so_cls(**kwargs)
+                set_attributes(so_obj, so.get('attributes', {}))
+            except (RTSLibError, TypeError):
+                errors += 1 # config was broken, but keep going
 
         # Don't need to create fabric modules
         for fm_obj in self.fabric_modules:
@@ -212,8 +207,6 @@ class RTSRoot(CFSNode):
 
         return errors
 
-    backstores = property(_list_backstores,
-            doc="Get the list of Backstore objects.")
     targets = property(_list_targets,
             doc="Get the list of Target objects.")
     tpgs = property(_list_tpgs,

@@ -572,7 +572,7 @@ class LUN(CFSNode):
     def dump(self):
         d = super(LUN, self).dump()
         d['storage_object'] = "/backstores/%s/%s" % \
-            (self.storage_object.backstore.plugin,  self.storage_object.name)
+            (self.storage_object.plugin,  self.storage_object.name)
         d['index'] = self.lun
         return d
 
@@ -1422,7 +1422,7 @@ class Target(CFSNode):
                     continue
 
                 for so in storage_objects:
-                    if so_name == so.name and bs_name == so.backstore.plugin:
+                    if so_name == so.name and bs_name == so.plugin:
                         match_so = so
                         break
                 else:
