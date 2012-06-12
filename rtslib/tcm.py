@@ -323,12 +323,9 @@ class StorageObject(CFSNode):
     '''
     # StorageObject private stuff
 
-    def __init__(self, backstore, backstore_class, name, mode):
-        if not isinstance(backstore, backstore_class):
-            raise RTSLibError("The parent backstore must be of "
-                              + "type %s" % backstore_class.__name__)
+    def __init__(self, backstore_class, name, mode):
         super(StorageObject, self).__init__()
-        self._backstore = backstore
+        self._backstore = backstore_class()
         if "/" in name or " " in name or "\t" in name or "\n" in name:
             raise RTSLibError("A storage object's name cannot contain "
                               " /, newline or spaces/tabs.")
@@ -517,7 +514,7 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject private stuff
 
-    def __init__(self, backstore, name, dev=None):
+    def __init__(self, name, dev=None):
         '''
         A PSCSIStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -530,8 +527,6 @@ class PSCSIStorageObject(StorageObject):
               configFS object must already exist in that mode, or instanciation
               will fail.
 
-        @param backstore: The parent backstore of the PSCSIStorageObject.
-        @type backstore: PSCSIBackstore
         @param name: The name of the PSCSIStorageObject.
         @type name: string
         @param dev: You have two choices:
@@ -546,8 +541,7 @@ class PSCSIStorageObject(StorageObject):
         @return: A PSCSIStorageObject object.
         '''
         if dev is not None:
-            super(PSCSIStorageObject, self).__init__(backstore,
-                                                     PSCSIBackstore,
+            super(PSCSIStorageObject, self).__init__(PSCSIBackstore,
                                                      name, 'create')
             try:
                 self._configure(dev)
@@ -555,8 +549,7 @@ class PSCSIStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(PSCSIStorageObject, self).__init__(backstore,
-                                                     PSCSIBackstore,
+            super(PSCSIStorageObject, self).__init__(PSCSIBackstore,
                                                      name, 'lookup')
 
     def _configure(self, dev):
@@ -697,7 +690,7 @@ class RDMCPStorageObject(StorageObject):
 
     # RDMCPStorageObject private stuff
 
-    def __init__(self, backstore, name, size=None, wwn=None):
+    def __init__(self, name, size=None, wwn=None):
         '''
         A RDMCPStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{size} is specified, the underlying
@@ -710,8 +703,6 @@ class RDMCPStorageObject(StorageObject):
               The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
-        @param backstore: The parent backstore of the RDMCPStorageObject.
-        @type backstore: RDMCPBackstore
         @param name: The name of the RDMCPStorageObject.
         @type name: string
         @param size: The size of the ramdrive to create:
@@ -735,8 +726,7 @@ class RDMCPStorageObject(StorageObject):
         '''
 
         if size is not None:
-            super(RDMCPStorageObject, self).__init__(backstore,
-                                                     RDMCPBackstore,
+            super(RDMCPStorageObject, self).__init__(RDMCPBackstore,
                                                      name,
                                                      'create')
             try:
@@ -745,8 +735,7 @@ class RDMCPStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(RDMCPStorageObject, self).__init__(backstore,
-                                                     RDMCPBackstore,
+            super(RDMCPStorageObject, self).__init__(RDMCPBackstore,
                                                      name,
                                                      'lookup')
 
@@ -798,7 +787,7 @@ class FileIOStorageObject(StorageObject):
 
     # FileIOStorageObject private stuff
 
-    def __init__(self, backstore, name, dev=None, size=None,
+    def __init__(self, name, dev=None, size=None,
                  wwn=None, buffered_mode=False):
         '''
         A FileIOStorageObject can be instanciated in two ways:
@@ -812,8 +801,6 @@ class FileIOStorageObject(StorageObject):
               The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
-        @param backstore: The parent backstore of the FileIOStorageObject.
-        @type backstore: FileIOBackstore
         @param name: The name of the FileIOStorageObject.
         @type name: string
         @param dev: The path to the backend file or block device to be used.
@@ -845,8 +832,7 @@ class FileIOStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(FileIOStorageObject, self).__init__(backstore,
-                                                      FileIOBackstore,
+            super(FileIOStorageObject, self).__init__(FileIOBackstore,
                                                       name,
                                                       'create')
             try:
@@ -855,8 +841,7 @@ class FileIOStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(FileIOStorageObject, self).__init__(backstore,
-                                                      FileIOBackstore,
+            super(FileIOStorageObject, self).__init__(FileIOBackstore,
                                                       name,
                                                       'lookup')
 
@@ -956,7 +941,7 @@ class BlockStorageObject(StorageObject):
 
     # BlockStorageObject private stuff
 
-    def __init__(self, backstore, name, dev=None, wwn=None):
+    def __init__(self, name, dev=None, wwn=None):
         '''
         A BlockIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -969,8 +954,6 @@ class BlockStorageObject(StorageObject):
               I{name}. The underlying configFS object must already exist in
               that mode, or instanciation will fail.
 
-        @param backstore: The parent backstore of the BlockIOStorageObject.
-        @type backstore: BlockIOBackstore
         @param name: The name of the BlockIOStorageObject.
         @type name: string
         @param dev: The path to the backend block device to be used.
@@ -984,8 +967,7 @@ class BlockStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(BlockStorageObject, self).__init__(backstore,
-                                                     BlockBackstore,
+            super(BlockStorageObject, self).__init__(BlockBackstore,
                                                      name,
                                                      'create')
             try:
@@ -994,8 +976,7 @@ class BlockStorageObject(StorageObject):
                 self.delete()
                 raise
         else:
-            super(BlockStorageObject, self).__init__(backstore,
-                                                     BlockBackstore,
+            super(BlockStorageObject, self).__init__(BlockBackstore,
                                                      name,
                                                      'lookup')
 
