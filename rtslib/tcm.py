@@ -166,7 +166,7 @@ class PSCSIBackstore(Backstore):
 
     # PSCSIBackstore private stuff
 
-    def __init__(self, index=None, mode='any', legacy=False):
+    def __init__(self, index=None, mode='any'):
         '''
         @param index: The backstore index matching a physical SCSI HBA.
         @type index: int
@@ -175,37 +175,11 @@ class PSCSIBackstore(Backstore):
             - I{'lookup'} the object MUST already exist configFS.
             - I{'create'} the object must NOT already exist in configFS.
         @type mode:string
-        @param legacy: Enable legacy physcal HBA mode. If True, you must
-        specify it also in lookup mode for StorageObjects to be notified.
-        You've been warned !
         @return: A PSCSIBackstore object.
         '''
-        self._legacy = legacy
         super(PSCSIBackstore, self).__init__("pscsi",
                                               PSCSIStorageObject,
                                               mode, index)
-
-    def _create_in_cfs_ine(self, mode):
-        if self.legacy_mode and self._index not in list_scsi_hbas():
-            raise RTSLibError("Cannot create backstore, hba "
-                              + "scsi%d does not exist."
-                              % self._index)
-        else:
-            Backstore._create_in_cfs_ine(self, mode)
-
-    def _get_legacy(self):
-        return self._legacy
-
-    # PSCSIBackstore public stuff
-
-    legacy_mode = property(_get_legacy,
-            doc="Get the legacy mode flag. If True, the Vitualbackstore "
-                + " index must match the StorageObjects real HBAs.")
-
-    def dump(self):
-        d = super(PSCSIBackstore, self).dump()
-        d['legacy_mode'] = self.legacy_mode
-        return d
 
 
 class RDMCPBackstore(Backstore):
@@ -494,13 +468,8 @@ class PSCSIStorageObject(StorageObject):
         @param name: The name of the PSCSIStorageObject.
         @type name: string
         @param dev: You have two choices:
-            - Use the SCSI id of the device: I{dev="H:C:T:L"}. If the parent
-              backstore is in legacy mode, you must use I{dev="C:T:L"}
-              instead, as the backstore index of the SCSI dev device would then be
-              constrained by the parent backstore index.
+            - Use the SCSI id of the device: I{dev="H:C:T:L"}.
             - Use the path to the SCSI device: I{dev="/path/to/dev"}.
-              Note that if the parent Backstore is in legacy mode, the device
-              must have the same backstore index as the parent backstore.
         @type dev: string
         @return: A PSCSIStorageObject object.
         '''
@@ -519,61 +488,32 @@ class PSCSIStorageObject(StorageObject):
     def _configure(self, dev):
         self._check_self()
         parent_hostid = self.backstore.index
-        legacy = self.backstore.legacy_mode
-        if legacy:
+
+        # Use H:C:T:L format or preserve the path given by the user.
+        try:
+            (hostid, channelid, targetid, lunid) = \
+                    convert_scsi_path_to_hctl(dev)
+        except TypeError:
             try:
-                (hostid, channelid, targetid, lunid) = \
-                        convert_scsi_path_to_hctl(dev)
-            except TypeError:
-                try:
-                    (channelid, targetid, lunid) = dev.split(':')
-                    channelid = int(channelid)
-                    targetid = int(targetid)
-                    lunid = int(lunid)
-                except ValueError:
-                    raise RTSLibError("Cannot find SCSI device by "
-                                      + "path, and dev parameter not "
-                                      + "in C:T:L format: %s." % dev)
-                else:
-                    udev_path = convert_scsi_hctl_to_path(parent_hostid,
-                                                                channelid,
-                                                                targetid,
-                                                                lunid)
-                if not udev_path:
-                    raise RTSLibError("SCSI device does not exist.")
+                (hostid, channelid, targetid, lunid) = dev.split(':')
+                hostid = int(hostid)
+                channelid = int(channelid)
+                targetid = int(targetid)
+                lunid = int(lunid)
+            except ValueError:
+                raise RTSLibError("Cannot find SCSI device by "
+                                  + "path, and dev "
+                                  + "parameter not in H:C:T:L "
+                                  + "format: %s." % dev)
             else:
-                if hostid != parent_hostid:
-                    raise RTSLibError("The specified SCSI device does "
-                                      + "not belong to the backstore.")
-                else:
-                    udev_path = dev.strip()
+                udev_path = convert_scsi_hctl_to_path(hostid,
+                                                            channelid,
+                                                            targetid,
+                                                            lunid)
+            if not udev_path:
+                raise RTSLibError("SCSI device does not exist.")
         else:
-            # The Backstore is not in legacy mode.
-            # Use H:C:T:L format or preserve the path given by the user.
-            try:
-                (hostid, channelid, targetid, lunid) = \
-                        convert_scsi_path_to_hctl(dev)
-            except TypeError:
-                try:
-                    (hostid, channelid, targetid, lunid) = dev.split(':')
-                    hostid = int(hostid)
-                    channelid = int(channelid)
-                    targetid = int(targetid)
-                    lunid = int(lunid)
-                except ValueError:
-                    raise RTSLibError("Cannot find SCSI device by "
-                                      + "path, and dev "
-                                      + "parameter not in H:C:T:L "
-                                      + "format: %s." % dev)
-                else:
-                    udev_path = convert_scsi_hctl_to_path(hostid,
-                                                                channelid,
-                                                                targetid,
-                                                                lunid)
-                if not udev_path:
-                    raise RTSLibError("SCSI device does not exist.")
-            else:
-                udev_path = dev.strip()
+            udev_path = dev.strip()
 
         if is_dev_in_use(udev_path):
             raise RTSLibError("Cannot configure StorageObject because "
@@ -582,15 +522,10 @@ class PSCSIStorageObject(StorageObject):
                                  targetid, lunid)
                               + "is already in use.")
 
-        if legacy:
-            self._control("scsi_channel_id=%d," % channelid \
-                          + "scsi_target_id=%d," % targetid \
-                          + "scsi_lun_id=%d" %  lunid)
-        else:
-            self._control("scsi_host_id=%d," % hostid \
-                          + "scsi_channel_id=%d," % channelid \
-                          + "scsi_target_id=%d," % targetid \
-                          + "scsi_lun_id=%d" % lunid)
+        self._control("scsi_host_id=%d," % hostid \
+                      + "scsi_channel_id=%d," % channelid \
+                      + "scsi_target_id=%d," % targetid \
+                      + "scsi_lun_id=%d" % lunid)
         self._set_udev_path(udev_path)
         self._enable()
 
