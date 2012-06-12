@@ -33,17 +33,22 @@ class Backstore(CFSNode):
 
     # Backstore private stuff
 
-    def __init__(self, plugin, storage_class, index, mode, alt_dirprefix=None):
+    def __init__(self, plugin, storage_class, mode, index=None, alt_dirprefix=None):
         super(Backstore, self).__init__()
         if issubclass(storage_class, StorageObject):
             self._storage_object_class = storage_class
             self._plugin = plugin
         else:
             raise RTSLibError("StorageClass must derive from StorageObject.")
-        try:
-            self._index = int(index)
-        except ValueError:
-            raise RTSLibError("Invalid backstore index: %s" % index)
+
+        if index == None:
+            self._index = self._next_hba_index(self.configfs_dir)
+        else:
+            try:
+                self._index = int(index)
+            except ValueError:
+                raise RTSLibError("Invalid backstore index: %s" % index)
+
         if alt_dirprefix:
             dirp = alt_dirprefix
         else:
@@ -55,6 +60,26 @@ class Backstore(CFSNode):
 
     @classmethod
     def all(cls, path):
+        mapping = dict(
+            fileio=FileIOBackstore,
+            pscsi=PSCSIBackstore,
+            iblock=BlockBackstore,
+            rd_mcp=RDMCPBackstore,
+            )
+        for name, index in cls._hbas(path):
+            yield mapping[name](int(index), 'lookup')
+
+    @classmethod
+    def _next_hba_index(cls, path):
+        indexes = [int(y) for x, y in cls._hbas(path)]
+        for index in xrange(1048576):
+            if index not in indexes:
+                return index
+        else:
+            raise ExecutionError("Cannot find an available backstore index.")
+
+    @classmethod
+    def _hbas(cls, path):
         if os.path.isdir("%s/core" % path):
             backstore_dirs = glob.glob("%s/core/*_*" % path)
             for backstore_dir in [os.path.basename(path)
@@ -62,15 +87,7 @@ class Backstore(CFSNode):
                 regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
                                   backstore_dir)
                 if regex:
-                    if regex.group(1) == "fileio":
-                        yield FileIOBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "pscsi":
-                        yield PSCSIBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "iblock":
-                        yield BlockBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "rd_mcp":
-                        yield RDMCPBackstore(int(regex.group(3)), 'lookup')
-
+                    yield(regex.group(1), regex.group(3))
 
     def _get_index(self):
         return self._index
@@ -150,7 +167,7 @@ class PSCSIBackstore(Backstore):
 
     # PSCSIBackstore private stuff
 
-    def __init__(self, index, mode='any', legacy=False):
+    def __init__(self, index=None, mode='any', legacy=False):
         '''
         @param index: The backstore index matching a physical SCSI HBA.
         @type index: int
@@ -167,8 +184,7 @@ class PSCSIBackstore(Backstore):
         self._legacy = legacy
         super(PSCSIBackstore, self).__init__("pscsi",
                                               PSCSIStorageObject,
-                                              index,
-                                              mode)
+                                              mode, index)
 
     def _create_in_cfs_ine(self, mode):
         if self.legacy_mode and self._index not in list_scsi_hbas():
@@ -208,7 +224,7 @@ class RDMCPBackstore(Backstore):
 
     # RDMCPBackstore private stuff
 
-    def __init__(self, index, mode='any'):
+    def __init__(self, index=None, mode='any'):
         '''
         @param index: The backstore index.
         @type index: int
@@ -221,7 +237,7 @@ class RDMCPBackstore(Backstore):
         '''
 
         super(RDMCPBackstore, self).__init__("ramdisk", RDMCPStorageObject,
-                                               index, mode, alt_dirprefix="rd_mcp")
+                                               mode, index, alt_dirprefix="rd_mcp")
 
     # RDMCPBackstore public stuff
 
@@ -241,7 +257,7 @@ class FileIOBackstore(Backstore):
 
     # FileIOBackstore private stuff
 
-    def __init__(self, index, mode='any'):
+    def __init__(self, index=None, mode='any'):
         '''
         @param index: The backstore index.
         @type index: int
@@ -254,7 +270,7 @@ class FileIOBackstore(Backstore):
         '''
 
         super(FileIOBackstore, self).__init__("fileio", FileIOStorageObject,
-                                               index, mode)
+                                               mode, index)
 
     # FileIOBackstore public stuff
 
@@ -276,7 +292,7 @@ class BlockBackstore(Backstore):
 
     # BlockBackstore private stuff
 
-    def __init__(self, index, mode='any'):
+    def __init__(self, index=None, mode='any'):
         '''
         @param index: The backstore index.
         @type index: int
@@ -289,7 +305,7 @@ class BlockBackstore(Backstore):
         '''
 
         super(BlockBackstore, self).__init__("block", BlockStorageObject,
-                                               index, mode, alt_dirprefix="iblock")
+                                               mode, index, alt_dirprefix="iblock")
 
     # BlockBackstore public stuff
 
