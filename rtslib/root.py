@@ -22,15 +22,17 @@ import os
 
 from node import CFSNode
 from target import Target, FabricModule
-from tcm import Backstore, FileIOBackstore, BlockBackstore
-from tcm import PSCSIBackstore, RDMCPBackstore
+from tcm import Backstore
+from tcm import (FileIOStorageObject, BlockStorageObject,
+                 PSCSIStorageObject, RDMCPStorageObject)
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import dict_remove, set_attributes
 
-backstores = dict(
-    fileio=FileIOBackstore,
-    block=BlockBackstore,
-    pscsi=PSCSIBackstore,
-    ramdisk=RDMCPBackstore,
+storageobjects = dict(
+    fileio=FileIOStorageObject,
+    block=BlockStorageObject,
+    pscsi=PSCSIStorageObject,
+    ramdisk=RDMCPStorageObject,
     )
 
 class RTSRoot(CFSNode):
@@ -182,13 +184,18 @@ class RTSRoot(CFSNode):
 
         errors = 0
 
-        for index, so in enumerate(config.get('storage_objects', [])):
-            # We need to create a Backstore object for each StorageObject
+        for so in config.get('storage_objects', []):
             if 'plugin' not in so:
                 errors += 1
                 continue
-            bs_obj = backstores[so['plugin']](index)
-            errors += bs_obj._storage_object_class.setup(bs_obj, **so)
+            so_cls = storageobjects[so['plugin']]
+            kwargs = so.copy()
+            dict_remove(kwargs, ('exists', 'attributes', 'plugin'))
+            try:
+                so_obj = so_cls(**kwargs)
+                set_attributes(so_obj, so.get('attributes', {}))
+            except (RTSLibError, TypeError):
+                errors += 1 # config was broken, but keep going
 
         # Don't need to create fabric modules
         for fm_obj in self.fabric_modules:

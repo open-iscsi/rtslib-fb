@@ -27,174 +27,6 @@ from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from utils import is_dev_in_use, get_block_type
 from utils import is_disk_partition, get_disk_size
-from utils import dict_remove, set_attributes
-
-class Backstore(CFSNode):
-
-    # Backstore private stuff
-
-    def __init__(self, plugin, storage_class, mode, index=None, alt_dirprefix=None):
-        super(Backstore, self).__init__()
-        if issubclass(storage_class, StorageObject):
-            self._storage_object_class = storage_class
-            self._plugin = plugin
-        else:
-            raise RTSLibError("StorageClass must derive from StorageObject.")
-
-        if index == None:
-            self._index = self._next_hba_index(self.configfs_dir)
-        else:
-            try:
-                self._index = int(index)
-            except ValueError:
-                raise RTSLibError("Invalid backstore index: %s" % index)
-
-        if alt_dirprefix:
-            dirp = alt_dirprefix
-        else:
-            dirp = plugin
-        self._path = "%s/core/%s_%d" % (self.configfs_dir,
-                                        dirp,
-                                        self._index)
-        self._create_in_cfs_ine(mode)
-
-    @classmethod
-    def all(cls, path):
-        mapping = dict(
-            fileio=FileIOBackstore,
-            pscsi=PSCSIBackstore,
-            iblock=BlockBackstore,
-            rd_mcp=RDMCPBackstore,
-            )
-        for name, index in cls._hbas(path):
-            yield mapping[name](int(index), 'lookup')
-
-    @classmethod
-    def _next_hba_index(cls, path):
-        indexes = [int(y) for x, y in cls._hbas(path)]
-        for index in xrange(1048576):
-            if index not in indexes:
-                return index
-        else:
-            raise ExecutionError("Cannot find an available backstore index.")
-
-    @classmethod
-    def _hbas(cls, path):
-        if os.path.isdir("%s/core" % path):
-            backstore_dirs = glob.glob("%s/core/*_*" % path)
-            for backstore_dir in [os.path.basename(path)
-                                  for path in backstore_dirs]:
-                regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
-                                  backstore_dir)
-                if regex:
-                    yield(regex.group(1), regex.group(3))
-
-    def _get_index(self):
-        return self._index
-
-    def _list_storage_objects(self):
-        self._check_self()
-        storage_object_names = [os.path.basename(s)
-                                for s in os.listdir(self.path)
-                                if s not in set(["hba_info", "hba_mode"])]
-
-        for storage_object_name in storage_object_names:
-            yield self._storage_object_class(self, storage_object_name)
-
-    def _create_in_cfs_ine(self, mode):
-        try:
-            super(Backstore, self)._create_in_cfs_ine(mode)
-        except OSError, msg:
-            raise RTSLibError("Cannot create backstore: %s" % msg)
-
-    def _parse_info(self, key):
-        self._check_self()
-        info = fread("%s/hba_info" % self.path)
-        return re.search(".*%s: ([^: ]+).*" \
-                         % key, ' '.join(info.split())).group(1).lower()
-
-    def _get_version(self):
-        self._check_self()
-        return self._parse_info("version")
-
-    def _get_plugin(self):
-        self._check_self()
-        return self._plugin
-
-    def _get_name(self):
-        self._check_self()
-        return "%s%d" % (self.plugin, self.index)
-
-    # Backstore public stuff
-
-    def delete(self):
-        '''
-        Recursively deletes a Backstore object.
-        This will delete all attached StorageObject objects, and then the
-        Backstore itself. The underlying file and block storages will not be
-        touched, but all ramdisk data will be lost.
-        '''
-        self._check_self()
-        for storage in self.storage_objects:
-            storage.delete()
-        super(Backstore, self).delete()
-
-    plugin = property(_get_plugin,
-            doc="Get the backstore plugin name.")
-    index = property(_get_index,
-            doc="Get the backstore index as an int.")
-    storage_objects = property(_list_storage_objects,
-            doc="Get the list of StorageObjects attached to the backstore.")
-    version = property(_get_version,
-            doc="Get the Backstore plugin version string.")
-    name = property(_get_name,
-            doc="Get the backstore name.")
-
-    def dump(self):
-        d = super(Backstore, self).dump()
-        d['storage_objects'] = [so.dump() for so in self.storage_objects]
-        d['plugin'] = self.plugin
-        d['name'] = self.name
-        return d
-
-
-class PSCSIBackstore(Backstore):
-    '''
-    This is an interface to pscsi backstore plugin objects in configFS.
-    A PSCSIBackstore object is identified by its backstore index.
-    '''
-
-    # PSCSIBackstore private stuff
-
-    def __init__(self, index=None, mode='any'):
-        '''
-        @param index: The backstore index matching a physical SCSI HBA.
-        @type index: int
-        @param mode: An optional string containing the object creation mode:
-            - I{'any'} the configFS object will be either lookuped or created.
-            - I{'lookup'} the object MUST already exist configFS.
-            - I{'create'} the object must NOT already exist in configFS.
-        @type mode:string
-        @return: A PSCSIBackstore object.
-        '''
-        super(PSCSIBackstore, self).__init__("pscsi",
-                                              PSCSIStorageObject,
-                                              mode, index)
-
-class RDMCPBackstore(Backstore):
-    def __init__(self, index=None, mode='any'):
-        super(RDMCPBackstore, self).__init__("ramdisk", RDMCPStorageObject,
-                                               mode, index, alt_dirprefix="rd_mcp")
-
-class FileIOBackstore(Backstore):
-    def __init__(self, index=None, mode='any'):
-        super(FileIOBackstore, self).__init__("fileio", FileIOStorageObject,
-                                               mode, index)
-
-class BlockBackstore(Backstore):
-    def __init__(self, index=None, mode='any'):
-        super(BlockBackstore, self).__init__("block", BlockStorageObject,
-                                               mode, index, alt_dirprefix="iblock")
 
 
 class StorageObject(CFSNode):
@@ -204,14 +36,14 @@ class StorageObject(CFSNode):
     '''
     # StorageObject private stuff
 
-    def __init__(self, backstore_class, name, mode):
+    def __init__(self, name, mode):
         super(StorageObject, self).__init__()
-        self._backstore = backstore_class()
         if "/" in name or " " in name or "\t" in name or "\n" in name:
             raise RTSLibError("A storage object's name cannot contain "
                               " /, newline or spaces/tabs.")
         else:
             self._name = name
+        self._backstore = Backstore(self, mode)
         self._path = "%s/%s" % (self.backstore.path, self.name)
         self._create_in_cfs_ine(mode)
 
@@ -364,23 +196,6 @@ class StorageObject(CFSNode):
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
 
-    @classmethod
-    def setup(cls, bs_obj, **so):
-        '''
-        Set up storage objects based upon so dict, from saved config.
-        Guard against missing or bad dict items, but keep going.
-        Returns how many recoverable errors happened.
-        '''
-        errors = 0
-        kwargs = so.copy()
-        dict_remove(kwargs, ('exists', 'attributes', 'plugin'))
-        try:
-            so_obj = bs_obj._storage_object_class(bs_obj, **kwargs)
-            set_attributes(so_obj, so.get('attributes', {}))
-        except (RTSLibError, TypeError):
-            errors += 1 # config was broken, but keep going
-        return errors
-
     def dump(self):
         d = super(StorageObject, self).dump()
         d['name'] = self.name
@@ -400,11 +215,11 @@ class PSCSIStorageObject(StorageObject):
         A PSCSIStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
               object will be created with that parameter. No PSCSIStorageObject
-              with the same I{name} can pre-exist in the parent PSCSIBackstore
+              with the same I{name} can pre-exist in the parent Backstore
               in that mode, or instanciation will fail.
             - B{Lookup mode}: If I{dev} is not set, then the PSCSIStorageObject
               will be bound to the existing configFS object in the parent
-              PSCSIBackstore having the specified I{name}. The underlying
+              Backstore having the specified I{name}. The underlying
               configFS object must already exist in that mode, or instanciation
               will fail.
 
@@ -417,16 +232,14 @@ class PSCSIStorageObject(StorageObject):
         @return: A PSCSIStorageObject object.
         '''
         if dev is not None:
-            super(PSCSIStorageObject, self).__init__(PSCSIBackstore,
-                                                     name, 'create')
+            super(PSCSIStorageObject, self).__init__(name, 'create')
             try:
                 self._configure(dev)
             except:
                 self.delete()
                 raise
         else:
-            super(PSCSIStorageObject, self).__init__(PSCSIBackstore,
-                                                     name, 'lookup')
+            super(PSCSIStorageObject, self).__init__(name, 'lookup')
 
     def _configure(self, dev):
         self._check_self()
@@ -538,10 +351,10 @@ class RDMCPStorageObject(StorageObject):
             - B{Creation mode}: If I{size} is specified, the underlying
               configFS object will be created with that parameter.
               No RDMCPStorageObject with the same I{name} can pre-exist in the
-              parent RDMCPBackstore in that mode, or instanciation will fail.
+              parent Backstore in that mode, or instanciation will fail.
             - B{Lookup mode}: If I{size} is not set, then the
               RDMCPStorageObject will be bound to the existing configFS object
-              in the parent RDMCPBackstore having the specified I{name}.
+              in the parent Backstore having the specified I{name}.
               The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
@@ -568,18 +381,14 @@ class RDMCPStorageObject(StorageObject):
         '''
 
         if size is not None:
-            super(RDMCPStorageObject, self).__init__(RDMCPBackstore,
-                                                     name,
-                                                     'create')
+            super(RDMCPStorageObject, self).__init__(name, 'create')
             try:
                 self._configure(size, wwn)
             except:
                 self.delete()
                 raise
         else:
-            super(RDMCPStorageObject, self).__init__(RDMCPBackstore,
-                                                     name,
-                                                     'lookup')
+            super(RDMCPStorageObject, self).__init__(name, 'lookup')
 
     def _configure(self, size, wwn):
         self._check_self()
@@ -636,10 +445,10 @@ class FileIOStorageObject(StorageObject):
             - B{Creation mode}: If I{dev} and I{size} are specified, the
               underlying configFS object will be created with those parameters.
               No FileIOStorageObject with the same I{name} can pre-exist in the
-              parent FileIOBackstore in that mode, or instanciation will fail.
+              parent Backstore in that mode, or instanciation will fail.
             - B{Lookup mode}: If I{dev} and I{size} are not set, then the
               FileIOStorageObject will be bound to the existing configFS object
-              in the parent FileIOBackstore having the specified I{name}.
+              in the parent Backstore having the specified I{name}.
               The underlying configFS object must already exist in that mode,
               or instanciation will fail.
 
@@ -674,18 +483,14 @@ class FileIOStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(FileIOStorageObject, self).__init__(FileIOBackstore,
-                                                      name,
-                                                      'create')
+            super(FileIOStorageObject, self).__init__(name, 'create')
             try:
                 self._configure(dev, size, wwn, buffered_mode)
             except:
                 self.delete()
                 raise
         else:
-            super(FileIOStorageObject, self).__init__(FileIOBackstore,
-                                                      name,
-                                                      'lookup')
+            super(FileIOStorageObject, self).__init__(name, 'lookup')
 
     def _configure(self, dev, size, wwn, buffered_mode):
         self._check_self()
@@ -789,10 +594,10 @@ class BlockStorageObject(StorageObject):
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
               object will be created with that parameter.
               No BlockIOStorageObject with the same I{name} can pre-exist in
-              the parent BlockIOBackstore in that mode.
+              the parent Backstore in that mode.
             - B{Lookup mode}: If I{dev} is not set, then the
               BlockIOStorageObject will be bound to the existing configFS
-              object in the parent BlockIOBackstore having the specified
+              object in the parent Backstore having the specified
               I{name}. The underlying configFS object must already exist in
               that mode, or instanciation will fail.
 
@@ -809,18 +614,14 @@ class BlockStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(BlockStorageObject, self).__init__(BlockBackstore,
-                                                     name,
-                                                     'create')
+            super(BlockStorageObject, self).__init__(name, 'create')
             try:
                 self._configure(dev, wwn)
             except:
                 self.delete()
                 raise
         else:
-            super(BlockStorageObject, self).__init__(BlockBackstore,
-                                                     name,
-                                                     'lookup')
+            super(BlockStorageObject, self).__init__(name, 'lookup')
 
     def _configure(self, dev, wwn):
         self._check_self()
@@ -863,6 +664,148 @@ class BlockStorageObject(StorageObject):
     def dump(self):
         d = super(BlockStorageObject, self).dump()
         d['dev'] = self.udev_path
+        return d
+
+
+bs_params = {
+    PSCSIStorageObject: dict(name='pscsi'),
+    RDMCPStorageObject: dict(name='ramdisk', alt_dirprefix='rd_mcp'),
+    FileIOStorageObject: dict(name='fileio'),
+    BlockStorageObject: dict(name='block', alt_dirprefix='iblock'),
+    }
+
+
+class Backstore(CFSNode):
+    """
+    Needed as a level in the configfs hierarchy, but otherwise useless.
+    1:1 so:backstore.
+    Created by so ctor before storageobject configfs entry.
+    """
+
+    def __init__(self, storage_object, mode):
+        super(Backstore, self).__init__()
+        self._so_cls = type(storage_object)
+        self._plugin = bs_params[self._so_cls]['name']
+        self._index = None
+
+        if mode == 'lookup':
+            backstore_dirs = glob.glob("%s/core/%s_*" % (self.path, self._plugin))
+            for backstore_dir in [os.path.basename(path)
+                                  for path in backstore_dirs]:
+                regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
+                                  backstore_dir)
+                if regex:
+                    print "woot!", regex.group(3)
+                    if os.path.isdir("%s/core/%s_%s/%s" %
+                        (self.configfs_path, self._plugin, regex.group(3), storage_object.name)):
+                        self._index = int(regex.group(3))
+
+        if self._index == None:
+            self._index = self._next_hba_index(self.configfs_dir)
+
+        dirp = bs_params[self._so_cls].get("alt_dirprefix", self._plugin)
+        self._path = "%s/core/%s_%d" % (self.configfs_dir,
+                                        dirp,
+                                        self._index)
+        self._create_in_cfs_ine(mode)
+
+    @classmethod
+    def all(cls, path):
+        mapping = dict(
+            fileio=FileIOStorageObject,
+            pscsi=PSCSIStorageObject,
+            iblock=BlockStorageObject,
+            rd_mcp=RDMCPStorageObject,
+            )
+        for name, index in cls._hbas(path):
+            yield Backstore(mapping[name], 'lookup')
+
+    @classmethod
+    def _next_hba_index(cls, path):
+        indexes = [int(y) for x, y in cls._hbas(path)]
+        for index in xrange(1048576):
+            if index not in indexes:
+                return index
+        else:
+            raise ExecutionError("Cannot find an available backstore index.")
+
+    @classmethod
+    def _hbas(cls, path):
+        if os.path.isdir("%s/core" % path):
+            backstore_dirs = glob.glob("%s/core/*_*" % path)
+            for backstore_dir in [os.path.basename(path)
+                                  for path in backstore_dirs]:
+                regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
+                                  backstore_dir)
+                if regex:
+                    yield(regex.group(1), regex.group(3))
+
+    def _get_index(self):
+        return self._index
+
+    def _list_storage_objects(self):
+        self._check_self()
+        storage_object_names = [os.path.basename(s)
+                                for s in os.listdir(self.path)
+                                if s not in set(["hba_info", "hba_mode"])]
+
+        for storage_object_name in storage_object_names:
+            yield self._so_cls(storage_object_name)
+
+    def _create_in_cfs_ine(self, mode):
+        try:
+            super(Backstore, self)._create_in_cfs_ine(mode)
+        except OSError, msg:
+            raise RTSLibError("Cannot create backstore: %s" % msg)
+
+    def _parse_info(self, key):
+        self._check_self()
+        info = fread("%s/hba_info" % self.path)
+        return re.search(".*%s: ([^: ]+).*" \
+                         % key, ' '.join(info.split())).group(1).lower()
+
+    def _get_version(self):
+        self._check_self()
+        return self._parse_info("version")
+
+    def _get_plugin(self):
+        self._check_self()
+        return self._plugin
+
+    def _get_name(self):
+        self._check_self()
+        return "%s%d" % (self.plugin, self.index)
+
+    # Backstore public stuff
+
+    def delete(self):
+        '''
+        Recursively deletes a Backstore object.
+        This will delete all attached StorageObject objects, and then the
+        Backstore itself. The underlying file and block storages will not be
+        touched, but all ramdisk data will be lost.
+        '''
+        self._check_self()
+        for storage in self.storage_objects:
+            storage.delete()
+        super(Backstore, self).delete()
+
+    plugin = property(_get_plugin,
+            doc="Get the backstore plugin name.")
+    index = property(_get_index,
+            doc="Get the backstore index as an int.")
+    storage_objects = property(_list_storage_objects,
+            doc="Get the list of StorageObjects attached to the backstore.")
+    version = property(_get_version,
+            doc="Get the Backstore plugin version string.")
+    name = property(_get_name,
+            doc="Get the backstore name.")
+
+    def dump(self):
+        d = super(Backstore, self).dump()
+        d['storage_objects'] = [so.dump() for so in self.storage_objects]
+        d['plugin'] = self.plugin
+        d['name'] = self.name
         return d
 
 
