@@ -1,8 +1,8 @@
-# Example LIO target fabric module.
+# The USB-gadget fabric module specification
 #
 # This file is part of RTSLib Community Edition.
 # Copyright (c) 2011 by RisingTide Systems LLC
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
 # published by the Free Software Foundation, version 3 (AGPLv3).
@@ -15,15 +15,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# The example fabric module uses the default feature set.
-# features = discovery_auth, acls, acls_auth, nps
-
-# This module uses anything as WWNs.
-wwn_type = free
-
-# Convoluted kernel module name. Default would be example_target_mod
-kernel_module = my_complex_kernel_module_name
-
-# The configfs group name. Default would be "example"
-configfs_group = "example_group"
-
+features = nexus
+wwn_type = naa
+kernel_module = tcm_usb_gadget
+configfs_group = "usb_gadget"
