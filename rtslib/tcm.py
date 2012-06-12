@@ -125,7 +125,6 @@ class Backstore(CFSNode):
         self._check_self()
         return "%s%d" % (self.plugin, self.index)
 
-
     # Backstore public stuff
 
     def delete(self):
@@ -199,13 +198,6 @@ class PSCSIBackstore(Backstore):
 
     # PSCSIBackstore public stuff
 
-    def storage_object(self, name, dev=None):
-        '''
-        Same as PSCSIStorageObject() without specifying the backstore
-        '''
-        self._check_self()
-        return PSCSIStorageObject(self, name=name, dev=dev)
-
     legacy_mode = property(_get_legacy,
             doc="Get the legacy mode flag. If True, the Vitualbackstore "
                 + " index must match the StorageObjects real HBAs.")
@@ -239,15 +231,6 @@ class RDMCPBackstore(Backstore):
         super(RDMCPBackstore, self).__init__("ramdisk", RDMCPStorageObject,
                                                mode, index, alt_dirprefix="rd_mcp")
 
-    # RDMCPBackstore public stuff
-
-    def storage_object(self, name, size=None, wwn=None):
-        '''
-        Same as RDMCPStorageObject() without specifying the backstore
-        '''
-        self._check_self()
-        return RDMCPStorageObject(self, name=name,
-                                  size=size, wwn=wwn)
 
 class FileIOBackstore(Backstore):
     '''
@@ -272,17 +255,6 @@ class FileIOBackstore(Backstore):
         super(FileIOBackstore, self).__init__("fileio", FileIOStorageObject,
                                                mode, index)
 
-    # FileIOBackstore public stuff
-
-    def storage_object(self, name, dev=None, size=None,
-                       wwn=None, buffered_mode=False):
-        '''
-        Same as FileIOStorageObject() without specifying the backstore
-        '''
-        self._check_self()
-        return FileIOStorageObject(self, name=name, dev=dev,
-                                   size=size, wwn=wwn,
-                                   buffered_mode=buffered_mode)
 
 class BlockBackstore(Backstore):
     '''
@@ -307,14 +279,6 @@ class BlockBackstore(Backstore):
         super(BlockBackstore, self).__init__("block", BlockStorageObject,
                                                mode, index, alt_dirprefix="iblock")
 
-    # BlockBackstore public stuff
-
-    def storage_object(self, name, dev=None, wwn=None):
-        '''
-        Same as BlockStorageObject() without specifying the backstore
-        '''
-        self._check_self()
-        return BlockStorageObject(self, name=name, dev=dev, wwn=wwn)
 
 class StorageObject(CFSNode):
     '''
