@@ -170,7 +170,7 @@ class PSCSIBackstore(Backstore):
         '''
         @param index: The backstore index matching a physical SCSI HBA.
         @type index: int
-        @param mode: An optionnal string containing the object creation mode:
+        @param mode: An optional string containing the object creation mode:
             - I{'any'} the configFS object will be either lookuped or created.
             - I{'lookup'} the object MUST already exist configFS.
             - I{'create'} the object must NOT already exist in configFS.
@@ -181,75 +181,18 @@ class PSCSIBackstore(Backstore):
                                               PSCSIStorageObject,
                                               mode, index)
 
-
 class RDMCPBackstore(Backstore):
-    '''
-    This is an interface to rd_mcp backstore plugin objects in configFS.
-    A RDMCPBackstore object is identified by its backstore index.
-    '''
-
-    # RDMCPBackstore private stuff
-
     def __init__(self, index=None, mode='any'):
-        '''
-        @param index: The backstore index.
-        @type index: int
-        @param mode: An optionnal string containing the object creation mode:
-            - I{'any'} the configFS object will be either lookupd or created.
-            - I{'lookup'} the object MUST already exist configFS.
-            - I{'create'} the object must NOT already exist in configFS.
-        @type mode:string
-        @return: A RDMCPBackstore object.
-        '''
-
         super(RDMCPBackstore, self).__init__("ramdisk", RDMCPStorageObject,
                                                mode, index, alt_dirprefix="rd_mcp")
 
-
 class FileIOBackstore(Backstore):
-    '''
-    This is an interface to fileio backstore plugin objects in configFS.
-    A FileIOBackstore object is identified by its backstore index.
-    '''
-
-    # FileIOBackstore private stuff
-
     def __init__(self, index=None, mode='any'):
-        '''
-        @param index: The backstore index.
-        @type index: int
-        @param mode: An optionnal string containing the object creation mode:
-            - I{'any'} the configFS object will be either lookuped or created.
-            - I{'lookup'} the object MUST already exist configFS.
-            - I{'create'} the object must NOT already exist in configFS.
-        @type mode:string
-        @return: A FileIOBackstore object.
-        '''
-
         super(FileIOBackstore, self).__init__("fileio", FileIOStorageObject,
                                                mode, index)
 
-
 class BlockBackstore(Backstore):
-    '''
-    This is an interface to iblock backstore plugin objects in configFS.
-    A BlockBackstore object is identified by its backstore index.
-    '''
-
-    # BlockBackstore private stuff
-
     def __init__(self, index=None, mode='any'):
-        '''
-        @param index: The backstore index.
-        @type index: int
-        @param mode: An optionnal string containing the object creation mode:
-            - I{'any'} the configFS object will be either lookupd or created.
-            - I{'lookup'} the object MUST already exist configFS.
-            - I{'create'} the object must NOT already exist in configFS.
-        @type mode:string
-        @return: A BlockBackstore object.
-        '''
-
         super(BlockBackstore, self).__init__("block", BlockStorageObject,
                                                mode, index, alt_dirprefix="iblock")
 
