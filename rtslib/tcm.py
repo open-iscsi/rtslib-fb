@@ -147,7 +147,7 @@ class StorageObject(CFSNode):
         rtsroot = RTSRoot()
         target_names_excludes = FabricModule.target_names_excludes
 
-        for base in (fm.path for fm in rtsroot.fabric_modules if fm.exists):
+        for base, fm in ((fm.path, fm) for fm in rtsroot.fabric_modules if fm.exists):
             for tgt_dir in listdir(base):
                 if tgt_dir not in target_names_excludes:
                     tpgts_base = "%s/%s" % (base, tgt_dir)
@@ -161,7 +161,7 @@ class StorageObject(CFSNode):
                                     if islink(link) and realpath(link) == path:
                                         val = (tpgt_dir + "_" + lun_dir)
                                         val = val.split('_')
-                                        target = Target(fabric_module, tgt_dir)
+                                        target = Target(fm, tgt_dir)
                                         yield LUN(TPG(target, val[1]), val[3])
 
     def _list_attached_luns(self):
