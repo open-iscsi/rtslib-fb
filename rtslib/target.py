@@ -224,7 +224,7 @@ class FabricModule(CFSNode):
         Checks whether or not the provided WWN is valid for this fabric module
         according to the spec file.
         '''
-        return is_valid_wwn(self.spec['wwn_type'], wwn, self.spec['wwn_list'])
+        return is_valid_wwn(self.spec['wwn_type'], wwn)
 
     def needs_wwn(self):
         '''
