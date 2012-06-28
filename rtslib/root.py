@@ -37,7 +37,7 @@ storageobjects = dict(
 class RTSRoot(CFSNode):
     '''
     This is an interface to the root of the configFS object tree.
-    Is allows one to start browsing Target and Backstore objects,
+    Is allows one to start browsing Target and StorageObjects,
     as well as helper methods to return arbitrary objects from the
     configFS tree.
 
@@ -48,8 +48,6 @@ class RTSRoot(CFSNode):
     >>> rtsroot.exists
     True
     >>> rtsroot.targets # doctest: +ELLIPSIS
-    [...]
-    >>> rtsroot.backstores # doctest: +ELLIPSIS
     [...]
     >>> rtsroot.tpgs # doctest: +ELLIPSIS
     [...]
@@ -132,10 +130,6 @@ class RTSRoot(CFSNode):
         handing to restore().
         '''
         d = super(RTSRoot, self).dump()
-        # backstores:storage_object is *usually* 1:1. In any case, they're an
-        # implementation detail that the user doesn't need to care about.
-        # Return an array of storageobject info with the crucial plugin name
-        # added from backstore, instead of a list of sos for each bs.
         d['storage_objects'] = [so.dump() for so in self.storage_objects]
         d['targets'] = [t.dump() for t in self.targets]
         d['fabric_modules'] = [f.dump() for f in self.fabric_modules
@@ -151,7 +145,6 @@ class RTSRoot(CFSNode):
             raise RTSLibError("As a precaution, confirm=True needs to be set")
 
         # Targets depend on storage objects, delete them first.
-        # Deleting backstores deletes associated storageobjects.
         for t in self.targets:
             t.delete()
         for fm in (f for f in self.fabric_modules if f.has_feature("discovery_auth")):
@@ -167,7 +160,7 @@ class RTSRoot(CFSNode):
         if clear_existing:
             self.clear_existing(confirm=True)
         elif list(self.storage_objects) or list(self.targets):
-            raise RTSLibError("backstores or targets present, not restoring." +
+            raise RTSLibError("storageobjects or targets present, not restoring." +
                               " Set clear_existing=True?")
 
         errors = 0
