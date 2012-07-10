@@ -658,17 +658,9 @@ class BlockStorageObject(StorageObject):
             raise RTSLibError("Cannot configure StorageObject because "
                               + "device %s is already in use." % dev)
         self._set_udev_path(dev)
-        if self._backstore.version.startswith("v3."):
-            # For 3.x, use the fd method
-            file_fd = os.open(dev, os.O_RDWR)
-            try:
-                self._write_fd(file_fd)
-            finally:
-                os.close(file_fd)
-        else:
-            # For 4.x and above, use the generic udev_path method
-            self._control("udev_path=%s" % dev)
-            self._enable()
+        self._control("udev_path=%s" % dev)
+        self._enable()
+
         if not wwn:
             wwn = generate_wwn('unit_serial')
         self.wwn = wwn
