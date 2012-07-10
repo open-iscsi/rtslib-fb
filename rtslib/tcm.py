@@ -98,7 +98,7 @@ class StorageObject(CFSNode):
         self._check_self()
         path = "%s/udev_path" % self.path
         udev_path = fread(path).strip()
-        if not udev_path and self.backstore.plugin == "fileio":
+        if not udev_path and self._backstore.plugin == "fileio":
             udev_path = self._parse_info('File').strip()
         return udev_path
 
