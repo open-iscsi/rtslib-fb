@@ -521,21 +521,6 @@ def is_valid_wwn(wwn_type, wwn, wwn_list=None):
     else:
         return False
 
-def list_available_kernel_modules():
-    '''
-    List all loadable kernel modules as registered by depmod
-    '''
-    kver = os.uname()[2]
-    depfile = "/lib/modules/%s/modules.dep" % kver
-    handle = open(depfile)
-    try:
-        lines = handle.readlines()
-    finally:
-        handle.close()
-
-    return [os.path.basename(line.partition(":")[0]).partition(".")[0]
-            for line in lines]
-
 def list_loaded_kernel_modules():
     '''
     List all currently loaded kernel modules
@@ -551,19 +536,13 @@ def modprobe(module):
     @return: Whether of not we had to load the module.
     '''
     if module not in list_loaded_kernel_modules():
-        if module in list_available_kernel_modules():
-            try:
-                exec_argv(["modprobe", module])
-            except Exception, msg:
-                raise RTSLibError("Kernel module %s exists "
-                                  % module + "but fails to load: %s" % msg)
-            else:
-                return True
-        else:
-            raise RTSLibError("Kernel module %s does not exist on disk "
-                                  % module + "and is not loaded.")
-    else:
         return False
+
+    try:
+        exec_argv(["modprobe", module])
+    except e:
+        pass
+    return True
 
 def exec_argv(argv, strip=True, shell=False):
     '''
