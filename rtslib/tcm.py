@@ -615,7 +615,7 @@ class BlockStorageObject(StorageObject):
 
     # BlockStorageObject private stuff
 
-    def __init__(self, name, dev=None, wwn=None):
+    def __init__(self, name, dev=None, wwn=None, readonly=False):
         '''
         A BlockIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -643,14 +643,14 @@ class BlockStorageObject(StorageObject):
         if dev is not None:
             super(BlockStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(dev, wwn)
+                self._configure(dev, wwn, readonly)
             except:
                 self.delete()
                 raise
         else:
             super(BlockStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, dev, wwn):
+    def _configure(self, dev, wwn, readonly):
         self._check_self()
         if get_block_type(dev) != 0:
             raise RTSLibError("Device is not a TYPE_DISK block device.")
@@ -659,6 +659,7 @@ class BlockStorageObject(StorageObject):
                               + "device %s is already in use." % dev)
         self._set_udev_path(dev)
         self._control("udev_path=%s" % dev)
+        self._control("readonly=%d" % readonly)
         self._enable()
 
         if not wwn:
