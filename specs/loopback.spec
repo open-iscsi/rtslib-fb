@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # The fabric module feature set
-features = nexus
+features = ("nexus",)
 
 # Use naa WWNs.
-wwn_type = naa
+wwn_type = "naa"
 
 # Non-standard module naming scheme
-kernel_module = tcm_loop
+kernel_module = "tcm_loop"
 
 # The configfs group
-configfs_group = loopback
+configfs_group = "loopback"

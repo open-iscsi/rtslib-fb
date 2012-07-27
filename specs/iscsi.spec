@@ -16,10 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # The iscsi fabric module features set.
-features = discovery_auth, acls, acls_auth, nps, tpgts
+features = ("discovery_auth", "acls", "acls_auth", "nps", "tpgts")
 
 # Obviously, this module uses IQN strings as WWNs.
-wwn_type = iqn
+wwn_type = "iqn"
 
 # This is default too
 # kernel_module = iscsi_target_mod

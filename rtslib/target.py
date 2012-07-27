@@ -26,7 +26,6 @@ import shutil
 from node import CFSNode
 from os.path import isdir
 from doctest import testmod
-from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
@@ -105,97 +104,36 @@ class FabricModule(CFSNode):
     def _parse_spec(self, spec_file):
         '''
         Parses the fabric module spec file.
+        spec files are in Python, and may use functions defined for
+        convenience in 'specfile_funcs' below
         '''
-        # Recognized options and their default values
-        defaults = dict(features=['discovery_auth', 'acls', 'acls_auth', 'nps',
-                                  'tpgts'],
+
+        def colonize(str):
+            '''
+            helper function for the specfiles to add colons every 2 chars
+            '''
+            new_str = ""
+            while str:
+                new_str += str[:2] + ":"
+                str = str[2:]
+            return new_str[:-1]
+
+        specfile_funcs = dict(glob=glob.iglob, fread=fread, colonize=colonize)
+
+        spec = dict(features=('discovery_auth', 'acls', 'acls_auth', 'nps',
+                                  'tpgts'),
                         kernel_module="%s_target_mod" % self.name,
                         configfs_group=self.name,
-                        wwn_from_files=[],
-                        wwn_from_files_filter='',
-                        wwn_from_cmds=[],
-                        wwn_from_cmds_filter='',
-                        wwn_type='free')
+                        wwn_type='free',
+                        wwn_list=None,
+                    )
 
-        spec = ConfigObj(spec_file).dict()
-        if spec:
-            self.spec_file = spec_file
-        else:
-            self.spec_file = ''
+        execfile(spec_file, specfile_funcs, spec)
 
-        # Do not allow unknown options
-        unknown_options =  set(spec.keys()) - set(defaults.keys())
-        if unknown_options:
-            raise RTSLibError("Unknown option(s) in %s: %s"
-                              % (spec_file, list(unknown_options)))
+        wwns = spec.get('wwns', None)
+        if wwns:
+            spec['wwn_list'] = list(wwns())
 
-        # Use defaults for missing options
-        missing_options = set(defaults.keys()) - set(spec.keys())
-        for option in missing_options:
-            spec[option] = defaults[option]
-
-        # Type conversion and checking
-        for option in spec:
-            spec_type = type(spec[option]).__name__
-            defaults_type = type(defaults[option]).__name__
-            if spec_type != defaults_type:
-                # Type mismatch, go through acceptable conversions
-                if spec_type == 'str' and defaults_type == 'list':
-                    spec[option] = [spec[option]]
-                else:
-                    raise RTSLibError("Wrong type for option '%s' in %s. "
-                                      % (option, spec_file)
-                                      + "Expected type '%s' and got '%s'."
-                                      % (defaults_type, spec_type))
-
-        # Generate the list of fixed WWNs if not empty
-        wwn_list = None
-        wwn_type = spec['wwn_type']
-
-        if spec['wwn_from_files']:
-            if wwn_list is None:
-                wwn_list = set([])
-            for wwn_pattern in spec['wwn_from_files']:
-                for wwn_file in glob.iglob(wwn_pattern):
-                    wwns_in_file = [wwn for wwn in
-                                    re.split('\t|\0|\n| ', fread(wwn_file))
-                                    if wwn.strip()]
-                    if spec['wwn_from_files_filter']:
-                        wwns_filtered = []
-                        for wwn in wwns_in_file:
-                            filter = "echo %s|%s" \
-                                    % (wwn, spec['wwn_from_files_filter'])
-                            wwns_filtered.append(exec_argv(filter, shell=True))
-                    else:
-                        wwns_filtered = wwns_in_file
-
-                    wwn_list.update(set([wwn for wwn in wwns_filtered
-                                         if is_valid_wwn(wwn_type, wwn)
-                                         if wwn]
-                                       ))
-        if spec['wwn_from_cmds']:
-            if wwn_list is None:
-                wwn_list = set([])
-            for wwn_cmd in spec['wwn_from_cmds']:
-                cmd_result = exec_argv(wwn_cmd, shell=True)
-                wwns_from_cmd = [wwn for wwn in
-                                 re.split('\t|\0|\n| ', cmd_result)
-                                 if wwn.strip()]
-                if spec['wwn_from_cmds_filter']:
-                    wwns_filtered = []
-                    for wwn in wwns_from_cmd:
-                        filter = "echo %s|%s" \
-                                % (wwn, spec['wwn_from_cmds_filter'])
-                        wwns_filtered.append(exec_argv(filter, shell=True))
-                else:
-                    wwns_filtered = wwns_from_cmd
-
-                wwn_list.update(set([wwn for wwn in wwns_filtered
-                                     if is_valid_wwn(wwn_type, wwn)
-                                     if wwn]
-                                   ))
-
-        spec['wwn_list'] = wwn_list
         return spec
 
     def _list_targets(self):
@@ -231,7 +169,7 @@ class FabricModule(CFSNode):
         This fabric requires wwn to be specified when creating a target,
         it cannot be autogenerated.
         '''
-        return bool(self.spec['wwn_from_files']) or bool(self.spec['wwn_from_cmds'])
+        return self.spec['wwn_list'] != None
 
     def _assert_feature(self, feature):
         if not self.has_feature(feature):
