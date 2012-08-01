@@ -27,12 +27,6 @@ import ipaddr
 import ethtool
 import subprocess
 
-from array import array
-from fcntl import ioctl
-from threading import Thread
-from Queue import Queue, Empty
-from struct import pack, unpack
-
 class RTSLibError(Exception):
     '''
     Generic rtslib error.
