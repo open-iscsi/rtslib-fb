@@ -529,7 +529,7 @@ def modprobe(module):
     @type module: str
     @return: Whether of not we had to load the module.
     '''
-    if module not in list_loaded_kernel_modules():
+    if module in list_loaded_kernel_modules():
         return False
 
     try:
