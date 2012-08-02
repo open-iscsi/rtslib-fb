@@ -28,7 +28,7 @@ from os.path import isdir
 from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
-from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
+from utils import fread, fwrite, generate_wwn, is_valid_wwn
 from utils import dict_remove, set_attributes, set_parameters
 
 # Where do we store the fabric modules spec files ?
@@ -72,7 +72,8 @@ class FabricModule(CFSNode):
 
     def _check_self(self):
         if not self.exists:
-            self._load()
+            modprobe(self.spec['kernel_module'])
+            self._create_in_cfs_ine('any')
         super(FabricModule, self)._check_self()
 
     def has_feature(self, feature):
@@ -83,23 +84,6 @@ class FabricModule(CFSNode):
             return True
         else:
             return False
-
-    def _load(self):
-        '''
-        Attempt to load the target fabric kernel module as defined in the
-        specfile.
-        @raises RTSLibError: For failure to load kernel module and/or create
-        configfs group.
-        '''
-        module = self.spec['kernel_module']
-        load_module = modprobe(module)
-
-        # TODO: Also load saved targets and config if needed. For that, support
-        #  XXX: from the configfs side would be nice: have a config ID present
-        #  XXX: both on the on-disk saved config and a configfs attibute.
-
-        # Create the configfs group
-        self._create_in_cfs_ine('any')
 
     def _parse_spec(self, spec_file):
         '''

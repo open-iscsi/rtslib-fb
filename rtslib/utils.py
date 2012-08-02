@@ -527,44 +527,20 @@ def modprobe(module):
     Load the specified kernel module if needed.
     @param module: The name of the kernel module to be loaded.
     @type module: str
-    @return: Whether of not we had to load the module.
     '''
     if module in list_loaded_kernel_modules():
-        return False
+        return
 
     try:
-        exec_argv(["modprobe", module])
-    except e:
-        pass
-    return True
-
-def exec_argv(argv, strip=True, shell=False):
-    '''
-    Executes a command line given as an argv table and either:
-        - raise an exception if return != 0
-        - return the output
-    If strip is True, then output lines will be stripped.
-    If shell is True, the argv must be a string that will be evaluated by the
-    shell, instead of the argv list.
-
-    '''
-    process = subprocess.Popen(argv,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               shell=shell)
-    (stdoutdata, stderrdata) = process.communicate()
-    # Remove indents, trailing space and empty lines in output.
-    if strip:
-        stdoutdata = "\n".join([line.strip()
-                                for line in stdoutdata.split("\n")
-                                if line.strip()])
-        stderrdata = "\n".join([line.strip()
-                                for line in stderrdata.split("\n")
-                                if line.strip()])
-    if process.returncode != 0:
-        raise RTSLibError(stderrdata)
-    else:
-        return stdoutdata
+        import kmod
+        kmod.Kmod().modprobe(module)
+    except ImportError:
+        process = subprocess.Popen(("modprobe", module),
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        (stdoutdata, stderrdata) = process.communicate()
+        if process.returncode != 0:
+            raise RTSLibError(stderrdata)
 
 def dict_remove(d, items):
     for item in items:

@@ -58,17 +58,14 @@ class RTSRoot(CFSNode):
 
     '''
 
-    # The core target/tcm kernel module
-    target_core_mod = 'target_core_mod'
-
     # RTSRoot private stuff
     def __init__(self):
         '''
         Instanciate an RTSRoot object. Basically checks for configfs setup and
-        base kernel modules (tcm )
+        base kernel modules (tcm)
         '''
         super(RTSRoot, self).__init__()
-        modprobe(self.target_core_mod)
+        modprobe('target_core_mod')
         self._create_in_cfs_ine('any')
 
     def _list_targets(self):
