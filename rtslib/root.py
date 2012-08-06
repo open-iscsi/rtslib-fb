@@ -168,7 +168,7 @@ class RTSRoot(CFSNode):
                 continue
             so_cls = storageobjects[so['plugin']]
             kwargs = so.copy()
-            dict_remove(kwargs, ('exists', 'attributes', 'plugin'))
+            dict_remove(kwargs, ('exists', 'attributes', 'plugin', 'buffered_mode'))
             try:
                 so_obj = so_cls(**kwargs)
                 set_attributes(so_obj, so.get('attributes', {}))

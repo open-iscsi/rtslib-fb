@@ -466,7 +466,7 @@ class FileIOStorageObject(StorageObject):
     # FileIOStorageObject private stuff
 
     def __init__(self, name, dev=None, size=None,
-                 wwn=None, buffered_mode=False):
+                 wwn=None, write_back=False):
         '''
         A FileIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} and I{size} are specified, the
@@ -502,24 +502,23 @@ class FileIOStorageObject(StorageObject):
         @type size: string or int
         @param wwn: T10 WWN Unit Serial, will generate if None
         @type wwn: string
-        @param buffered_mode: Should we create the StorageObject in buffered
-        mode or not ? Byt default, we create it in synchronous mode
-        (non-buffered). This cannot be changed later.
-        @type buffered_mode: bool
+        @param write_back: Should we create the StorageObject with
+        write caching enabled? Disabled by default
+        @type write_back: bool
         @return: A FileIOStorageObject object.
         '''
 
         if dev is not None:
             super(FileIOStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(dev, size, wwn, buffered_mode)
+                self._configure(dev, size, wwn, write_back)
             except:
                 self.delete()
                 raise
         else:
             super(FileIOStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, dev, size, wwn, buffered_mode):
+    def _configure(self, dev, size, wwn, write_back):
         self._check_self()
         rdev = os.path.realpath(dev)
         if not os.path.isdir(os.path.dirname(rdev)):
@@ -562,8 +561,8 @@ class FileIOStorageObject(StorageObject):
 
         self._set_udev_path(dev)
 
-        if buffered_mode:
-            self._set_buffered_mode()
+        if write_back:
+            self.set_attribute("emulate_write_cache", 1)
 
         self._enable()
 
@@ -571,38 +570,24 @@ class FileIOStorageObject(StorageObject):
             wwn = generate_wwn('unit_serial')
         self.wwn = wwn
 
-    def _get_buffered_mode(self):
+    def _get_wb_enabled(self):
         self._check_self()
-        if self._parse_info('Mode') == 'buffered':
-            return True
-        else:
-            return False
+        return bool(int(self.get_attribute("emulate_write_cache")))
 
     def _get_size(self):
         self._check_self()
         return int(self._parse_info('Size'))
 
-    def _set_buffered_mode(self):
-        '''
-        FileIOStorage objects have synchronous mode enable by default.
-        This allows to move them to buffered mode.
-        Warning, setting the object back to synchronous mode is not
-        implemented yet, so there is no turning back unless you delete
-        and recreate the FileIOStorageObject.
-        '''
-        self._check_self()
-        self._control("fd_buffered_io=1")
-
     # FileIOStorageObject public stuff
 
-    buffered_mode = property(_get_buffered_mode,
-            doc="True if buffered, False if synchronous (O_SYNC)")
+    write_back = property(_get_wb_enabled,
+            doc="True if write-back, False if write-through (write cache disabled)")
     size = property(_get_size,
             doc="Get the current FileIOStorage size in bytes")
 
     def dump(self):
         d = super(FileIOStorageObject, self).dump()
-        d['buffered_mode'] = self.buffered_mode
+        d['write_back'] = self.write_back
         d['dev'] = self.udev_path
         d['size'] = self.size
         return d
