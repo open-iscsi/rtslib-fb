@@ -6,10 +6,14 @@ features = ()
 # Non-standard module naming scheme
 kernel_module = "sbp_target"
 
-# This *will* return the first local 1394 device's guid, but until
-# 3.6 when is_local is available, return an arbitrary value
+# We need a single unique value to create the target.
+# Return the first local 1394 device's guid.
 def wwns():
-  return ["1234567890abcdef"]
+    import os
+    for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
+        if bool(int(fread(fname))):
+            guid_path = os.path.dirname(fname) + "/guid"
+            return [fread(guid_path)[2:]]
 
 # The configfs group
 configfs_group = "sbp"
