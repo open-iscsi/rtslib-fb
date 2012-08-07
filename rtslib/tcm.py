@@ -600,7 +600,8 @@ class BlockStorageObject(StorageObject):
 
     # BlockStorageObject private stuff
 
-    def __init__(self, name, dev=None, wwn=None, readonly=False):
+    def __init__(self, name, dev=None, wwn=None, readonly=False,
+                 write_back=False):
         '''
         A BlockIOStorageObject can be instanciated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -628,14 +629,14 @@ class BlockStorageObject(StorageObject):
         if dev is not None:
             super(BlockStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(dev, wwn, readonly)
+                self._configure(dev, wwn, readonly, write_back)
             except:
                 self.delete()
                 raise
         else:
             super(BlockStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, dev, wwn, readonly):
+    def _configure(self, dev, wwn, readonly, write_back):
         self._check_self()
         if get_block_type(dev) != 0:
             raise RTSLibError("Device is not a TYPE_DISK block device.")
@@ -646,6 +647,9 @@ class BlockStorageObject(StorageObject):
         self._control("udev_path=%s" % dev)
         self._control("readonly=%d" % readonly)
         self._enable()
+
+        if write_back:
+            self.set_attribute("emulate_write_cache", 1)
 
         if not wwn:
             wwn = generate_wwn('unit_serial')
@@ -659,15 +663,27 @@ class BlockStorageObject(StorageObject):
         self._check_self()
         return int(self._parse_info('Minor'))
 
+    def _get_size(self):
+        return get_disk_size(self.udev_path)
+
+    def _get_wb_enabled(self):
+        self._check_self()
+        return bool(int(self.get_attribute("emulate_write_cache")))
+
     # BlockStorageObject public stuff
 
     major = property(_get_major,
             doc="Get the block device major number")
     minor = property(_get_minor,
             doc="Get the block device minor number")
+    size = property(_get_size,
+            doc="Get the block device size")
+    write_back = property(_get_wb_enabled,
+            doc="True if write-back, False if write-through (write cache disabled)")
 
     def dump(self):
         d = super(BlockStorageObject, self).dump()
+        d['write_back'] = self.write_back
         d['dev'] = self.udev_path
         return d
 
