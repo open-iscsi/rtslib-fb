@@ -670,6 +670,10 @@ class BlockStorageObject(StorageObject):
         self._check_self()
         return bool(int(self.get_attribute("emulate_write_cache")))
 
+    def _get_readonly(self):
+        self._check_self()
+        return bool(int(self._parse_info('readonly')))
+
     # BlockStorageObject public stuff
 
     major = property(_get_major,
@@ -680,10 +684,13 @@ class BlockStorageObject(StorageObject):
             doc="Get the block device size")
     write_back = property(_get_wb_enabled,
             doc="True if write-back, False if write-through (write cache disabled)")
+    readonly = property(_get_readonly,
+            doc="True if the device is read-only, False if read/write")
 
     def dump(self):
         d = super(BlockStorageObject, self).dump()
         d['write_back'] = self.write_back
+        d['readonly'] = self.readonly
         d['dev'] = self.udev_path
         return d
 
