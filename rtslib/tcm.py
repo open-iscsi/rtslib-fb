@@ -561,10 +561,10 @@ class FileIOStorageObject(StorageObject):
 
         self._set_udev_path(dev)
 
+        self._enable()
+
         if write_back:
             self.set_attribute("emulate_write_cache", 1)
-
-        self._enable()
 
         if not wwn:
             wwn = generate_wwn('unit_serial')
