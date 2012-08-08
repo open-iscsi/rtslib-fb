@@ -13,7 +13,8 @@ def wwns():
     for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
         if bool(int(fread(fname))):
             guid_path = os.path.dirname(fname) + "/guid"
-            return [fread(guid_path)[2:]]
+            yield fread(guid_path)[2:]
+            break
 
 # The configfs group
 configfs_group = "sbp"
