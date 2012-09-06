@@ -809,7 +809,10 @@ class NodeACL(CFSNode):
             yield MappedLUN(self, mapped_lun)
 
     def _get_session(self):
-        lines = fread("%s/info" % self.path).splitlines()
+        try:
+            lines = fread("%s/info" % self.path).splitlines()
+        except IOError:
+            return None
 
         if lines[0].startswith("No active"):
             return None
