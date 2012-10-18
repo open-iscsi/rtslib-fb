@@ -1075,22 +1075,22 @@ class TPG(CFSNode):
         # If the TPG does not have the enable attribute, then it is always
         # enabled.
         if os.path.isfile(path):
-            return int(fread(path))
+            return bool(int(fread(path)))
         else:
-            return 1
+            return True
 
     def _set_enable(self, boolean):
         '''
         Enables or disables the TPG. Raises an error if trying to disable a TPG
-        without en enable attribute (but enabling works in that case).
+        without an enable attribute (but enabling works in that case).
         '''
         self._check_self()
         path = "%s/enable" % self.path
-        if os.path.isfile(path):
-            if boolean and not self._get_enable():
-                fwrite(path, "1")
-            elif not boolean and self._get_enable():
-                fwrite(path, "0")
+        if os.path.isfile(path) and (boolean != self._get_enable()):
+            try:
+                fwrite(path, str(int(boolean)))
+            except IOError, e:
+                raise RTSLibError("Cannot change enable state: %s" % e)
         elif not boolean:
             raise RTSLibError("TPG cannot be disabled.")
 
