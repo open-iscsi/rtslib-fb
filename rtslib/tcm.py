@@ -270,7 +270,7 @@ class PSCSIStorageObject(StorageObject):
 
     def _configure(self, dev):
         self._check_self()
-        parent_hostid = self.backstore.index
+        parent_hostid = self._backstore.index
 
         # Use H:C:T:L format or preserve the path given by the user.
         try:
