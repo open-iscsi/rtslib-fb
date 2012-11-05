@@ -114,6 +114,7 @@ class FabricModule(CFSNode):
 
         execfile(spec_file, specfile_funcs, spec)
 
+        self.spec_file = spec_file
         wwns = spec.get('wwns', None)
         if wwns:
             spec['wwn_list'] = list(wwns())
