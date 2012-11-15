@@ -3,6 +3,7 @@ Implements the RTS generic Target fabric classes.
 
 This file is part of RTSLib Community Edition.
 Copyright (c) 2011 by RisingTide Systems LLC
+Copyright (c) 2011-2012 by Red Hat, Inc.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -37,10 +38,12 @@ spec_dir = "/var/lib/target/fabric"
 class FabricModule(CFSNode):
     '''
     This is an interface to RTS Target Fabric Modules.
-    It can load/unload modules, provide information about them and
+    It can load modules, provide information about them and
     handle the configfs housekeeping. It uses module configuration
-    files in /var/target/fabric/*.spec. After instanciation, whether or
-    not the fabric module is loaded and
+    files in /var/target/fabric/*.spec. After instantiation, whether or
+    not the fabric module is loaded depends on if a method requiring
+    it (i.e. accessing configfs) is used. This helps limit loaded
+    kernel modules to just the fabrics in use.
     '''
 
     version_attributes = set(["lio_version", "version"])
