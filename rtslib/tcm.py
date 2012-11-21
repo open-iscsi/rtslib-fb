@@ -664,7 +664,8 @@ class BlockStorageObject(StorageObject):
         return int(self._parse_info('Minor'))
 
     def _get_size(self):
-        return get_disk_size(self.udev_path)
+        # udev_path doesn't work here, what if LV gets renamed?
+        return get_disk_size('/dev/%s' % self._parse_info('device'))
 
     def _get_wb_enabled(self):
         self._check_self()
