@@ -52,6 +52,12 @@ class StorageObject(CFSNode):
             self._backstore.delete()
             raise
 
+    def __eq__(self, other):
+        return self.plugin == other.plugin and self.name == other.name
+
+    def __ne__(self, other):
+        return not self == other
+
     @classmethod
     def all(cls, path):
         mapping = dict(
