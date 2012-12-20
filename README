@@ -10,6 +10,12 @@ Please use Github facilities for code contributions and bug reports:
 
 https://github.com/agrover/rtslib-fb
 
+Release tarballs are available from:
+
+http://pypi.python.org/pypi/rtslib (new)
+
+https://github.com/agrover/rtslib-fb/tags (pre-fb25)
+
 -----
 
 # This file is part of RTSLib Community Edition.
