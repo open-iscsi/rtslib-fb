@@ -797,6 +797,19 @@ class NodeACL(CFSNode):
             msg = msg[1]
             raise RTSLibError("Cannot set tcq_depth: %s" % str(msg))
 
+    def _get_tag(self):
+        self._check_self()
+        try:
+            return fread("%s/tag" % self.path).strip()
+        except IOError:
+            return None
+
+    def _set_tag(self, tag_str):
+        try:
+            fwrite("%s/tag" % self.path, tag_str)
+        except IOError:
+            pass
+
     def _get_authenticate_target(self):
         self._check_self()
         path = "%s/auth/authenticate_target" % self.path
@@ -885,6 +898,8 @@ class NodeACL(CFSNode):
     tcq_depth = property(_get_tcq_depth, _set_tcq_depth,
                          doc="Set or get the TCQ depth for the initiator " \
                          + "sessions matching this NodeACL.")
+    tag = property(_get_tag, _set_tag,
+            doc="Set or get the NodeACL tag. If not supported, return None")
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
     node_wwn = property(_get_node_wwn,
@@ -905,6 +920,8 @@ class NodeACL(CFSNode):
                     d["chap_" + attr] = val
         d['node_wwn'] = self.node_wwn
         d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
+        if self.tag:
+            d['tag'] = self.tag
         return d
 
 
