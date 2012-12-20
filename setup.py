@@ -20,21 +20,13 @@ import re
 from distutils.core import setup
 import rtslib
 
-PKG = rtslib
-VERSION = str(PKG.__version__)
-(AUTHOR, EMAIL) = re.match('^(.*?)\s*<(.*)>$', PKG.__author__).groups()
-URL = PKG.__url__
-LICENSE = PKG.__license__
-SCRIPTS = []
-DESCRIPTION = PKG.__description__
-
-setup(name=PKG.__name__,
-      description=DESCRIPTION,
-      version=VERSION,
-      author=AUTHOR,
-      author_email=EMAIL,
-      license=LICENSE,
-      url=URL,
-      scripts=SCRIPTS,
-      packages=[PKG.__name__],
-      package_data = {'':[]})
+setup (
+    name = 'rtslib',
+    version = '2.1.fb25',
+    description = 'API for Linux kernel SCSI target (aka LIO)',
+    license='AGPLv3',
+    maintainer='Andy Grover',
+    maintainer_email='agrover@redhat.com',
+    url='http://github.com/agrover/rtslib-fb',
+    packages=['rtslib'],
+    )
