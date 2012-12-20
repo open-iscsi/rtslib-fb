@@ -23,8 +23,6 @@ import stat
 import uuid
 import glob
 import socket
-import ipaddr
-import ethtool
 import subprocess
 
 class RTSLibError(Exception):
@@ -562,45 +560,6 @@ def set_parameters(obj, param_dict):
         except RTSLibError:
             # Setting some parameters may return an error, before kernel 3.3
             pass
-
-
-def list_eth_ips(ifnames=None):
-    '''
-    List the IPv4 and IPv6 non-loopback, non link-local addresses (in the
-    RFC3330 sense, not addresses attached to lo) of a list of ethernet
-    interfaces from the SIOCGIFADDR struct. If ifname is omitted, list all IPs
-    of all ifaces excepted for lo.
-    '''
-    if ifnames is None:
-        ifnames = [name for name in ethtool.get_devices() if name != 'lo']
-    devcfgs = ethtool.get_interfaces_info(ifnames)
-
-    addrs = []
-    for d in devcfgs:
-        if d.ipv4_address:
-            addrs.append(d.ipv4_address)
-        # For IPv6 addresses, we might have more of them on the same device,
-        # and only grab global (universe) addresses.
-        for ip6 in [a for a in d.get_ipv6_addresses() if a.scope == 'universe']:
-            addrs.append(ip6.address)
-
-    return sorted(set(addrs))
-
-def is_ipv4_address(addr):
-    try:
-        ipaddr.IPv4Address(addr)
-    except:
-        return False
-    else:
-        return True
-
-def is_ipv6_address(addr):
-    try:
-        ipaddr.IPv6Address(addr)
-    except:
-        return False
-    else:
-        return True
 
 def _test():
     '''Run the doctests'''

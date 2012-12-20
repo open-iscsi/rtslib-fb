@@ -28,7 +28,6 @@ from node import CFSNode
 from os.path import isdir
 from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
-from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn
 from utils import dict_remove, set_attributes, set_parameters
 
@@ -924,7 +923,8 @@ class NetworkPortal(CFSNode):
         '''
         @param parent_tpg: The parent TPG object.
         @type parent_tpg: TPG
-        @param ip_address: The ipv4 IP address of the NetworkPortal.
+        @param ip_address: The ipv4/v6 IP address of the NetworkPortal. ipv6
+            addresses should be surrounded by '[]'.
         @type ip_address: string
         @param port: The optional (defaults to 3260) NetworkPortal TCP/IP port.
         @type port: int
@@ -937,10 +937,8 @@ class NetworkPortal(CFSNode):
         @return: A NetworkPortal object.
         '''
         super(NetworkPortal, self).__init__()
-        if not (is_ipv4_address(ip_address) or is_ipv6_address(ip_address)):
-            raise RTSLibError("Invalid IP address: %s" % ip_address)
-        else:
-            self._ip_address = str(ip_address)
+
+        self._ip_address = str(ip_address)
 
         try:
             self._port = int(port)
@@ -952,12 +950,9 @@ class NetworkPortal(CFSNode):
         else:
             raise RTSLibError("Invalid parent TPG.")
 
-        if is_ipv4_address(ip_address):
-            self._path = "%s/np/%s:%d" \
-                    % (self.parent_tpg.path, self.ip_address, self.port)
-        else:
-            self._path = "%s/np/[%s]:%d" \
-                    % (self.parent_tpg.path, self.ip_address, self.port)
+        self._path = "%s/np/%s:%d" \
+            % (self.parent_tpg.path, self.ip_address, self.port)
+
         try:
             self._create_in_cfs_ine(mode)
         except OSError, msg:
@@ -1061,15 +1056,8 @@ class TPG(CFSNode):
             return
 
         for network_portal_dir in os.listdir("%s/np" % self.path):
-            if network_portal_dir.startswith('['):
-                # IPv6 portals are [IPv6]:PORT
-                (ip_address, port) = \
-                        os.path.basename(network_portal_dir)[1:].split("]")
-                port = port[1:]
-            else:
-                # IPv4 portals are IPv4:PORT
-                (ip_address, port) = \
-                        os.path.basename(network_portal_dir).split(":")
+            (ip_address, port) = \
+                os.path.basename(network_portal_dir).rsplit(":", 1)
             port = int(port)
             yield NetworkPortal(self, ip_address, port, 'lookup')
 
