@@ -679,7 +679,11 @@ class BlockStorageObject(StorageObject):
 
     def _get_readonly(self):
         self._check_self()
-        return bool(int(self._parse_info('readonly')))
+        # 'readonly' not present before kernel 3.6
+        try:
+            return bool(int(self._parse_info('readonly')))
+        except AttributeError:
+            return False
 
     # BlockStorageObject public stuff
 
