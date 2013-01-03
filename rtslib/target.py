@@ -1054,8 +1054,8 @@ class TPG(CFSNode):
 
     def _set_enable(self, boolean):
         '''
-        Enables or disables the TPG. Raises an error if trying to disable a TPG
-        without an enable attribute (but enabling works in that case).
+        Enables or disables the TPG. If the TPG doesn't support the enable
+        attribute, do nothing.
         '''
         self._check_self()
         path = "%s/enable" % self.path
@@ -1064,8 +1064,6 @@ class TPG(CFSNode):
                 fwrite(path, str(int(boolean)))
             except IOError, e:
                 raise RTSLibError("Cannot change enable state: %s" % e)
-        elif not boolean:
-            raise RTSLibError("TPG cannot be disabled.")
 
     def _get_nexus(self):
         '''
@@ -1140,9 +1138,7 @@ class TPG(CFSNode):
         '''
         self._check_self()
 
-        path = "%s/enable" % self.path
-        if os.path.isfile(path):
-            self.enable = False
+        self.enable = False
 
         for acl in self.node_acls:
             acl.delete()
