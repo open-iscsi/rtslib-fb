@@ -713,6 +713,7 @@ bs_params = {
     BlockStorageObject: dict(name='block', alt_dirprefix='iblock'),
     }
 
+bs_cache = {}
 
 class _Backstore(CFSNode):
     """
@@ -721,27 +722,31 @@ class _Backstore(CFSNode):
     Created by storageobject ctor before SO configfs entry.
     """
 
-    def __init__(self, name, storage_object_cls, mode, index=None):
+    def __init__(self, name, storage_object_cls, mode):
         super(_Backstore, self).__init__()
         self._so_cls = storage_object_cls
         self._plugin = bs_params[self._so_cls]['name']
-        self._index = index
 
         dirp = bs_params[self._so_cls].get("alt_dirprefix", self._plugin)
 
-        # does (so_cls, index) exist already?
-        for plugin, num in self._hbas(self.path):
-            if os.path.isdir("%s/core/%s_%s/%s" %
-                             (self.path, dirp, num, name)):
+        # mapping in cache?
+        lookup_key = "%s/%s" % (dirp, name)
+        self._index = bs_cache.get(lookup_key, None)
+
+        if not self._index:
+            # cache miss. does (so_cls, index) exist already?
+            dirs = glob.glob("%s/core/%s_*/%s" % (self.configfs_dir, dirp, name))
+            if len(dirs):
                 if mode == 'create':
                     raise RTSLibError("Storage object %s/%s already exists" %
                                       (self._plugin, name))
                 else:
-                    self._index = int(num)
-                    break
+                    self._index = int(dirs[0].split("/")[-2].rsplit("_", 1)[1])
+            else:
+                self._index = self._next_hba_index(self.configfs_dir)
+            bs_cache[lookup_key] = self._index
 
-        if self._index == None:
-            self._index = self._next_hba_index(self.configfs_dir)
+        self.lookup_key = lookup_key
 
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
                                         dirp,
@@ -767,6 +772,10 @@ class _Backstore(CFSNode):
                                   backstore_dir)
                 if regex:
                     yield(regex.group(1), regex.group(3))
+
+    def delete(self):
+        super(_Backstore, self).delete()
+        del bs_cache[self.lookup_key]
 
     def _get_index(self):
         return self._index
