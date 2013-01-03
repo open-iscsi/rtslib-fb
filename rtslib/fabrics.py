@@ -115,7 +115,7 @@ def _colonize(str):
 # '0xfe8000000000000000021903000e8acd'
 def _srpt_wwns():
     for wwn_file in glob("/sys/class/infiniband/*/ports/*/gids/0"):
-        yield "0x" + fread(wwn_file).strip(":")
+        yield "0x" + fread(wwn_file).translate(None, ":")
 
 _ib_srpt = dict(features = ("acls",),
                 kernel_module="ib_srpt",
