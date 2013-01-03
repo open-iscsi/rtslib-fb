@@ -21,7 +21,6 @@ import os
 import re
 import glob
 
-from target import LUN, TPG, Target, FabricModule
 from node import CFSNode
 from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
@@ -60,24 +59,25 @@ class StorageObject(CFSNode):
 
     @classmethod
     def all(cls, path):
+        for so_dir in glob.glob("%s/core/*_*/*" % path):
+            if os.path.isdir(so_dir):
+                yield cls.so_from_path(so_dir)
+
+    @classmethod
+    def so_from_path(cls, path):
+        '''
+        Build a StorageObject of the correct type from a configfs path.
+        '''
         mapping = dict(
             fileio=FileIOStorageObject,
             pscsi=PSCSIStorageObject,
             iblock=BlockStorageObject,
             rd_mcp=RDMCPStorageObject,
             )
-        for so_type, so_name in cls._hbas(path):
-            yield mapping[so_type](so_name)
-
-    @classmethod
-    def _hbas(cls, path):
-        if os.path.isdir("%s/core" % path):
-            for backstore_dir in glob.glob("%s/core/*_*/*" % path):
-                if os.path.isdir(backstore_dir):
-                    so_name = os.path.basename(backstore_dir)
-                    so_type = backstore_dir.split("/")[-2].rsplit("_", 1)[0]
-                    yield (so_type, so_name)
-
+        so_name = os.path.basename(path)
+        so_type = path.split("/")[-2].rsplit("_", 1)[0]
+        return mapping[so_type](so_name)
+        
     def _get_wwn(self):
         self._check_self()
         if self.is_configured():
@@ -150,6 +150,7 @@ class StorageObject(CFSNode):
         realpath = os.path.realpath
         path = self.path
         from root import RTSRoot
+        from target import LUN, TPG, Target, FabricModule
         rtsroot = RTSRoot()
         target_names_excludes = FabricModule.target_names_excludes
 

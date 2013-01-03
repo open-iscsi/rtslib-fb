@@ -31,6 +31,7 @@ from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import fread, fwrite, generate_wwn, is_valid_wwn
 from utils import dict_remove, set_attributes, set_parameters
 import fabrics
+import tcm
 
 # Where do we store the fabric modules spec files ?
 spec_dir = "/var/lib/target/fabric"
@@ -391,12 +392,7 @@ class LUN(CFSNode):
         if alias_path is None:
             raise RTSLibBrokenLink("Broken LUN in configFS, no "
                                    + "storage object attached.")
-        from root import RTSRoot
-        rtsroot = RTSRoot()
-        for storage_object in rtsroot.storage_objects:
-            if storage_object.path == alias_path:
-                return storage_object
-        raise RTSLibBrokenLink("Broken storage object link in LUN.")
+        return tcm.StorageObject.so_from_path(alias_path)
 
     def _get_parent_tpg(self):
         return self._parent_tpg
