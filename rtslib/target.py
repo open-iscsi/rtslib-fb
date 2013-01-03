@@ -312,13 +312,13 @@ class LUN(CFSNode):
             raise RTSLibError("Invalid parent TPG.")
 
         if lun is None:
-            luns = [lun.lun for lun in self.parent_tpg.luns]
-            for index in xrange(self.MAX_LUN):
+            luns = [l.lun for l in self.parent_tpg.luns]
+            for index in xrange(self.MAX_LUN+1):
                 if index not in luns:
                     lun = index
                     break
             if lun is None:
-                raise RTSLibError("Cannot find an available LUN.")
+                raise RTSLibError("All LUNs 0-%d in use" % self.MAX_LUN)
         else:
             lun = int(lun)
             if lun < 0 or lun > self.MAX_LUN:
