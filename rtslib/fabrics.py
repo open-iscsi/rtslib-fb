@@ -101,13 +101,13 @@ from utils import fread
 
 def _colonize(str):
     '''
-    helper function for the specfiles to add colons every 2 chars
+    helper function to add colons every 2 chars
     '''
     new_str = ""
     while str:
         new_str += str[:2] + ":"
         str = str[2:]
-        return new_str[:-1]
+    return new_str
 
 # ---- Fabric override definitions ----
 
