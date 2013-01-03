@@ -30,6 +30,7 @@ from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import fread, fwrite, generate_wwn, is_valid_wwn
 from utils import dict_remove, set_attributes, set_parameters
+import fabrics
 
 # Where do we store the fabric modules spec files ?
 spec_dir = "/var/lib/target/fabric"
@@ -51,9 +52,7 @@ class FabricModule(CFSNode):
 
     @classmethod
     def all(cls):
-        mod_names = [mod_name[:-5] for mod_name in os.listdir(spec_dir)
-                     if mod_name.endswith('.spec')]
-        for name in mod_names:
+        for name, unused in fabrics.fabrics:
             yield FabricModule(name)
 
 
@@ -67,7 +66,8 @@ class FabricModule(CFSNode):
         '''
         super(FabricModule, self).__init__()
         self.name = str(name)
-        self.spec = self._parse_spec(spec_dir+"/"+name+".spec")
+        self.spec = fabrics.specs[self.name]
+        self.spec_file = "N/A"
         self._path = "%s/%s" % (self.configfs_dir,
                                 self.spec['configfs_group'])
     # FabricModule public stuff
@@ -86,42 +86,6 @@ class FabricModule(CFSNode):
             return True
         else:
             return False
-
-    def _parse_spec(self, spec_file):
-        '''
-        Parses the fabric module spec file.
-        spec files are in Python, and may use functions defined for
-        convenience in 'specfile_funcs' below
-        '''
-
-        def colonize(str):
-            '''
-            helper function for the specfiles to add colons every 2 chars
-            '''
-            new_str = ""
-            while str:
-                new_str += str[:2] + ":"
-                str = str[2:]
-            return new_str[:-1]
-
-        specfile_funcs = dict(glob=glob.iglob, fread=fread, colonize=colonize)
-
-        spec = dict(features=('discovery_auth', 'acls', 'acls_auth', 'nps',
-                                  'tpgts'),
-                        kernel_module="%s_target_mod" % self.name,
-                        configfs_group=self.name,
-                        wwn_type='free',
-                        wwn_list=None,
-                    )
-
-        execfile(spec_file, specfile_funcs, spec)
-
-        self.spec_file = spec_file
-        wwns = spec.get('wwns', None)
-        if wwns:
-            spec['wwn_list'] = list(wwns())
-
-        return spec
 
     def _list_targets(self):
         if self.exists:
