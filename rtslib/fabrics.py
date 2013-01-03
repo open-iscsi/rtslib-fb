@@ -82,15 +82,15 @@ WWNs. This function should return a string with the WWN formatted for
 what the fabric module expects.
 
 * kernel_module
-Sets the name of the kernel module implementing the fabric modules. If not
-specified, it will be assumed to be MODNAME_target_mod, where MODNAME is the
-name of the fabric module, as used to name the spec file. Note that you must
-not specify any .ko or such extension here.
+Sets the name of the kernel module implementing the fabric modules. If
+not specified, it will be assumed to be MODNAME_target_mod, where
+MODNAME is the name of the fabric module, from the fabrics list. Note
+that you must not specify any .ko or such extension here.
 Example: kernel_module = "my_module"
 
 * configfs_group
 Sets the name of the configfs group used by the fabric module. Defaults to the
-name of the module as used to name the spec file.
+name of the module from the fabrics list.
 Example: configfs_group = "iscsi"
 
 '''
