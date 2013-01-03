@@ -33,9 +33,6 @@ from utils import dict_remove, set_attributes, set_parameters
 import fabrics
 import tcm
 
-# Where do we store the fabric modules spec files ?
-spec_dir = "/var/lib/target/fabric"
-
 class FabricModule(CFSNode):
     '''
     This is an interface to RTS Target Fabric Modules.
