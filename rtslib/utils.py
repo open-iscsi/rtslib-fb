@@ -93,7 +93,7 @@ def fread(path):
     string = ""
     file_fd = open(path, 'r')
     try:
-        string = file_fd.read()
+        string = file_fd.read().strip()
     finally:
         file_fd.close()
 
@@ -343,9 +343,9 @@ def get_block_type(path):
         return 0
 
     # list of (major, minor, type) tuples
-    blocks = [(fread("%s/dev" % fdev).strip().split(':')[0],
-        fread("%s/dev" % fdev).strip().split(':')[1],
-        fread("%s/device/type" % fdev).strip())
+    blocks = [(fread("%s/dev" % fdev).split(':')[0],
+        fread("%s/dev" % fdev).split(':')[1],
+        fread("%s/device/type" % fdev))
         for fdev in glob.glob("/sys/block/*")
         if os.path.isfile("%s/device/type" % fdev)]
 

@@ -140,7 +140,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/password_mutual" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -158,7 +158,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/userid_mutual" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -176,7 +176,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/password" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -194,7 +194,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/userid" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -212,7 +212,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/enforce_discovery_auth" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         return int(value)
 
     def _set_discovery_enable_auth(self, enable):
@@ -588,7 +588,7 @@ class MappedLUN(CFSNode):
     def _get_write_protect(self):
         self._check_self()
         path = "%s/write_protect" % self.path
-        write_protect = fread(path).strip()
+        write_protect = fread(path)
         if write_protect == "1":
             return True
         else:
@@ -686,7 +686,7 @@ class NodeACL(CFSNode):
     def _get_chap_mutual_password(self):
         self._check_self()
         path = "%s/auth/password_mutual" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -702,7 +702,7 @@ class NodeACL(CFSNode):
     def _get_chap_mutual_userid(self):
         self._check_self()
         path = "%s/auth/userid_mutual" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -718,7 +718,7 @@ class NodeACL(CFSNode):
     def _get_chap_password(self):
         self._check_self()
         path = "%s/auth/password" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -734,7 +734,7 @@ class NodeACL(CFSNode):
     def _get_chap_userid(self):
         self._check_self()
         path = "%s/auth/userid" % self.path
-        value = fread(path).strip()
+        value = fread(path)
         if value == "NULL":
             return ''
         else:
@@ -750,7 +750,7 @@ class NodeACL(CFSNode):
     def _get_tcq_depth(self):
         self._check_self()
         path = "%s/cmdsn_depth" % self.path
-        return fread(path).strip()
+        return fread(path)
 
     def _set_tcq_depth(self, depth):
         self._check_self()
@@ -764,7 +764,7 @@ class NodeACL(CFSNode):
     def _get_tag(self):
         self._check_self()
         try:
-            return fread("%s/tag" % self.path).strip()
+            return fread("%s/tag" % self.path)
         except IOError:
             return None
 
@@ -777,7 +777,7 @@ class NodeACL(CFSNode):
     def _get_authenticate_target(self):
         self._check_self()
         path = "%s/auth/authenticate_target" % self.path
-        if fread(path).strip() == "1":
+        if fread(path) == "1":
             return True
         else:
             return False
@@ -1074,7 +1074,7 @@ class TPG(CFSNode):
         self._check_self()
         if self.has_feature('nexus'):
             try:
-                nexus_wwn = fread("%s/nexus" % self.path).strip()
+                nexus_wwn = fread("%s/nexus" % self.path)
             except IOError:
                 nexus_wwn = ''
             return nexus_wwn

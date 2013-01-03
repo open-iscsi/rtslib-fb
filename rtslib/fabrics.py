@@ -146,7 +146,7 @@ def _sbp_wwns():
     for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
         if bool(int(fread(fname))):
             guid_path = os.path.dirname(fname) + "/guid"
-            yield fread(guid_path)[2:].strip()
+            yield fread(guid_path)[2:]
             break
 
 _sbp = dict(features=(),

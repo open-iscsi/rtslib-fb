@@ -165,7 +165,7 @@ class CFSNode(object):
             raise RTSLibError("Cannot find attribute: %s."
                               % str(attribute))
         else:
-            return fread(path).strip()
+            return fread(path)
 
     def set_parameter(self, parameter, value):
         '''
@@ -201,7 +201,7 @@ class CFSNode(object):
             raise RTSLibError("Cannot find RFC-3720 parameter: %s."
                               % str(parameter))
         else:
-            return fread(path).rstrip()
+            return fread(path)
 
     def delete(self):
         '''
