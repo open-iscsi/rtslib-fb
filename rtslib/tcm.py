@@ -767,12 +767,12 @@ class _Backstore(CFSNode):
     def _hbas(cls, path):
         if os.path.isdir("%s/core" % path):
             backstore_dirs = glob.glob("%s/core/*_*" % path)
+            regex = re.compile("([a-z]+[_]*[a-z]+)(_)([0-9]+)")
             for backstore_dir in [os.path.basename(path)
                                   for path in backstore_dirs]:
-                regex = re.search("([a-z]+[_]*[a-z]+)(_)([0-9]+)",
-                                  backstore_dir)
-                if regex:
-                    yield(regex.group(1), regex.group(3))
+                result = regex.search(backstore_dir)
+                if result:
+                    yield(result.group(1), result.group(3))
 
     def delete(self):
         super(_Backstore, self).delete()
