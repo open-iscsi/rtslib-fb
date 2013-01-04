@@ -731,52 +731,42 @@ class _Backstore(CFSNode):
         dirp = bs_params[self._so_cls].get("alt_dirprefix", self._plugin)
 
         # mapping in cache?
-        lookup_key = "%s/%s" % (dirp, name)
-        self._index = bs_cache.get(lookup_key, None)
+        self._lookup_key = "%s/%s" % (dirp, name)
+        self._index = bs_cache.get(self._lookup_key, None)
 
-        if not self._index:
-            # cache miss. does (so_cls, index) exist already?
-            dirs = glob.glob("%s/core/%s_*/%s" % (self.configfs_dir, dirp, name))
-            if len(dirs):
-                if mode == 'create':
-                    raise RTSLibError("Storage object %s/%s already exists" %
-                                      (self._plugin, name))
-                else:
-                    self._index = int(dirs[0].split("/")[-2].rsplit("_", 1)[1])
+        if self._index == None:
+            # cache miss. Check the fs and load cache for next time
+            for dir in glob.iglob("%s/core/*_*/*/" % self.configfs_dir):
+                parts = dir.split("/")
+                bs_name = parts[-2]
+                bs_dirp, bs_index = parts[-3].rsplit("_", 1)
+                current_key = "%s/%s" % (bs_dirp, bs_name)
+                if current_key == self._lookup_key:
+                    if mode == 'create':
+                        raise RTSLibError("Storage object %s/%s exists" %
+                                          (self._plugin, name))
+                    else:
+                        self._index = int(bs_index)
+                bs_cache[current_key] = int(bs_index)
+
+        if self._index == None:
+            # Allocate new index value
+            for index in xrange(1048576):
+                if index not in bs_cache.values():
+                    self._index = index
+                    bs_cache[self._lookup_key] = self._index
+                    break
             else:
-                self._index = self._next_hba_index(self.configfs_dir)
-            bs_cache[lookup_key] = self._index
-
-        self.lookup_key = lookup_key
+                raise ExecutionError("No available backstore index")
 
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
                                         dirp,
                                         self._index)
         self._create_in_cfs_ine(mode)
 
-    @classmethod
-    def _next_hba_index(cls, path):
-        indexes = [int(y) for x, y in cls._hbas(path)]
-        for index in xrange(1048576):
-            if index not in indexes:
-                return index
-        else:
-            raise ExecutionError("Cannot find an available backstore index.")
-
-    @classmethod
-    def _hbas(cls, path):
-        if os.path.isdir("%s/core" % path):
-            backstore_dirs = glob.glob("%s/core/*_*" % path)
-            regex = re.compile("([a-z]+[_]*[a-z]+)(_)([0-9]+)")
-            for backstore_dir in [os.path.basename(path)
-                                  for path in backstore_dirs]:
-                result = regex.search(backstore_dir)
-                if result:
-                    yield(result.group(1), result.group(3))
-
     def delete(self):
         super(_Backstore, self).delete()
-        del bs_cache[self.lookup_key]
+        del bs_cache[self._lookup_key]
 
     def _get_index(self):
         return self._index
