@@ -232,7 +232,6 @@ class StorageObject(CFSNode):
     def dump(self):
         d = super(StorageObject, self).dump()
         d['name'] = self.name
-        d['wwn'] = self.wwn
         d['plugin'] = self.plugin
         return d
 
@@ -371,6 +370,12 @@ class PSCSIStorageObject(StorageObject):
     lun = property(_get_lun,
             doc="Get the SCSI device LUN")
 
+    def dump(self):
+        d = super(PSCSIStorageObject, self).dump()
+        d['dev'] = "%s:%s:%s:%s" % (self.host_id, self.channel_id,
+                                    self.target_id, self.lun)
+        return d
+
 
 class RDMCPStorageObject(StorageObject):
     '''
@@ -461,6 +466,7 @@ class RDMCPStorageObject(StorageObject):
 
     def dump(self):
         d = super(RDMCPStorageObject, self).dump()
+        d['wwn'] = self.wwn
         d['size'] = self.size
         return d
 
@@ -595,6 +601,7 @@ class FileIOStorageObject(StorageObject):
     def dump(self):
         d = super(FileIOStorageObject, self).dump()
         d['write_back'] = self.write_back
+        d['wwn'] = self.wwn
         d['dev'] = self.udev_path
         d['size'] = self.size
         return d
@@ -703,6 +710,7 @@ class BlockStorageObject(StorageObject):
         d = super(BlockStorageObject, self).dump()
         d['write_back'] = self.write_back
         d['readonly'] = self.readonly
+        d['wwn'] = self.wwn
         d['dev'] = self.udev_path
         return d
 
