@@ -250,15 +250,16 @@ class FabricModule(CFSNode):
     version = property(_get_version,
                        doc="Get the fabric module version string.")
 
-    def setup(self, fm):
+    def setup(self, fm, err_func):
         '''
         Setup fabricmodule with settings from fm dict.
-        Returns int of how many nonfatal errors were encountered
         '''
         for name, value in fm.iteritems():
             if name != 'name':
-                setattr(self, name, value)
-        return 0
+                try:
+                    setattr(self, name, value)
+                except:
+                    err_func("Could not set fabric %s attribute '%s'" % (fm['name'], name))
 
     def dump(self):
         d = super(FabricModule, self).dump()
@@ -1281,31 +1282,33 @@ class Target(CFSNode):
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
 
     @classmethod
-    def setup(cls, fm_obj, storage_objects, t):
+    def setup(cls, fm_obj, storage_objects, t, err_func):
         '''
         Set up target objects based upon t dict, from saved config.
         Guard against missing or bad dict items, but keep going.
-        Returns how many recoverable errors happened.
+        Call 'err_func' for each error.
         '''
 
         try:
             t_obj = Target(fm_obj, t.get('wwn'))
         except RTSLibError:
-            return 1
-
-        errors = 0
+            err_func("Could not create Target object")
+            return
 
         for tpg in t.get('tpgs', []):
-            tpg_obj = TPG(t_obj)
+            tpg_obj = TPG(t_obj, tag=tpg.get("tag", None))
             tpg_obj.enable = tpg.get('enable', True)
             set_attributes(tpg_obj, tpg.get('attributes', {})) 
             set_parameters(tpg_obj, tpg.get('parameters', {}))
 
-            for lun in tpg.get('luns', []):
+            for index, lun in enumerate(tpg.get('luns', [])):
+                if 'index' not in lun:
+                    err_func("'index' missing from TPG %d LUN %d" % (tpg_obj.tag, index))
+                    continue
                 try:
                     bs_name, so_name = lun['storage_object'].split('/')[2:]
                 except:
-                    errors += 1
+                    err_func("Malformed storage object field for lun %s" % lun['index'])
                     continue
 
                 for so in storage_objects:
@@ -1313,50 +1316,74 @@ class Target(CFSNode):
                         match_so = so
                         break
                 else:
-                    errors += 1
+                    err_func("Could not find matching StorageObject for LUN")
                     continue
 
                 try:
                     LUN(tpg_obj, lun['index'], storage_object=match_so)
                 except (RTSLibError, KeyError):
-                    errors += 1
+                    err_func("Creating TPG %d LUN index %d failed" %
+                             (tpg_obj.tag, lun['index']))
 
-            for p in tpg.get('portals', []):
+            for index, p in enumerate(tpg.get('portals', [])):
+                if 'ip_address' not in p:
+                    err_func("'ip_address' field missing from TPG %d portal %d" %
+                             (tpg_obj.tag, index))
+                    continue
+                if 'port' not in p:
+                    err_func("'port' field missing from TPG %d portal %d" %
+                             (tpg_obj.tag, index))
+                    continue
+
                 try:
                     NetworkPortal(tpg_obj, p['ip_address'], p['port'])
                 except (RTSLibError, KeyError):
-                    errors += 1
+                    err_func("Creating NetworkPortal object %s:%s failed" %
+                             (p['ip_address'], p['port']))
 
-            for acl in tpg.get('node_acls', []):
+            for index, acl in enumerate(tpg.get('node_acls', [])):
+                if 'node_wwn' not in acl:
+                    err_func("'node_wwn' not in node_acl %d" % index)
+                    continue
                 try:
                     acl_obj = NodeACL(tpg_obj, acl['node_wwn'])
-                    set_attributes(tpg_obj, tpg.get('attributes', {}))
-                    for mlun in acl.get('mapped_luns', []):
-                        # mapped lun needs to correspond with already-created
-                        # TPG lun
-                        for lun in tpg_obj.luns:
-                            if lun.lun == mlun['tpg_lun']:
-                                tpg_lun_obj = lun
-                                break
-                        else:
-                            errors += 1
-                            continue
+                except RTSLibError:
+                    err_func("Error when creating NodeACL for %s" % acl['node_wwn'])
+                    continue
 
+                set_attributes(tpg_obj, tpg.get('attributes', {}))
+                for mindex, mlun in enumerate(acl.get('mapped_luns', [])):
+                    # mapped lun needs to correspond with already-created
+                    # TPG lun
+                    if 'tpg_lun' not in mlun:
+                        err_func("'tpg_lun' not in node_acl %d" % mindex)
+                        continue
+                    if 'index' not in mlun:
+                        err_func("'index' not in node_acl %d" % mindex)
+                        continue
+                    for lun in tpg_obj.luns:
+                        if lun.lun == mlun['tpg_lun']:
+                            tpg_lun_obj = lun
+                            break
+                    else:
+                        err_func("Could not find matching TPG LUN %d for MappedLUN %s" %
+                                 (mlun['tpg_lun'], mindex))
+                        continue
+
+                    try:
+                        mlun_obj = MappedLUN(acl_obj, mlun['index'],
+                                             tpg_lun_obj, mlun.get('write_protect'))
+                    except (RTSLibError, KeyError):
+                        err_func("Creating MappedLUN object %d failed" % mindex)
+
+                dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
+                for name, value in acl.iteritems():
+                    if value:
                         try:
-                            mlun_obj = MappedLUN(acl_obj, mlun['index'],
-                                                 tpg_lun_obj, mlun.get('write_protect'))
-                        except (RTSLibError, KeyError):
-                            errors += 1
-                            continue
-
-                    dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
-                    for name, value in acl.iteritems():
-                        if value:
                             setattr(acl_obj, name, value)
-                except (RTSLibError, KeyError):
-                    errors += 1
-
-        return errors
+                        except:
+                            err_func("Could not set nodeacl %s attribute '%s'" %
+                                     (acl['node_wwn'], name))
 
     def dump(self):
         d = super(Target, self).dump()
