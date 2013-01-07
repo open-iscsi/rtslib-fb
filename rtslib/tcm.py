@@ -371,8 +371,7 @@ class PSCSIStorageObject(StorageObject):
 
     def dump(self):
         d = super(PSCSIStorageObject, self).dump()
-        d['dev'] = "%s:%s:%s:%s" % (self.host_id, self.channel_id,
-                                    self.target_id, self.lun)
+        d['dev'] = self.udev_path
         return d
 
 
