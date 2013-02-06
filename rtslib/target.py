@@ -42,7 +42,7 @@ class Target(CFSNode):
     # Target private stuff
 
     def __repr__(self):
-        return "<Target %s>" % self.wwn
+        return "<Target %s/%s>" % (self.fabric_module.name, self.wwn)
 
     def __init__(self, fabric_module, wwn=None, mode='any'):
         '''
