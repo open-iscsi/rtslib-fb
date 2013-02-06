@@ -21,7 +21,8 @@ from root import RTSRoot
 from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 
 from target import LUN, MappedLUN
-from target import NodeACL, NetworkPortal, TPG, Target, FabricModule
+from target import NodeACL, NetworkPortal, TPG, Target
+from fabric import FabricModule
 
 from tcm import FileIOStorageObject, BlockStorageObject
 from tcm import PSCSIStorageObject, RDMCPStorageObject

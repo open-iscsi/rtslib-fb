@@ -476,42 +476,77 @@ def generate_wwn(wwn_type):
         serial = "sn.%s" % str(uuid.uuid4())[24:]
         return "%s:%s" % (prefix, serial)
     elif wwn_type == 'naa':
-        sas_address = "naa.6001405%s" % str(uuid.uuid4())[:10]
-        return sas_address.replace('-', '')
+        # see http://standards.ieee.org/develop/regauth/tut/fibre.pdf
+        # 5 = IEEE registered
+        # 001405 = OpenIB OUI (they let us use it I guess?)
+        # rest = random
+        return "5001405" + uuid.uuid4().get_hex()[-9:]
+    elif wwn_type == 'eui':
+        return "001405" + uuid.uuid4().get_hex()[-10:]
     else:
         raise ValueError("Unknown WWN type: %s." % wwn_type)
 
-def is_valid_wwn(wwn_type, wwn, wwn_list=None):
+def colonize(str):
     '''
-    Returns True if the wwn is a valid wwn of type wwn_type.
-    @param wwn_type: The WWN address type.
-    @type wwn_type: str
-    @param wwn: The WWN address to check.
-    @type wwn: str
-    @param wwn_list: An optional list of wwns to check the wwn parameter from.
-    @type wwn_list: list of str
-    @returns: bool.
+    helper function to add colons every 2 chars
     '''
-    wwn_type = wwn_type.lower()
+    return ":".join(str[i:i+2] for i in range(0, len(str), 2))
 
-    if wwn_list is not None and wwn not in wwn_list:
-        return False
-    elif wwn_type == 'free':
-        return True
-    elif wwn_type == 'iqn' \
-       and re.match("iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
-       and not re.search(' ', wwn) \
-       and not re.search('_', wwn):
-        return True
-    elif wwn_type == 'naa' \
-            and re.match("naa\.[0-9A-Fa-f]{16}$", wwn):
-        return True
-    elif wwn_type == 'unit_serial' \
-            and re.match(
-                "[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn):
-        return True
+def _cleanse_wwn(wwn_type, wwn):
+    '''
+    Some wwns may have alternate text representations. Adjust to our
+    preferred representation.
+    '''
+    wwn = wwn.strip()
+
+    if wwn_type == 'naa':
+        # naa fabrics want aa:bb:cc:dd
+        if wwn.startswith("0x"):
+            wwn = wwn[2:]
+        elif wwn.startswith("naa."):
+            wwn = wwn[4:]
+        wwn = wwn.translate(None, ":-")
+        return colonize(wwn)
+    elif wwn_type == 'eui':
+        # eui fabrics want aabbccdd
+        if wwn.startswith("0x"):
+            wwn = wwn[2:]
+        return wwn.translate(None, ":-")
     else:
-        return False
+        return wwn
+
+def normalize_wwn(wwn_types, wwn, possible_wwns=None):
+    '''
+    Take a WWN as given by the user and convert it to a standard text
+    representation. If possible_wwns is not None, verify that
+    the given WWN is on that list.
+
+    Returns (normalized_wwn, wwn_type), or exception if invalid wwn.
+    '''
+    wwn_test = {
+    'free' : lambda wwn: True,
+    'iqn' : lambda wwn: \
+        re.match("iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
+        and not re.search(' ', wwn) \
+        and not re.search('_', wwn),
+    'naa' : lambda wwn: re.match("[125][0-9a-f](:[0-9a-f]{2}){7}$", wwn),
+    'eui' : lambda wwn: re.match("[0-9a-f]{16}$", wwn),
+    'unit_serial' : lambda wwn: \
+        re.match("[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
+    }
+
+    for wwn_type in wwn_types:
+        clean_wwn = _cleanse_wwn(wwn_type, wwn)
+        found_type = wwn_test[wwn_type](clean_wwn)
+        if found_type:
+            break
+    else:
+        raise RTSLibError("WWN not valid as: %s" % ", ".join(wwn_types))
+
+    if possible_wwns is not None and clean_wwn not in possible_wwns:
+        raise RTSLibError("WWN not in possible WWNs")
+
+    return (clean_wwn, wwn_type)
 
 def list_loaded_kernel_modules():
     '''

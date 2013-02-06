@@ -21,7 +21,8 @@ import re
 import os
 
 from node import CFSNode
-from target import Target, FabricModule
+from target import Target
+from fabric import FabricModule
 from tcm import (StorageObject, FileIOStorageObject, BlockStorageObject,
                  PSCSIStorageObject, RDMCPStorageObject)
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
