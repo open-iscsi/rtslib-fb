@@ -35,6 +35,9 @@ class StorageObject(CFSNode):
     '''
     # StorageObject private stuff
 
+    def __repr__(self):
+        return "<%s %s/%s>" % (self.__class__.__name__, self.plugin, self.name)
+
     def __init__(self, name, mode):
         super(StorageObject, self).__init__()
         if "/" in name or " " in name or "\t" in name or "\n" in name:

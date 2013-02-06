@@ -41,6 +41,9 @@ class Target(CFSNode):
 
     # Target private stuff
 
+    def __repr__(self):
+        return "<Target %s>" % self.wwn
+
     def __init__(self, fabric_module, wwn=None, mode='any'):
         '''
         @param fabric_module: The target's fabric module.
@@ -225,6 +228,9 @@ class TPG(CFSNode):
     '''
 
     # TPG private stuff
+
+    def __repr__(self):
+        return "<TPG %d>" % self.tag
 
     def __init__(self, parent_target, tag=None, mode='any'):
         '''
@@ -469,6 +475,10 @@ class LUN(CFSNode):
 
     # LUN private stuff
 
+    def __repr__(self):
+        return "<LUN %d (%s/%s)" % (self.lun, self.storage_object.plugin,
+                                    self.storage_object.name)
+
     def __init__(self, parent_tpg, lun=None, storage_object=None, alias=None):
         '''
         A LUN object can be instanciated in two ways:
@@ -658,6 +668,9 @@ class NetworkPortal(CFSNode):
 
     # NetworkPortal private stuff
 
+    def __repr__(self):
+        return "<NetworkPortal %s port %s" % (self.ip_address, self.port)
+
     def __init__(self, parent_tpg, ip_address, port=3260, mode='any'):
         '''
         @param parent_tpg: The parent TPG object.
@@ -729,6 +742,9 @@ class NodeACL(CFSNode):
     '''
 
     # NodeACL private stuff
+
+    def __repr__(self):
+        return "<NodeACL %s>" % self.node_wwn
 
     def __init__(self, parent_tpg, node_wwn, mode='any'):
         '''
@@ -980,6 +996,9 @@ class MappedLUN(CFSNode):
     '''
 
     # MappedLUN private stuff
+
+    def __repr__(self):
+        return "<MappedLUN %d -> %d>" % (self.mapped_lun, self.tpg_lun.lun)
 
     def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None):
