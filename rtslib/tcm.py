@@ -153,11 +153,10 @@ class StorageObject(CFSNode):
         realpath = os.path.realpath
         path = self.path
         from root import RTSRoot
-        from target import LUN, TPG, Target, FabricModule
-        rtsroot = RTSRoot()
-        target_names_excludes = FabricModule.target_names_excludes
+        from target import LUN, TPG, Target
+        from fabric import target_names_excludes
 
-        for base, fm in ((fm.path, fm) for fm in rtsroot.fabric_modules if fm.exists):
+        for base, fm in ((fm.path, fm) for fm in RTSRoot().fabric_modules if fm.exists):
             for tgt_dir in listdir(base):
                 if tgt_dir not in target_names_excludes:
                     tpgts_base = "%s/%s" % (base, tgt_dir)
