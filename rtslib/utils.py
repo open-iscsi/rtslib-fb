@@ -502,12 +502,12 @@ def _cleanse_wwn(wwn_type, wwn):
     if wwn_type in ('naa', 'eui'):
         if wwn.startswith("0x"):
             wwn = wwn[2:]
-        elif wwn.startswith("naa.") or wwn.startswith("eui."):
-            wwn = wwn[4:]
         wwn = wwn.translate(None, ":-")
-        return wwn_type + "." + wwn
-    else:
-        return wwn
+
+        if not (wwn.startswith("naa.") or wwn.startswith("eui.")):
+            wwn = wwn_type + "." + wwn
+
+    return wwn
 
 def normalize_wwn(wwn_types, wwn, possible_wwns=None):
     '''
