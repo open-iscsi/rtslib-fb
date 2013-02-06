@@ -31,6 +31,7 @@ class CFSNode(object):
 
     def __init__(self):
         self._path = self.configfs_dir
+        self._fresh = None
 
     def __str__(self):
         return self.path
