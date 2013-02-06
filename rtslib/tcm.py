@@ -938,7 +938,6 @@ class FileIOStorageObject(StorageObject):
                                   + "%s is already in use." % dev)
             if is_disk_partition(rdev):
                 size = get_disk_size(rdev)
-                print "fd_dev_name=%s,fd_dev_size=%d" % (dev, size)
                 self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
             else:
                 self._control("fd_dev_name=%s" % dev)
