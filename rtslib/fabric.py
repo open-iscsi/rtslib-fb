@@ -18,10 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Description
 -----------
 
-Instead of having a class to handle each fabric type, rtslib uses a
-single FabricModule class. An instance of FabricModule changes its
-behavior depending on parameters it picks up from here. These used to
-be listed in "spec" files, but are now here.
+Fabrics may differ in how fabric WWNs are represented, as well as
+what capabilities they support
 
 
 Available parameters
@@ -80,12 +78,17 @@ Detail of features:
     * unit_serial
     Disk-type unit serial.
 
-* wwns()
-This function returns an iterable (either generator or list) of valid
+* wwns
+This property returns an iterable (either generator or list) of valid
 target WWNs for the fabric, if WWNs should be chosen from existing
 fabric interfaces. The most common case for this is hardware-set
-WWNs. This function should return a string with the WWN formatted for
-what the fabric module expects.
+WWNs. WWNs should conform to rtslib's normalized internal format: the wwn
+type (see above), a period, then the wwn with interstitial dividers like
+':' removed.
+
+* to_fabric_wwn()
+Converts WWNs from normalized format (see above) to whatever the kernel code
+expects when getting a wwn. Only needed if different from normalized format.
 
 * kernel_module
 Sets the name of the kernel module implementing the fabric modules. If
