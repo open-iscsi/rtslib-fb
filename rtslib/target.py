@@ -28,7 +28,7 @@ from node import CFSNode
 from os.path import isdir
 from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
-from utils import fread, fwrite
+from utils import fread, fwrite, normalize_wwn, generate_wwn
 from utils import dict_remove, set_attributes, set_parameters
 import tcm
 
@@ -66,17 +66,17 @@ class Target(CFSNode):
         fabric_module._check_self()
 
         if wwn is not None:
-            self.wwn, wwn_type = fabric_module.to_normalized_wwn(wwn)
+            self.wwn, self.wwn_type = fabric_module.to_normalized_wwn(wwn)
         elif not fabric_module.wwns:
             self.wwn = generate_wwn(fabric_module.wwn_types[0])
-            wwn_type = fabric_module.wwn_types[0]
+            self.wwn_type = fabric_module.wwn_types[0]
         else:
             raise RTSLibError("Fabric cannot generate WWN but it was not given")
 
         # Checking is done, convert to format the fabric wants
-        self.wwn = fabric_module.to_fabric_wwn(wwn_type, self.wwn)
+        fabric_wwn = fabric_module.to_fabric_wwn(self.wwn_type, self.wwn)
 
-        self._path = "%s/%s" % (self.fabric_module.path, self.wwn)
+        self._path = "%s/%s" % (self.fabric_module.path, fabric_wwn)
         self._create_in_cfs_ine(mode)
 
     def _list_tpgs(self):
@@ -349,7 +349,7 @@ class TPG(CFSNode):
             raise RTSLibError("The TPG's nexus initiator WWN is already set.")
 
         # Nexus wwn type should match parent target
-        wwn_type = self.parent_target.wwn.split(".")[0]
+        wwn_type = self.parent_target.wwn_type
         if nexus_wwn:
             # Not using fabric-specific version of normalize_wwn, since we
             # want to make sure wwn conforms to regexp, but don't check
@@ -357,6 +357,9 @@ class TPG(CFSNode):
             nexus_wwn = normalize_wwn((wwn_type,), wwn)[0]
         else:
             nexus_wwn = generate_wwn(wwn_type)
+
+        fm = self.parent_target.fabric_module
+        nexus_wwn = fm.to_fabric_wwn(wwn_type, nexus_wwn)
 
         fwrite("%s/nexus" % self.path, nexus_wwn)
 
@@ -770,7 +773,7 @@ class NodeACL(CFSNode):
             raise RTSLibError("Invalid parent TPG.")
 
         fm = self.parent_tpg.parent_target.fabric_module
-        self._node_wwn = normalize_wwn(fm.wwn_types, wwn)[0]
+        self._node_wwn, self.wwn_type = normalize_wwn(fm.wwn_types, node_wwn)
         self._path = "%s/acls/%s" % (self.parent_tpg.path, self.node_wwn)
         self._create_in_cfs_ine(mode)
 

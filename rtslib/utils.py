@@ -480,9 +480,9 @@ def generate_wwn(wwn_type):
         # 5 = IEEE registered
         # 001405 = OpenIB OUI (they let us use it I guess?)
         # rest = random
-        return "5001405" + uuid.uuid4().get_hex()[-9:]
+        return "naa.5001405" + uuid.uuid4().get_hex()[-9:]
     elif wwn_type == 'eui':
-        return "001405" + uuid.uuid4().get_hex()[-10:]
+        return "eui.001405" + uuid.uuid4().get_hex()[-10:]
     else:
         raise ValueError("Unknown WWN type: %s." % wwn_type)
 
@@ -499,19 +499,13 @@ def _cleanse_wwn(wwn_type, wwn):
     '''
     wwn = wwn.strip()
 
-    if wwn_type == 'naa':
-        # naa fabrics want aa:bb:cc:dd
+    if wwn_type in ('naa', 'eui'):
         if wwn.startswith("0x"):
             wwn = wwn[2:]
-        elif wwn.startswith("naa."):
+        elif wwn.startswith("naa.") or wwn.startswith("eui."):
             wwn = wwn[4:]
         wwn = wwn.translate(None, ":-")
-        return colonize(wwn)
-    elif wwn_type == 'eui':
-        # eui fabrics want aabbccdd
-        if wwn.startswith("0x"):
-            wwn = wwn[2:]
-        return wwn.translate(None, ":-")
+        return wwn_type + "." + wwn
     else:
         return wwn
 
@@ -529,8 +523,8 @@ def normalize_wwn(wwn_types, wwn, possible_wwns=None):
         re.match("iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
         and not re.search(' ', wwn) \
         and not re.search('_', wwn),
-    'naa' : lambda wwn: re.match("[125][0-9a-f](:[0-9a-f]{2}){7}$", wwn),
-    'eui' : lambda wwn: re.match("[0-9a-f]{16}$", wwn),
+    'naa' : lambda wwn: re.match("naa\.[125][0-9a-fA-F]{15}$", wwn),
+    'eui' : lambda wwn: re.match("eui\.[0-9a-f]{16}$", wwn),
     'unit_serial' : lambda wwn: \
         re.match("[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
     }
