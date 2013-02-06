@@ -543,9 +543,6 @@ class LUN(CFSNode):
         else:
             self._create_in_cfs_ine('lookup')
 
-    def _create_in_cfs_ine(self, mode):
-        super(LUN, self)._create_in_cfs_ine(mode)
-
     def _configure(self, storage_object, alias):
         self._check_self()
         if alias is None:
@@ -554,16 +551,13 @@ class LUN(CFSNode):
             alias = str(alias).strip()
             if '/' in alias:
                 raise RTSLibError("Invalid alias: %s", alias)
+
         destination = "%s/%s" % (self.path, alias)
-        from tcm import StorageObject
-        if isinstance(storage_object, StorageObject):
-            if storage_object.exists:
-                source = storage_object.path
-            else:
-                raise RTSLibError("The storage_object does not exist " \
-                                  + "in configFS.")
+
+        if storage_object.exists:
+            source = storage_object.path
         else:
-            raise RTSLibError("Invalid storage object.")
+            raise RTSLibError("storage_object does not exist in configFS.")
 
         os.symlink(source, destination)
 
