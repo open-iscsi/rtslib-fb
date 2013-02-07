@@ -66,6 +66,9 @@ class Target(CFSNode):
         fabric_module._check_self()
 
         if wwn is not None:
+            # old versions used wrong NAA prefix, fixup
+            if wwn.startswith("naa.6"):
+                wwn = "naa.5" + wwn[5:]
             self.wwn, self.wwn_type = fabric_module.to_normalized_wwn(wwn)
         elif not fabric_module.wwns:
             self.wwn = generate_wwn(fabric_module.wwn_types[0])
