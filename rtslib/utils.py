@@ -497,7 +497,7 @@ def _cleanse_wwn(wwn_type, wwn):
     Some wwns may have alternate text representations. Adjust to our
     preferred representation.
     '''
-    wwn = wwn.strip()
+    wwn = str(wwn.strip())
 
     if wwn_type in ('naa', 'eui'):
         if wwn.startswith("0x"):
