@@ -459,6 +459,14 @@ class USBGadgetFabricModule(_BaseFabricModule):
         return wwn[4:]
 
 
+class VhostFabricModule(_BaseFabricModule):
+    def __init__(self):
+        super(VhostFabricModule, self).__init__('vhost')
+        self.features = ("nexus", "acls")
+        self.wwn_types = ('naa',)
+        self.kernel_module = "tcm_vhost"
+
+
 fabric_modules = {
     "ib_srpt": SRPTFabricModule,
     "iscsi": ISCSIFabricModule,
@@ -467,6 +475,7 @@ fabric_modules = {
     "sbp": SBPFabricModule,
     "tcm_fc": FCoEFabricModule,
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
+    "vhost": VhostFabricModule,
     }
 
 #
