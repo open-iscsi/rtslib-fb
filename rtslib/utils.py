@@ -41,7 +41,7 @@ class RTSLibNotInCFS(RTSLibError):
     '''
     The underlying configfs object does not exist. Happens when
     calling methods of an object that is instanciated but have
-    been deleted from congifs, or when trying to lookup an
+    been deleted from configfs, or when trying to lookup an
     object that does not exist.
     '''
     pass
