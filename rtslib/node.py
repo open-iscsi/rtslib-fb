@@ -31,7 +31,6 @@ class CFSNode(object):
 
     def __init__(self):
         self._path = self.configfs_dir
-        self._fresh = None
 
     def __str__(self):
         return self.path
@@ -46,8 +45,6 @@ class CFSNode(object):
         any -> makes sure it exists, also works if the node already does exists
         lookup -> make sure it does NOT exists
         create -> create the node which must not exists beforehand
-        Upon success (no exception raised), self._fresh is True if a node was
-        created, else self._fresh is False.
         '''
         if mode not in ['any', 'lookup', 'create']:
             raise RTSLibError("Invalid mode: %s" % mode)
@@ -57,16 +54,13 @@ class CFSNode(object):
         elif not self.exists and mode == 'lookup':
             raise RTSLibNotInCFS("No such %s in configfs: %s."
                                  % (self.__class__.__name__, self.path))
-        if self.exists:
-            self._fresh = False
-            return
 
-        try:
-            os.mkdir(self.path)
-            self._fresh = True
-        except:
-            raise RTSLibError("Could not create %s in configFS."
-                              % self.__class__.__name__)
+        if not self.exists:
+            try:
+                os.mkdir(self.path)
+            except:
+                raise RTSLibError("Could not create %s in configFS."
+                                  % self.__class__.__name__)
 
     def _exists(self):
         return os.path.isdir(self.path)
@@ -75,9 +69,6 @@ class CFSNode(object):
         if not self.exists:
             raise RTSLibNotInCFS("This %s does not exist in configFS."
                                  % self.__class__.__name__)
-
-    def _is_fresh(self):
-        return self._fresh
 
     def _list_files(self, path, writable=None):
         '''
@@ -220,11 +211,6 @@ class CFSNode(object):
                       + "If the underlying configFS objects gets deleted " \
                       + "either by calling the delete() method, or by any " \
                       + "other means, it will be False.")
-    is_fresh = property(_is_fresh,
-            doc="Is True if the underlying configFS object has been created " \
-                        + "when instanciating this particular object. Is " \
-                        + "False if this object instanciation just looked " \
-                        + "up the underlying configFS object.")
 
     def dump(self):
         d = {}
