@@ -40,11 +40,11 @@ class CFSNode(object):
 
     def _create_in_cfs_ine(self, mode):
         '''
-        Creates the configFS node if it does not already exists depending on
+        Creates the configFS node if it does not already exist, depending on
         the mode.
-        any -> makes sure it exists, also works if the node already does exists
-        lookup -> make sure it does NOT exists
-        create -> create the node which must not exists beforehand
+        any -> makes sure it exists, also works if the node already does exist
+        lookup -> make sure it does NOT exist
+        create -> create the node which must not exist beforehand
         '''
         if mode not in ['any', 'lookup', 'create']:
             raise RTSLibError("Invalid mode: %s" % mode)
