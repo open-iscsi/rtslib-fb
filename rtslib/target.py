@@ -2,7 +2,7 @@
 Implements the RTS generic Target fabric classes.
 
 This file is part of RTSLib Community Edition.
-Copyright (c) 2011 by RisingTide Systems LLC
+Copyright (c) 2011-2013 by RisingTide Systems LLC
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -618,9 +618,10 @@ class MappedLUN(CFSNode):
                               % str(tpg_lun))
         os.symlink(tpg_lun.path, "%s/%s"
                    % (self.path, str(uuid.uuid4())[-10:]))
-        if write_protect:
-            self.write_protect = True
-        else:
+
+        try:
+            self.write_protect = int(write_protect) > 0
+        except:
             self.write_protect = False
 
     def _get_alias(self):
