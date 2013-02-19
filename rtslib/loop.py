@@ -39,11 +39,11 @@ class LUN(CFSNode):
 
     def __init__(self, parent_nexus, lun, storage_object=None, alias=None):
         '''
-        A LUN object can be instanciated in two ways:
+        A LUN object can be instantiated in two ways:
             - B{Creation mode}: If I{storage_object} is specified, the
               underlying configFS object will be created with that parameter.
               No LUN with the same I{lun} index can pre-exist in the parent
-              Nexus in that mode, or instanciation will fail.
+              Nexus in that mode, or instantiation will fail.
             - B{Lookup mode}: If I{storage_object} is not set, then the LUN
               will be bound to the existing configFS LUN object of the parent
               Nexus having the specified I{lun} index. The underlying configFS

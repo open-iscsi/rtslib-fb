@@ -36,7 +36,7 @@ class FabricModule(CFSNode):
     This is an interface to RTS Target Fabric Modules.
     It can load/unload modules, provide information about them and
     handle the configfs housekeeping. It uses module configuration
-    files in /var/target/fabric/*.spec. After instanciation, whether or
+    files in /var/target/fabric/*.spec. After instantiation, whether or
     not the fabric module is loaded and
     '''
 
@@ -47,7 +47,7 @@ class FabricModule(CFSNode):
     # FabricModule private stuff
     def __init__(self, name):
         '''
-        Instanciate a FabricModule object, according to the provided name.
+        Instantiate a FabricModule object, according to the provided name.
         @param name: the name of the FabricModule object. It must match an
         existing target fabric module specfile (name.spec).
         @type name: str
@@ -356,11 +356,11 @@ class LUN(CFSNode):
 
     def __init__(self, parent_tpg, lun, storage_object=None, alias=None):
         '''
-        A LUN object can be instanciated in two ways:
+        A LUN object can be instantiated in two ways:
             - B{Creation mode}: If I{storage_object} is specified, the
               underlying configFS object will be created with that parameter.
               No LUN with the same I{lun} index can pre-exist in the parent TPG
-              in that mode, or instanciation will fail.
+              in that mode, or instantiation will fail.
             - B{Lookup mode}: If I{storage_object} is not set, then the LUN
               will be bound to the existing configFS LUN object of the parent
               TPG having the specified I{lun} index. The underlying configFS
@@ -545,11 +545,11 @@ class MappedLUN(CFSNode):
     def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None):
         '''
-        A MappedLUN object can be instanciated in two ways:
+        A MappedLUN object can be instantiated in two ways:
             - B{Creation mode}: If I{tpg_lun} is specified, the underlying
               configFS object will be created with that parameter. No MappedLUN
               with the same I{mapped_lun} index can pre-exist in the parent
-              NodeACL in that mode, or instanciation will fail.
+              NodeACL in that mode, or instantiation will fail.
             - B{Lookup mode}: If I{tpg_lun} is not set, then the MappedLUN will
               be bound to the existing configFS MappedLUN object of the parent
               NodeACL having the specified I{mapped_lun} index. The underlying

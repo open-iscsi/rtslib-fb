@@ -274,8 +274,8 @@ class CFSNode(object):
                       + "other means, it will be False.")
     is_fresh = property(_is_fresh,
             doc="Is True if the underlying configFS object has been created " \
-                        + "when instanciating this particular object. Is " \
-                        + "False if this object instanciation just looked " \
+                        + "when instantiating this particular object. Is " \
+                        + "False if this object instantiation just looked " \
                         + "up the underlying configFS object.")
 
 def _test():
