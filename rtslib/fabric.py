@@ -471,7 +471,7 @@ fabric_modules = {
     "ib_srpt": SRPTFabricModule,
     "iscsi": ISCSIFabricModule,
     "loopback": LoopbackFabricModule,
-    "qla2xxxx": Qla2xxxFabricModule,
+    "qla2xxx": Qla2xxxFabricModule,
     "sbp": SBPFabricModule,
     "tcm_fc": FCoEFabricModule,
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
