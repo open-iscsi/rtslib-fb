@@ -117,8 +117,12 @@ class Target(CFSNode):
         Call 'err_func' for each error.
         '''
 
+        if 'wwn' not in t:
+            err_func("'wwn' not defined for Target")
+            return
+
         try:
-            t_obj = Target(fm_obj, t.get('wwn'))
+            t_obj = Target(fm_obj, t['wwn'])
         except RTSLibError:
             err_func("Could not create Target object")
             return
