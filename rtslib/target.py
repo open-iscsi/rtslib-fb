@@ -201,6 +201,7 @@ class Target(CFSNode):
                     try:
                         mlun_obj = MappedLUN(acl_obj, mlun['index'],
                                              tpg_lun_obj, mlun.get('write_protect'))
+                        mlun_obj.tag = mlun.get("tag", None)
                     except (RTSLibError, KeyError):
                         err_func("Creating MappedLUN object %d failed" % mindex)
 
@@ -861,13 +862,19 @@ class NodeACL(CFSNode):
     def _get_tag(self):
         self._check_self()
         try:
-            return fread("%s/tag" % self.path)
+            tag = fread("%s/tag" % self.path)
+            if tag:
+                return tag
+            return None
         except IOError:
             return None
 
     def _set_tag(self, tag_str):
         try:
-            fwrite("%s/tag" % self.path, tag_str)
+            if tag_str is None:
+                fwrite("%s/tag" % self.path, 'NULL')
+            else:
+                fwrite("%s/tag" % self.path, tag_str)
         except IOError:
             pass
 
