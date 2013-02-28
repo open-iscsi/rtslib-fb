@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import re
 import glob
+import resource
 
 from node import CFSNode
 from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
@@ -408,8 +409,8 @@ class RDMCPStorageObject(StorageObject):
                 - B{g}, B{G}, B{gB}, B{GB} for GB (gigabytes)
                 - B{t}, B{T}, B{tB}, B{TB} for TB (terabytes)
                 Example: size="1MB" for a one megabytes storage object.
-                - Note that the size will be rounded to the closest 4096 Bytes
-                  RAM pages count. For instance, a size of 100000 Bytes will be
+                - Note that the size will be rounded to the closest multiple
+                  of page size. For instance, a size of 100000 Bytes will be
                   rounded to 24 pages, really 98304 Bytes.
                 - The base value for kilo is 1024, aka 1kB = 1024B.
                   Strictly speaking, we use kiB, MiB, etc.
@@ -431,8 +432,8 @@ class RDMCPStorageObject(StorageObject):
 
     def _configure(self, size, wwn):
         self._check_self()
-        # convert to 4k pages
-        size = round(float(size)/4096)
+        # convert to pages
+        size = round(float(size)/resource.getpagesize())
         if size == 0:
             size = 1
 
