@@ -388,15 +388,14 @@ def convert_scsi_path_to_hctl(path):
     values representing the SCSI ID of the device, or None if no
     match is found.
     '''
-    dev = os.path.realpath(path)
-    scsi_devices = [os.path.basename(scsi_dev).split(':')
-            for scsi_dev in glob.glob("/sys/class/scsi_device/*")]
-    for (host, controller, target, lun) in scsi_devices:
-        scsi_dev = convert_scsi_hctl_to_path(host, controller, target, lun)
-        if dev == scsi_dev:
-            return (int(host), int(controller), int(target), int(lun))
-
-    return None
+    devname = os.path.basename(os.path.realpath(path))
+    try:
+        hctl = os.listdir("/sys/block/%s/device/scsi_device"
+                          % devname)[0].split(':')
+    except:
+        return None
+    
+    return [int(data) for data in hctl]
 
 def convert_scsi_hctl_to_path(host, controller, target, lun):
     '''
@@ -430,28 +429,12 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
         raise RTSLibError(
             "The host, controller, target and lun parameter must be integers.")
 
-    scsi_dev_path = "/sys/class/scsi_device"
-    sysfs_names = [os.path.basename(name) for name
-            in glob.glob("%s/%d:%d:%d:%d/device/block:*"
-            % (scsi_dev_path, host, controller, target, lun))]
-    if len(sysfs_names) == 0:
-        sysfs_names = [os.path.basename(name) for name
-                in glob.glob("%s/%d:%d:%d:%d/device/block/*"
-                % (scsi_dev_path, host, controller, target, lun))]
-    if len(sysfs_names) > 0:
-        for name in sysfs_names:
-            name1 = name.partition(":")[2].strip()
-            if name1:
-                name = name1
-            dev = os.path.realpath("/dev/%s" % name)
-            try:
-                mode = os.stat(dev)[stat.ST_MODE]
-            except OSError:
-                pass
-            if stat.S_ISBLK(mode):
-                return dev
-    else:
-        return ''
+    for devname in os.listdir("/sys/block"):
+        path = "/dev/%s" % devname
+        hctl = [host, controller, target, lun]
+        if convert_scsi_path_to_hctl(path) == hctl:
+            return os.path.realpath(path)
+    return ''
 
 def generate_wwn(wwn_type):
     '''
