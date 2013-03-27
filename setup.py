@@ -21,8 +21,8 @@ from distutils.core import setup
 import rtslib
 
 setup (
-    name = 'rtslib',
-    version = '2.1.fb30',
+    name = 'rtslib-fb',
+    version = '2.1.31',
     description = 'API for Linux kernel SCSI target (aka LIO)',
     license='AGPLv3',
     maintainer='Andy Grover',
