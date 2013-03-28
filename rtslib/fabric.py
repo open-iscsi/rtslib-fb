@@ -411,7 +411,7 @@ class Qla2xxxFabricModule(_BaseFabricModule):
 
 class SRPTFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(SRPTFabricModule, self).__init__('ib_srpt')
+        super(SRPTFabricModule, self).__init__('srpt')
         self.features = ("acls",)
         self.wwn_types = ('eui',)
         self.kernel_module = "ib_srpt"
@@ -468,7 +468,7 @@ class VhostFabricModule(_BaseFabricModule):
 
 
 fabric_modules = {
-    "ib_srpt": SRPTFabricModule,
+    "srpt": SRPTFabricModule,
     "iscsi": ISCSIFabricModule,
     "loopback": LoopbackFabricModule,
     "qla2xxx": Qla2xxxFabricModule,
