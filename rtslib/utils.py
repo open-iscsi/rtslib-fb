@@ -499,12 +499,13 @@ def _cleanse_wwn(wwn_type, wwn):
     '''
     wwn = str(wwn.strip())
 
-    if wwn_type in ('naa', 'eui'):
+    if wwn_type in ('naa', 'eui', 'ib'):
         if wwn.startswith("0x"):
             wwn = wwn[2:]
         wwn = wwn.translate(None, ":-")
 
-        if not (wwn.startswith("naa.") or wwn.startswith("eui.")):
+        if not (wwn.startswith("naa.") or wwn.startswith("eui.") or \
+            wwn.startswith("ib.")):
             wwn = wwn_type + "." + wwn
 
     return wwn
@@ -525,6 +526,7 @@ def normalize_wwn(wwn_types, wwn, possible_wwns=None):
         and not re.search('_', wwn),
     'naa' : lambda wwn: re.match("naa\.[125][0-9a-fA-F]{15}$", wwn),
     'eui' : lambda wwn: re.match("eui\.[0-9a-f]{16}$", wwn),
+    'ib' : lambda wwn: re.match("ib\.[0-9a-f]{32}$", wwn),
     'unit_serial' : lambda wwn: \
         re.match("[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
     }
