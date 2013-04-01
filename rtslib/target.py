@@ -615,12 +615,15 @@ class LUN(CFSNode):
 
     def delete(self):
         '''
-        If the underlying configFS object does not exists, this method does
+        If the underlying configFS object does not exist, this method does
         nothing. If the underlying configFS object exists, this method attempts
         to delete it along with all MappedLUN objects referencing that LUN.
         '''
         self._check_self()
-        [mlun.delete() for mlun in self._list_mapped_luns()]
+
+        for mlun in self.mapped_luns:
+            mlun.delete()
+
         try:
             link = self.alias
         except RTSLibBrokenLink:
