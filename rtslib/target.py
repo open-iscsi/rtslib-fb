@@ -77,8 +77,7 @@ class Target(CFSNode):
             raise RTSLibError("Fabric cannot generate WWN but it was not given")
 
         # Checking is done, convert to format the fabric wants
-        fabric_wwn = fabric_module.to_fabric_wwn(self.wwn_type, self.wwn)
-
+        fabric_wwn = fabric_module.to_fabric_wwn(self.wwn)
         self._path = "%s/%s" % (self.fabric_module.path, fabric_wwn)
         self._create_in_cfs_ine(mode)
 
@@ -367,9 +366,8 @@ class TPG(CFSNode):
             nexus_wwn = generate_wwn(wwn_type)
 
         fm = self.parent_target.fabric_module
-        nexus_wwn = fm.to_fabric_wwn(wwn_type, nexus_wwn)
 
-        fwrite("%s/nexus" % self.path, nexus_wwn)
+        fwrite("%s/nexus" % self.path, fm.to_fabric_wwn(nexus_wwn))
 
     def _list_node_acls(self):
         self._check_self()
@@ -777,7 +775,7 @@ class NodeACL(CFSNode):
 
         fm = self.parent_tpg.parent_target.fabric_module
         self._node_wwn, self.wwn_type = normalize_wwn(fm.wwn_types, node_wwn)
-        self._path = "%s/acls/%s" % (self.parent_tpg.path, self.node_wwn)
+        self._path = "%s/acls/%s" % (self.parent_tpg.path, fm.to_fabric_wwn(self.node_wwn))
         self._create_in_cfs_ine(mode)
 
     def _get_node_wwn(self):
