@@ -62,7 +62,7 @@ class RTSRoot(CFSNode):
     # RTSRoot private stuff
     def __init__(self):
         '''
-        Instanciate an RTSRoot object. Basically checks for configfs setup and
+        Instantiate an RTSRoot object. Basically checks for configfs setup and
         base kernel modules (tcm)
         '''
         super(RTSRoot, self).__init__()

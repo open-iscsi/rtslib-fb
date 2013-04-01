@@ -248,15 +248,15 @@ class PSCSIStorageObject(StorageObject):
 
     def __init__(self, name, dev=None):
         '''
-        A PSCSIStorageObject can be instanciated in two ways:
+        A PSCSIStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
               object will be created with that parameter. No PSCSIStorageObject
-              with the same I{name} can pre-exist in the parent Backstore
-              in that mode, or instanciation will fail.
+              with the same I{name} can pre-exist in the parent PSCSIBackstore
+              in that mode, or instantiation will fail.
             - B{Lookup mode}: If I{dev} is not set, then the PSCSIStorageObject
               will be bound to the existing configFS object in the parent
-              Backstore having the specified I{name}. The underlying
-              configFS object must already exist in that mode, or instanciation
+              PSCSIBackstore having the specified I{name}. The underlying
+              configFS object must already exist in that mode, or instantiation
               will fail.
 
         @param name: The name of the PSCSIStorageObject.
@@ -387,16 +387,16 @@ class RDMCPStorageObject(StorageObject):
 
     def __init__(self, name, size=None, wwn=None):
         '''
-        A RDMCPStorageObject can be instanciated in two ways:
+        A RDMCPStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{size} is specified, the underlying
               configFS object will be created with that parameter.
               No RDMCPStorageObject with the same I{name} can pre-exist in the
-              parent Backstore in that mode, or instanciation will fail.
+              parent Backstore in that mode, or instantiation will fail.
             - B{Lookup mode}: If I{size} is not set, then the
               RDMCPStorageObject will be bound to the existing configFS object
               in the parent Backstore having the specified I{name}.
               The underlying configFS object must already exist in that mode,
-              or instanciation will fail.
+              or instantiation will fail.
 
         @param name: The name of the RDMCPStorageObject.
         @type name: string
@@ -482,16 +482,16 @@ class FileIOStorageObject(StorageObject):
     def __init__(self, name, dev=None, size=None,
                  wwn=None, write_back=False):
         '''
-        A FileIOStorageObject can be instanciated in two ways:
+        A FileIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} and I{size} are specified, the
               underlying configFS object will be created with those parameters.
               No FileIOStorageObject with the same I{name} can pre-exist in the
-              parent Backstore in that mode, or instanciation will fail.
+              parent Backstore in that mode, or instantiation will fail.
             - B{Lookup mode}: If I{dev} and I{size} are not set, then the
               FileIOStorageObject will be bound to the existing configFS object
               in the parent Backstore having the specified I{name}.
               The underlying configFS object must already exist in that mode,
-              or instanciation will fail.
+              or instantiation will fail.
 
         @param name: The name of the FileIOStorageObject.
         @type name: string
@@ -617,7 +617,7 @@ class BlockStorageObject(StorageObject):
     def __init__(self, name, dev=None, wwn=None, readonly=False,
                  write_back=False):
         '''
-        A BlockIOStorageObject can be instanciated in two ways:
+        A BlockIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
               object will be created with that parameter.
               No BlockIOStorageObject with the same I{name} can pre-exist in
@@ -626,7 +626,7 @@ class BlockStorageObject(StorageObject):
               BlockIOStorageObject will be bound to the existing configFS
               object in the parent Backstore having the specified
               I{name}. The underlying configFS object must already exist in
-              that mode, or instanciation will fail.
+              that mode, or instantiation will fail.
 
         @param name: The name of the BlockIOStorageObject.
         @type name: string
