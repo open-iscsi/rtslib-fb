@@ -379,7 +379,8 @@ class TPG(CFSNode):
         node_acl_dirs = [os.path.basename(path)
                          for path in os.listdir("%s/acls" % self.path)]
         for node_acl_dir in node_acl_dirs:
-            yield NodeACL(self, node_acl_dir, 'lookup')
+            fm = self.parent_target.fabric_module
+            yield NodeACL(self, fm.from_fabric_wwn(node_acl_dir), 'lookup')
 
     def _list_luns(self):
         self._check_self()

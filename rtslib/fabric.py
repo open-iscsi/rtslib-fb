@@ -158,7 +158,7 @@ class _BaseFabricModule(CFSNode):
             for wwn in os.listdir(self.path):
                 if os.path.isdir("%s/%s" % (self.path, wwn)) and \
                         wwn not in target_names_excludes:
-                    yield Target(self, wwn, 'lookup')
+                    yield Target(self, self.from_fabric_wwn(wwn), 'lookup')
 
     def _get_version(self):
         if self.exists:
@@ -180,10 +180,16 @@ class _BaseFabricModule(CFSNode):
         '''
         return normalize_wwn(self.wwn_types, wwn, self.wwns)
 
-    def to_fabric_wwn(self, wwn_type, wwn):
+    def to_fabric_wwn(self, wwn):
         '''
         Some fabrics need WWNs in a format different than rtslib's internal
         format. These fabrics should override this method.
+        '''
+        return wwn
+
+    def from_fabric_wwn(self, wwn):
+        '''
+        see to_fabric_wwn.
         '''
         return wwn
 
@@ -378,9 +384,11 @@ class SBPFabricModule(_BaseFabricModule):
         self.wwn_types = ('eui',)
         self.kernel_module = "sbp_target"
 
-    def to_fabric_wwn(self, wwn_type, wwn):
-        # strip 'eui.'
-        return wwn[4:]
+    def to_fabric_wwn(self, wwn):
+        return "0x" + wwn[4:]
+
+    def from_fabric_wwn(self, wwn):
+        return "eui." + wwn[2:]
 
     # return 1st local guid (is unique) so our share is named uniquely
     @property
@@ -388,7 +396,7 @@ class SBPFabricModule(_BaseFabricModule):
         for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
             if bool(int(fread(fname))):
                 guid_path = os.path.dirname(fname) + "/guid"
-                yield "eui." + fread(guid_path)[2:]
+                yield self.from_fabric_wwn(fread(guid_path))
                 break
 
 
@@ -399,33 +407,39 @@ class Qla2xxxFabricModule(_BaseFabricModule):
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_qla2xxx"
 
-    def to_fabric_wwn(self, wwn_type, wwn):
+    def to_fabric_wwn(self, wwn):
         # strip 'naa.' and add colons
         return colonize(wwn[4:])
+
+    def from_fabric_wwn(self, wwn):
+        return "naa." + wwn[2:]
 
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            yield "naa." + fread(wwn_file)[2:]
+            yield self.from_fabric_wwn(fread(wwn_file))
 
 
 class SRPTFabricModule(_BaseFabricModule):
     def __init__(self):
         super(SRPTFabricModule, self).__init__('srpt')
         self.features = ("acls",)
-        self.wwn_types = ('eui',)
+        self.wwn_types = ('ib',)
         self.kernel_module = "ib_srpt"
 
-    def to_fabric_wwn(self, wwn_type, wwn):
-        # strip 'naa.'
-        return "0xfe80000000000000" + wwn[4:]
+    def to_fabric_wwn(self, wwn):
+        # strip 'ib.' and re-add '0x'
+        return "0x" + wwn[3:]
 
-    # Transform 'fe80:0000:0000:0000:0002:1903:000e:8acd' WWN notation to
-    # 'eui.0002c903000e8acd'
+    def from_fabric_wwn(self, wwn):
+        if wwn.startswith("0x"):
+            wwn = wwn[2:]
+        return "ib." + wwn.translate(None, ":")
+
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/infiniband/*/ports/*/gids/0"):
-            yield "eui." + fread(wwn_file).translate(None, ":")[-16:]
+            yield self.from_fabric_wwn(fread(wwn_file))
 
 
 class FCoEFabricModule(_BaseFabricModule):
@@ -437,14 +451,17 @@ class FCoEFabricModule(_BaseFabricModule):
         self.configfs_group = "fc"
         self.wwn_types=('naa',)
 
-    def to_fabric_wwn(self, wwn_type, wwn):
+    def to_fabric_wwn(self, wwn):
         # strip 'naa.' and add colons
         return colonize(wwn[4:])
+
+    def from_fabric_wwn(self, wwn):
+        return "naa." + wwn[2:]
 
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            yield "naa." + fread(wwn_file)[2:]
+            yield self.from_fabric_wwn(fread(wwn_file))
 
 
 class USBGadgetFabricModule(_BaseFabricModule):
@@ -453,10 +470,6 @@ class USBGadgetFabricModule(_BaseFabricModule):
         self.features = ("nexus",)
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_usb_gadget"
-
-    def to_fabric_wwn(self, wwn_type, wwn):
-        # strip 'naa.'
-        return wwn[4:]
 
 
 class VhostFabricModule(_BaseFabricModule):
