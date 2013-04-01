@@ -601,26 +601,15 @@ class LUN(CFSNode):
 
     def _list_mapped_luns(self):
         self._check_self()
-        listdir = os.listdir
-        realpath = os.path.realpath
-        path = self.path
 
         tpg = self.parent_tpg
         if not tpg.has_feature('acls'):
-            return []
-        else:
-            base = "%s/acls/" % tpg.path
-            xmlun = ["param", "info", "cmdsn_depth", "auth", "attrib",
-                     "node_name", "port_name"]
-            return [MappedLUN(NodeACL(tpg, nodeacl), mapped_lun.split('_')[1])
-                    for nodeacl in listdir(base)
-                    for mapped_lun in listdir("%s/%s" % (base, nodeacl))
-                    if mapped_lun not in xmlun
-                    if isdir("%s/%s/%s" % (base, nodeacl, mapped_lun))
-                    for link in listdir("%s/%s/%s" \
-                                        % (base, nodeacl, mapped_lun))
-                    if realpath("%s/%s/%s/%s" \
-                                % (base, nodeacl, mapped_lun, link)) == path]
+            return
+
+        for na in tpg.node_acls:
+            for mlun in na.mapped_luns:
+                if os.path.realpath("%s/%s" % (mlun.path, mlun._get_alias())) == self.path:
+                    yield mlun
 
     # LUN public stuff
 
