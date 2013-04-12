@@ -167,7 +167,8 @@ class Target(CFSNode):
                     continue
 
                 try:
-                    NetworkPortal(tpg_obj, p['ip_address'], p['port'])
+                    np = NetworkPortal(tpg_obj, p['ip_address'], p['port'])
+                    np.iser = p.get('iser', False)
                 except (RTSLibError, KeyError):
                     err_func("Creating NetworkPortal object %s:%s failed" %
                              (p['ip_address'], p['port']))
@@ -715,7 +716,26 @@ class NetworkPortal(CFSNode):
     def _get_parent_tpg(self):
         return self._parent_tpg
 
+    def _get_iser(self):
+        try:
+            return bool(int(fread("%s/iser" % self.path)))
+        except IOError:
+            return False
+
+    def _set_iser(self, boolean):
+        path = "%s/iser" % self.path
+        try:
+            fwrite(path, str(int(boolean)))
+        except IOError:
+            # b/w compat: don't complain if iser entry is missing
+            if os.path.isfile(path):
+                raise RTSLibError("Cannot change iser")
+
     # NetworkPortal public stuff
+
+    def delete(self):
+        self.iser = False
+        super(NetworkPortal, self).delete()
 
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
@@ -723,11 +743,15 @@ class NetworkPortal(CFSNode):
             doc="Get the NetworkPortal's TCP port as an int.")
     ip_address = property(_get_ip_address,
             doc="Get the NetworkPortal's IP address as a string.")
+    iser = property(_get_iser, _set_iser,
+                    doc="Get or set a boolean value representing if this " \
+                        + "NetworkPortal supports iSER.")
 
     def dump(self):
         d = super(NetworkPortal, self).dump()
         d['port'] = self.port
         d['ip_address'] = self.ip_address
+        d['iser'] = self.iser
         return d
 
 
