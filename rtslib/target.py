@@ -29,7 +29,7 @@ from os.path import isdir
 from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import fread, fwrite, normalize_wwn, generate_wwn
-from utils import dict_remove, set_attributes, set_parameters
+from utils import dict_remove, set_attributes, set_parameters, ignored
 import tcm
 
 class Target(CFSNode):
@@ -865,13 +865,11 @@ class NodeACL(CFSNode):
             return None
 
     def _set_tag(self, tag_str):
-        try:
+        with ignored(IOError):
             if tag_str is None:
                 fwrite("%s/tag" % self.path, 'NULL')
             else:
                 fwrite("%s/tag" % self.path, tag_str)
-        except IOError:
-            pass
 
     def _get_authenticate_target(self):
         self._check_self()

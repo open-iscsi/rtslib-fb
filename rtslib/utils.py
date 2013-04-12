@@ -24,6 +24,7 @@ import uuid
 import glob
 import socket
 import subprocess
+from contextlib import contextmanager
 
 class RTSLibError(Exception):
     '''
@@ -63,12 +64,8 @@ def fwrite(path, string):
     @type string: string
 
     '''
-    path = os.path.realpath(str(path))
-    file_fd = open(path, 'w')
-    try:
-        file_fd.write("%s" % string)
-    finally:
-        file_fd.close()
+    with open(path, 'w') as file_fd:
+        file_fd.write(str(string))
 
 def fread(path):
     '''
@@ -89,15 +86,8 @@ def fread(path):
     @return: A string containing the file's contents.
 
     '''
-    path = os.path.realpath(str(path))
-    string = ""
-    file_fd = open(path, 'r')
-    try:
-        string = file_fd.read().strip()
-    finally:
-        file_fd.close()
-
-    return string
+    with open(path, 'r') as file_fd:
+        return file_fd.read().strip()
 
 def is_dev_in_use(path):
     '''
@@ -559,21 +549,24 @@ def dict_remove(d, items):
         if item in d:
             del d[item]
 
+@contextmanager
+def ignored(*exceptions):
+    try:
+        yield
+    except exceptions:
+        pass
+
 def set_attributes(obj, attr_dict):
     for name, value in attr_dict.iteritems():
-        try:
+        # Setting some attributes may return an error, before kernel 3.3
+        with ignored(RTSLibError):
             obj.set_attribute(name, value)
-        except RTSLibError:
-            # Setting some attributes may return an error, before kernel 3.3
-            pass
 
 def set_parameters(obj, param_dict): 
     for name, value in param_dict.iteritems():
-        try: 
+        # Setting some parameters may return an error, before kernel 3.3
+        with ignored(RTSLibError):
             obj.set_parameter(name, value)
-        except RTSLibError:
-            # Setting some parameters may return an error, before kernel 3.3
-            pass
 
 def _test():
     '''Run the doctests'''
