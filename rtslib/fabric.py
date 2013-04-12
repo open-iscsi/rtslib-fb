@@ -291,7 +291,7 @@ class _BaseFabricModule(CFSNode):
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/enforce_discovery_auth" % self.path
         value = fread(path)
-        return int(value)
+        return bool(int(value))
 
     def _set_discovery_enable_auth(self, enable):
         self._check_self()
@@ -358,7 +358,7 @@ class _BaseFabricModule(CFSNode):
             val = getattr(self, "discovery_" + attr, None)
             if val:
                 d["discovery_" + attr] = val
-        d['discovery_enable_auth'] = bool(int(self.discovery_enable_auth))
+        d['discovery_enable_auth'] = self.discovery_enable_auth
         return d
 
 
