@@ -863,6 +863,27 @@ class NetworkPortal(CFSNode):
     def _get_parent_tpg(self):
         return self._parent_tpg
 
+    def _set_iser_attr(self, iser_attr):
+        path = "%s/iser" % self.path
+        if os.path.isfile(path):
+            if iser_attr:
+                fwrite(path, "1")
+            else:
+                fwrite(path, "0")
+        else:
+            raise RTSLibError("iser network portal attribute does not exist.")
+
+    def _get_iser_attr(self):
+        path = "%s/iser" % self.path
+        if os.path.isfile(path):
+            iser_attr = fread(path).strip()
+            if iser_attr == "1":
+                return True
+            else:
+                return False
+        else:
+            return False
+
     # NetworkPortal public stuff
 
     parent_tpg = property(_get_parent_tpg,
