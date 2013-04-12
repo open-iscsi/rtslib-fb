@@ -886,6 +886,17 @@ class NetworkPortal(CFSNode):
 
     # NetworkPortal public stuff
 
+    def delete(self):
+        '''
+        Delete the NetworkPortal.
+        '''
+        path = "%s/iser" % self.path
+        if os.path.isfile(path):
+            iser_attr = fread(path).strip()
+            if iser_attr == "1":
+                fwrite(path, "0")
+        super(NetworkPortal, self).delete()
+
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
     port = property(_get_port,
