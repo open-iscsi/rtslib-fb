@@ -27,7 +27,6 @@ install: build
 	dh_testdir
 	dh_testroot
 	dh_installdirs 
-	cp -R specs $(install_dir)
 
 build: build-stamp
 build-stamp: 

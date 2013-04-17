@@ -29,8 +29,6 @@ mv html doc/
 %install
 rm -rf %{buildroot}
 %{__python} setup.py install --skip-build --root %{buildroot} --prefix usr
-mkdir -p %{buildroot}/var/target/fabric
-cp specs/* %{buildroot}/var/target/fabric
 mkdir -p %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}
 cp -r doc/* %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}/
 
