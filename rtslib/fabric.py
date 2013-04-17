@@ -354,11 +354,12 @@ class _BaseFabricModule(CFSNode):
     def dump(self):
         d = super(_BaseFabricModule, self).dump()
         d['name'] = self.name
-        for attr in ("userid", "password", "mutual_userid", "mutual_password"):
-            val = getattr(self, "discovery_" + attr, None)
-            if val:
-                d["discovery_" + attr] = val
-        d['discovery_enable_auth'] = self.discovery_enable_auth
+        if self.has_feature("discovery_auth"):
+            for attr in ("userid", "password", "mutual_userid", "mutual_password"):
+                val = getattr(self, "discovery_" + attr, None)
+                if val:
+                    d["discovery_" + attr] = val
+            d['discovery_enable_auth'] = self.discovery_enable_auth
         return d
 
 
