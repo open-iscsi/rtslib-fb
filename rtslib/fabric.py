@@ -476,7 +476,7 @@ class USBGadgetFabricModule(_BaseFabricModule):
 class VhostFabricModule(_BaseFabricModule):
     def __init__(self):
         super(VhostFabricModule, self).__init__('vhost')
-        self.features = ("nexus", "acls")
+        self.features = ("nexus", "acls", "tpgts")
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_vhost"
 
