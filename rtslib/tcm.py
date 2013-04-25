@@ -521,8 +521,8 @@ class FileIOStorageObject(StorageObject):
             self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
 
         else: # a block device
-            if size is not None:
-                raise RTSLibError("Size param not used for block devices.")
+            # size is ignored but we can't raise an exception because
+            # dump() saves it and thus restore() will call us with it.
 
             if block_type != 0:
                 raise RTSLibError("Device is not a TYPE_DISK block device.")
