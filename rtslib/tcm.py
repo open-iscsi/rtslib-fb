@@ -23,10 +23,9 @@ import glob
 import resource
 
 from node import CFSNode
-from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
+from utils import fread, fwrite, RTSLibError, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
-from utils import is_dev_in_use, get_block_type
-from utils import is_disk_partition, get_disk_size
+from utils import is_dev_in_use, get_block_type, get_disk_size
 
 
 class StorageObject(CFSNode):
@@ -534,43 +533,29 @@ class FileIOStorageObject(StorageObject):
 
     def _configure(self, dev, size, wwn, write_back):
         self._check_self()
-        rdev = os.path.realpath(dev)
-        if not os.path.isdir(os.path.dirname(rdev)):
-            raise RTSLibError("The dev parameter must be a path to a "
-                              + "file inside an existing directory, "
-                              + "not %s." % str(os.path.dirname(dev)))
-        if os.path.isdir(rdev):
-            raise RTSLibError("The dev parameter must be a path to a "
-                              + "file or block device not a directory:"
-                              + "%s." % dev)
 
-        block_type = get_block_type(rdev)
-        if block_type is None and not is_disk_partition(rdev):
-            if os.path.exists(rdev) and not os.path.isfile(dev):
+        block_type = get_block_type(dev)
+        if block_type is None: # a file
+            if os.path.exists(os.path.realpath(dev)) and not os.path.isfile(dev):
                 raise RTSLibError("Device %s is neither a file, " % dev
                                   + "a disk partition or a block device.")
-            # It is a file
+
             if size is None:
                 raise RTSLibError("The size parameter is mandatory "
                                   + "when using a file.")
             self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
-        else:
-            # it is a block device or a disk partition
+
+        else: # a block device
             if size is not None:
-                raise RTSLibError("You cannot specify a size for a "
-                                  + "block device.")
-            if block_type != 0 and block_type is not None:
-                raise RTSLibError("Device %s is a block device, " % dev
-                                  + "but not of TYPE_DISK.")
-            if is_dev_in_use(rdev):
-                raise RTSLibError("Cannot configure StorageObject "
-                                  + "because device "
-                                  + "%s is already in use." % dev)
-            if is_disk_partition(rdev):
-                size = get_disk_size(rdev)
-                self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
-            else:
-                self._control("fd_dev_name=%s" % dev)
+                raise RTSLibError("Size param not used for block devices.")
+
+            if block_type != 0:
+                raise RTSLibError("Device is not a TYPE_DISK block device.")
+
+            if is_dev_in_use(dev):
+                raise RTSLibError("Device %s is already in use." % dev)
+
+            self._control("fd_dev_name=%s" % dev)
 
         self._set_udev_path(dev)
 
