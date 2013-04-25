@@ -513,12 +513,11 @@ class FileIOStorageObject(StorageObject):
         block_type = get_block_type(dev)
         if block_type is None: # a file
             if os.path.exists(os.path.realpath(dev)) and not os.path.isfile(dev):
-                raise RTSLibError("Device %s is neither a file, " % dev
-                                  + "a disk partition or a block device.")
+                raise RTSLibError("Path not to a file or block device.")
 
             if size is None:
-                raise RTSLibError("The size parameter is mandatory "
-                                  + "when using a file.")
+                raise RTSLibError("Path is to a file, size needed.")
+
             self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
 
         else: # a block device
