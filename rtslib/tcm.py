@@ -399,21 +399,8 @@ class RDMCPStorageObject(StorageObject):
 
         @param name: The name of the RDMCPStorageObject.
         @type name: string
-        @param size: The size of the ramdrive to create:
-            - If size is an int, it represents a number of bytes
-            - If size is a string, the following units can be used :
-                - B{B} or no unit present for bytes
-                - B{k}, B{K}, B{kB}, B{KB} for kB (kilobytes)
-                - B{m}, B{M}, B{mB}, B{MB} for MB (megabytes)
-                - B{g}, B{G}, B{gB}, B{GB} for GB (gigabytes)
-                - B{t}, B{T}, B{tB}, B{TB} for TB (terabytes)
-                Example: size="1MB" for a one megabytes storage object.
-                - Note that the size will be rounded to the closest multiple
-                  of page size. For instance, a size of 100000 Bytes will be
-                  rounded to 24 pages, really 98304 Bytes.
-                - The base value for kilo is 1024, aka 1kB = 1024B.
-                  Strictly speaking, we use kiB, MiB, etc.
-        @type size: string or int
+        @param size: The size of the ramdrive to create, in bytes.
+        @type size: int
         @param wwn: T10 WWN Unit Serial, will generate if None
         @type wwn: string
         @return: A RDMCPStorageObject object.
@@ -500,19 +487,8 @@ class FileIOStorageObject(StorageObject):
               partitions of a I{TYPE_DISK} device.
               For other device types, use pscsi.
         @type dev: string
-        @param size: The maximum size to allocate for the file.
-        Not used for block devices.
-            - If size is an int, it represents a number of bytes
-            - If size is a string, the following units can be used :
-                - B{B} or no unit present for bytes
-                - B{k}, B{K}, B{kB}, B{KB} for kB (kilobytes)
-                - B{m}, B{M}, B{mB}, B{MB} for MB (megabytes)
-                - B{g}, B{G}, B{gB}, B{GB} for GB (gigabytes)
-                - B{t}, B{T}, B{tB}, B{TB} for TB (terabytes)
-                Example: size="1MB" for a one megabytes storage object.
-                - The base value for kilo is 1024, aka 1kB = 1024B.
-                  Strictly speaking, we use kiB, MiB, etc.
-        @type size: string or int
+        @param size: Size of the object, if not a block device
+        @type size: int
         @param wwn: T10 WWN Unit Serial, will generate if None
         @type wwn: string
         @param write_back: Should we create the StorageObject with
