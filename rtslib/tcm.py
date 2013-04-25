@@ -461,7 +461,7 @@ class StorageObject(CFSNode):
     wwn = property(_get_wwn, _set_wwn,
             doc="Get or set the StorageObject T10 WWN Serial as a string.")
     status = property(_get_status,
-            doc="Get the storage object status, depending on wether or not it"\
+            doc="Get the storage object status, depending on whether or not it"\
                 + "is used by any LUN")
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
