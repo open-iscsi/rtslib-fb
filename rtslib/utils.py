@@ -112,9 +112,9 @@ def is_dev_in_use(path):
 
 def get_disk_size(path):
     '''
-    Returns the size in bytes of a disk-type block device.
+    Returns the size in blocks of a disk-type block device.
     '''
-    return int(fread("/sys/block/%s/size" % os.path.realpath(path)))
+    return int(fread("/sys/block/%s/size" % os.path.basename(os.path.realpath(path))))
 
 def get_block_numbers(path):
     '''

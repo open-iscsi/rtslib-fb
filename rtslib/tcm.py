@@ -550,7 +550,15 @@ class FileIOStorageObject(StorageObject):
 
     def _get_size(self):
         self._check_self()
-        return int(self._parse_info('Size'))
+
+        if self.is_block:
+            return (get_disk_size(self._parse_info('File')) *
+                    int(self._parse_info('SectorSize')))
+        else:
+            return int(self._parse_info('Size'))
+
+    def _is_block(self):
+        return get_block_type(self.udev_path) is not None
 
     # FileIOStorageObject public stuff
 
@@ -558,6 +566,8 @@ class FileIOStorageObject(StorageObject):
             doc="True if write-back, False if write-through (write cache disabled)")
     size = property(_get_size,
             doc="Get the current FileIOStorage size in bytes")
+    is_block = property(_is_block,
+            doc="True if FileIoStorage is backed by a block device instead of a file")
 
     def dump(self):
         d = super(FileIOStorageObject, self).dump()
@@ -640,7 +650,7 @@ class BlockStorageObject(StorageObject):
 
     def _get_size(self):
         # udev_path doesn't work here, what if LV gets renamed?
-        return get_disk_size('/dev/%s' % self._parse_info('device'))
+        return get_disk_size(self._parse_info('device')) * int(self._parse_info('SectorSize'))
 
     def _get_wb_enabled(self):
         self._check_self()
