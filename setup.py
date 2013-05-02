@@ -22,7 +22,7 @@ import rtslib
 
 setup (
     name = 'rtslib-fb',
-    version = '2.1.32',
+    version = '2.1.33',
     description = 'API for Linux kernel SCSI target (aka LIO)',
     license='AGPLv3',
     maintainer='Andy Grover',
