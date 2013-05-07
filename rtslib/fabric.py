@@ -413,7 +413,9 @@ class Qla2xxxFabricModule(_BaseFabricModule):
         return colonize(wwn[4:])
 
     def from_fabric_wwn(self, wwn):
-        return "naa." + wwn[2:]
+        if wwn.startswith("0x"):
+            wwn = wwn[2:]
+        return "naa." + wwn.translate(None, ":")
 
     @property
     def wwns(self):
