@@ -109,7 +109,7 @@ from glob import iglob as glob
 
 from node import CFSNode
 from utils import fread, fwrite, generate_wwn, normalize_wwn, colonize
-from utils import RTSLibError, modprobe
+from utils import RTSLibError, modprobe, ignored
 from target import Target
 
 version_attributes = set(["lio_version", "version"])
@@ -420,7 +420,9 @@ class Qla2xxxFabricModule(_BaseFabricModule):
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            yield self.from_fabric_wwn(fread(wwn_file))
+            with ignored(IOError):
+                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("QMI2"):
+                    yield self.from_fabric_wwn(fread(wwn_file))
 
 
 class SRPTFabricModule(_BaseFabricModule):
@@ -464,7 +466,9 @@ class FCoEFabricModule(_BaseFabricModule):
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            yield self.from_fabric_wwn(fread(wwn_file))
+            with ignored(IOError):
+                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
+                    yield self.from_fabric_wwn(fread(wwn_file))
 
 
 class USBGadgetFabricModule(_BaseFabricModule):
