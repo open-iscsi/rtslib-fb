@@ -421,7 +421,7 @@ class Qla2xxxFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("QMI2"):
+                if not fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
                     yield self.from_fabric_wwn(fread(wwn_file))
 
 
