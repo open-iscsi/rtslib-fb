@@ -162,7 +162,7 @@ class _BaseFabricModule(CFSNode):
 
     def _get_version(self):
         if self.exists:
-            for attr in self.version_attributes:
+            for attr in version_attributes:
                 path = "%s/%s" % (self.path, attr)
                 if os.path.isfile(path):
                     return fread(path)

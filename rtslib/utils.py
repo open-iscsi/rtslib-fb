@@ -21,7 +21,6 @@ import re
 import os
 import stat
 import uuid
-import glob
 import socket
 import subprocess
 from contextlib import contextmanager
@@ -151,7 +150,7 @@ def get_block_type(path):
 
     # is dev a block device?
     try:
-        maj_min = "%s:%s" % get_block_numbers(dev)
+        get_block_numbers(dev)
     except (OSError, IOError):
         return None
 

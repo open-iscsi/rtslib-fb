@@ -22,7 +22,6 @@ import re
 import os
 from glob import iglob as glob
 import uuid
-import shutil
 
 from node import CFSNode
 from os.path import isdir
@@ -362,7 +361,7 @@ class TPG(CFSNode):
             # Not using fabric-specific version of normalize_wwn, since we
             # want to make sure wwn conforms to regexp, but don't check
             # against target wwn_list, since we're setting the "initiator" here.
-            nexus_wwn = normalize_wwn((wwn_type,), wwn)[0]
+            nexus_wwn = normalize_wwn((wwn_type,), nexus_wwn)[0]
         else:
             nexus_wwn = generate_wwn(wwn_type)
 

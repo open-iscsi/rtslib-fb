@@ -736,7 +736,7 @@ class _Backstore(CFSNode):
                     bs_cache[self._lookup_key] = self._index
                     break
             else:
-                raise ExecutionError("No available backstore index")
+                raise RTSLibError("No available backstore index")
 
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
                                         dirp,

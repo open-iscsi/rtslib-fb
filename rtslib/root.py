@@ -71,7 +71,6 @@ class RTSRoot(CFSNode):
 
     def _list_targets(self):
         self._check_self()
-        targets = set([])
         for fabric_module in self.fabric_modules:
             for target in fabric_module.targets:
                 yield target
