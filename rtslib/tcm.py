@@ -754,7 +754,7 @@ class RDMCPStorageObject(StorageObject):
 
     # RDMCPStorageObject private stuff
 
-    def __init__(self, backstore, name, size=None, gen_wwn=True):
+    def __init__(self, backstore, name, size=None, gen_wwn=True, nullio=False):
         '''
         A RDMCPStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{size} is specified, the underlying
@@ -788,6 +788,8 @@ class RDMCPStorageObject(StorageObject):
         @type size: string or int
         @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
         @type gen_wwn: bool
+        @param nullio: If rd should be created w/o backing page store.
+        @type nullio: boolean
         @return: A RDMCPStorageObject object.
         '''
 
@@ -797,7 +799,7 @@ class RDMCPStorageObject(StorageObject):
                                                      name,
                                                      'create')
             try:
-                self._configure(size, gen_wwn)
+                self._configure(size, gen_wwn, nullio)
             except:
                 self.delete()
                 raise
@@ -807,7 +809,7 @@ class RDMCPStorageObject(StorageObject):
                                                      name,
                                                      'lookup')
 
-    def _configure(self, size, wwn):
+    def _configure(self, size, wwn, nullio):
         self._check_self()
         size = convert_human_to_bytes(size)
         # convert to 4k pages
@@ -816,6 +818,8 @@ class RDMCPStorageObject(StorageObject):
             size = 1
 
         self._control("rd_pages=%d" % size)
+        if nullio:
+            self._control("rd_nullio=1")
         self._enable()
         if wwn:
             self.wwn = generate_wwn('unit_serial')
@@ -833,6 +837,14 @@ class RDMCPStorageObject(StorageObject):
         size = self._get_page_size() * self._get_pages()
         return size
 
+    def _get_nullio(self):
+        self._check_self()
+        # nullio not present before 3.10
+        try:
+            return bool(int(self._parse_info('nullio')))
+        except AttributeError:
+            return False
+
     # RDMCPStorageObject public stuff
 
     page_size = property(_get_page_size,
@@ -841,7 +853,8 @@ class RDMCPStorageObject(StorageObject):
             doc="Get the ramdisk number of pages.")
     size = property(_get_size,
             doc="Get the ramdisk size in bytes.")
-
+    nullio = property(_get_nullio,
+            doc="Get the nullio status.")
 
 class FileIOStorageObject(StorageObject):
     '''
