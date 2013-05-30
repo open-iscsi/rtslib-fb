@@ -59,11 +59,41 @@ class StorageObject(CFSNode):
             wwn = generate_wwn('unit_serial')
         self.wwn = wwn
 
+        self._config_pr_aptpl()
+
     def __eq__(self, other):
         return self.plugin == other.plugin and self.name == other.name
 
     def __ne__(self, other):
         return not self == other
+
+    def _config_pr_aptpl(self):
+        """
+        LIO actually *writes* pr aptpl info to the filesystem, so we
+        need to read it in and squirt it back into configfs when we configure
+        the storage object. BLEH.
+        """
+        aptpl_dir = "/var/target/pr"
+
+        try:
+            lines = fread("%s/aptpl_%s" % (aptpl_dir, self.wwn)).split()
+        except:
+            return
+
+        if not lines[0].startswith("PR_REG_START:"):
+            return
+
+	reservations = []
+	for line in lines:
+            if line.startswith("PR_REG_START:"):
+                res_list = []
+            elif line.startswith("PR_REG_END:"):
+                reservations.append(res_list)
+            else:
+                res_list.append(line.strip())
+
+	for res in reservations:
+            fwrite(self.path + "/pr/res_aptpl_metadata", ",".join(res))
 
     @classmethod
     def all(cls, path):
