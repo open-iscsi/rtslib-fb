@@ -54,6 +54,11 @@ class StorageObject(CFSNode):
             self._backstore.delete()
             raise
 
+    def _configure(self, wwn=None):
+        if not wwn:
+            wwn = generate_wwn('unit_serial')
+        self.wwn = wwn
+
     def __eq__(self, other):
         return self.plugin == other.plugin and self.name == other.name
 
@@ -320,6 +325,12 @@ class PSCSIStorageObject(StorageObject):
         self._set_udev_path(udev_path)
         self._enable()
 
+        super(PSCSIStorageObject, self)._configure()
+
+    def _set_wwn(self, wwn):
+        # pscsi doesn't support setting wwn
+        pass
+
     def _get_model(self):
         self._check_self()
         info = fread("%s/info" % self.path)
@@ -354,7 +365,7 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject public stuff
 
-    wwn = property(StorageObject._get_wwn,
+    wwn = property(StorageObject._get_wwn, _set_wwn,
             doc="Get the StorageObject T10 WWN Unit Serial as a string."
             + " You cannot set it for pscsi-backed StorageObjects.")
     model = property(_get_model,
@@ -430,9 +441,8 @@ class RDMCPStorageObject(StorageObject):
         if nullio:
             self._control("rd_nullio=1")
         self._enable()
-        if not wwn:
-            wwn = generate_wwn('unit_serial')
-        self.wwn = wwn
+
+        super(RDMCPStorageObject, self)._configure(wwn)
 
     def _get_page_size(self):
         self._check_self()
@@ -558,9 +568,7 @@ class FileIOStorageObject(StorageObject):
 
         self._enable()
 
-        if not wwn:
-            wwn = generate_wwn('unit_serial')
-        self.wwn = wwn
+        super(FileIOStorageObject, self)._configure(wwn)
 
     def _get_wb_enabled(self):
         self._check_self()
@@ -654,9 +662,7 @@ class BlockStorageObject(StorageObject):
         if write_back:
             self.set_attribute("emulate_write_cache", 1)
 
-        if not wwn:
-            wwn = generate_wwn('unit_serial')
-        self.wwn = wwn
+        super(BlockStorageObject, self)._configure(wwn)
 
     def _get_major(self):
         self._check_self()
