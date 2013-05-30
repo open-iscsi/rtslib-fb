@@ -87,7 +87,8 @@ class StorageObject(CFSNode):
             path = "%s/wwn/vpd_unit_serial" % self.path
             return fread(path).partition(":")[2].strip()
         else:
-            return ""
+            raise RTSLibError("Cannot read a T10 WWN Unit Serial from "
+                              + "an unconfigured StorageObject.")
 
     def _set_wwn(self, wwn):
         self._check_self()
