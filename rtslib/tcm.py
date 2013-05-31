@@ -245,13 +245,13 @@ class StorageObject(CFSNode):
         '''
 
         self._check_self()
-        path = "%s/info" % self.path
+        path = "%s/enable" % self.path
         try:
-            fread(path)
+            configured = fread(path)
         except IOError:
-            return False
-        else:
             return True
+
+        return bool(int(configured))
 
     version = property(_get_version,
             doc="Get the version of the StorageObject's backstore")
