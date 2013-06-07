@@ -83,8 +83,8 @@ class StorageObject(CFSNode):
         if not lines[0].startswith("PR_REG_START:"):
             return
 
-	reservations = []
-	for line in lines:
+        reservations = []
+        for line in lines:
             if line.startswith("PR_REG_START:"):
                 res_list = []
             elif line.startswith("PR_REG_END:"):
@@ -92,7 +92,7 @@ class StorageObject(CFSNode):
             else:
                 res_list.append(line.strip())
 
-	for res in reservations:
+        for res in reservations:
             fwrite(self.path + "/pr/res_aptpl_metadata", ",".join(res))
 
     @classmethod
