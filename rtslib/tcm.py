@@ -25,7 +25,7 @@ import resource
 from node import CFSNode
 from utils import fread, fwrite, RTSLibError, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
-from utils import is_dev_in_use, get_block_type, get_block_size
+from utils import is_dev_in_use, get_blockdev_type, get_blockdev_size
 
 
 class StorageObject(CFSNode):
@@ -568,7 +568,7 @@ class FileIOStorageObject(StorageObject):
     def _configure(self, dev, size, wwn, write_back):
         self._check_self()
 
-        block_type = get_block_type(dev)
+        block_type = get_blockdev_type(dev)
         if block_type is None: # a file
             if os.path.exists(os.path.realpath(dev)) and not os.path.isfile(dev):
                 raise RTSLibError("Path not to a file or block device.")
@@ -608,13 +608,13 @@ class FileIOStorageObject(StorageObject):
         self._check_self()
 
         if self.is_block:
-            return (get_block_size(self._parse_info('File')) *
+            return (get_blockdev_size(self._parse_info('File')) *
                     int(self._parse_info('SectorSize')))
         else:
             return int(self._parse_info('Size'))
 
     def _is_block(self):
-        return get_block_type(self.udev_path) is not None
+        return get_blockdev_type(self.udev_path) is not None
 
     # FileIOStorageObject public stuff
 
@@ -679,7 +679,7 @@ class BlockStorageObject(StorageObject):
 
     def _configure(self, dev, wwn, readonly, write_back):
         self._check_self()
-        if get_block_type(dev) != 0:
+        if get_blockdev_type(dev) != 0:
             raise RTSLibError("Device is not a TYPE_DISK block device.")
         if is_dev_in_use(dev):
             raise RTSLibError("Cannot configure StorageObject because "
@@ -704,7 +704,7 @@ class BlockStorageObject(StorageObject):
 
     def _get_size(self):
         # udev_path doesn't work here, what if LV gets renamed?
-        return get_block_size(self._parse_info('device')) * int(self._parse_info('SectorSize'))
+        return get_blockdev_size(self._parse_info('device')) * int(self._parse_info('SectorSize'))
 
     def _get_wb_enabled(self):
         self._check_self()

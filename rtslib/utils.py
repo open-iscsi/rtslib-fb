@@ -109,7 +109,7 @@ def is_dev_in_use(path):
         os.close(file_fd)
         return False
 
-def get_block_size(path):
+def get_blockdev_size(path):
     '''
     Returns the size in blocks of a disk-type block device.
     '''
@@ -121,31 +121,22 @@ def get_block_size(path):
     else:
         return int(fread("/sys/block/%s/%s/size" % (m.groups()[0], m.group())))
 
-def get_block_numbers(path):
-    '''
-    Returns a (major,minor) tuple for the block device found at path.
-    '''
-    mode = os.stat(os.path.realpath(path))
+get_block_size = get_blockdev_size
 
-    if not stat.S_ISBLK(mode[stat.ST_MODE]):
-        raise IOError("Not a block device")
-
-    return (os.major(mode.st_rdev), os.minor(mode.st_rdev))
-
-def get_block_type(path):
+def get_blockdev_type(path):
     '''
     This function returns a block device's type.
     Example: 0 is TYPE_DISK
     If no match is found, None is returned.
 
     >>> from rtslib.utils import *
-    >>> get_block_type("/dev/sda")
+    >>> get_blockdev_type("/dev/sda")
     0
-    >>> get_block_type("/dev/sr0")
+    >>> get_blockdev_type("/dev/sr0")
     5
-    >>> get_block_type("/dev/scd0")
+    >>> get_blockdev_type("/dev/scd0")
     5
-    >>> get_block_type("/dev/nodevicehere") is None
+    >>> get_blockdev_type("/dev/nodevicehere") is None
     True
 
     @param path: path to the block device
@@ -156,8 +147,11 @@ def get_block_type(path):
 
     # is dev a block device?
     try:
-        get_block_numbers(dev)
-    except (OSError, IOError):
+        mode = os.stat(dev)
+    except OSError:
+        return None
+
+    if not stat.S_ISBLK(mode[stat.ST_MODE]):
         return None
 
     # assume disk if device/type is missing
@@ -166,6 +160,8 @@ def get_block_type(path):
         disk_type = int(fread("/sys/block/%s/device/type" % os.path.basename(dev)))
 
     return disk_type
+
+get_block_type = get_blockdev_type
 
 def convert_scsi_path_to_hctl(path):
     '''
