@@ -25,7 +25,7 @@ import resource
 from node import CFSNode
 from utils import fread, fwrite, RTSLibError, generate_wwn
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
-from utils import is_dev_in_use, get_block_type, get_disk_size
+from utils import is_dev_in_use, get_block_type, get_block_size
 
 
 class StorageObject(CFSNode):
@@ -608,7 +608,7 @@ class FileIOStorageObject(StorageObject):
         self._check_self()
 
         if self.is_block:
-            return (get_disk_size(self._parse_info('File')) *
+            return (get_block_size(self._parse_info('File')) *
                     int(self._parse_info('SectorSize')))
         else:
             return int(self._parse_info('Size'))
@@ -704,7 +704,7 @@ class BlockStorageObject(StorageObject):
 
     def _get_size(self):
         # udev_path doesn't work here, what if LV gets renamed?
-        return get_disk_size(self._parse_info('device')) * int(self._parse_info('SectorSize'))
+        return get_block_size(self._parse_info('device')) * int(self._parse_info('SectorSize'))
 
     def _get_wb_enabled(self):
         self._check_self()
