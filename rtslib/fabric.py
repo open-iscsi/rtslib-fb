@@ -27,8 +27,8 @@ Available parameters
 
 * features
 Lists the target fabric available features. Default value:
-("discovery_auth", "acls", "acls_auth", "nps")
-example: features = ("discovery_auth", "acls", "acls_auth")
+("discovery_auth", "acls", "auth", "nps")
+example: features = ("discovery_auth", "acls", "auth")
 example: features = () # no features supported
 
 Detail of features:
@@ -43,8 +43,9 @@ Detail of features:
   * acls
   The target's TPGTs support explicit initiator ACLs.
 
-  * acls_auth
-  The target's TPGT's ACLs support per-ACL initiator authentication.
+  * auth
+  The target's TPGT's support per-TPG authentication, and
+  the target's TPGT's ACLs support per-ACL initiator authentication.
 
   * nps
   The TPGTs support iSCSI-like IPv4/IPv6 network portals, using IP:PORT
@@ -138,7 +139,7 @@ class _BaseFabricModule(CFSNode):
         self.name = str(name)
         self.spec_file = "N/A"
         self._path = "%s/%s" % (self.configfs_dir, self.name)
-        self.features = ('discovery_auth', 'acls', 'acls_auth', 'nps', 'tpgts')
+        self.features = ('discovery_auth', 'acls', 'auth', 'nps', 'tpgts')
         self.wwn_types = ('free',)
         self.kernel_module = "%s_target_mod" % self.name
 
@@ -151,6 +152,9 @@ class _BaseFabricModule(CFSNode):
         super(_BaseFabricModule, self)._check_self()
 
     def has_feature(self, feature):
+        # Handle a renamed feature
+        if feature == 'acls_auth':
+            feature = 'auth'
         return feature in self.features
 
     def _list_targets(self):

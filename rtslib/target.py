@@ -489,7 +489,7 @@ class TPG(CFSNode):
         d['luns'] = [lun.dump() for lun in self.luns]
         d['portals'] = [portal.dump() for portal in self.network_portals]
         d['node_acls'] =  [acl.dump() for acl in self.node_acls]
-        if self.has_feature("acls_auth"):
+        if self.has_feature("auth"):
             for attr in ("userid", "password", "mutual_userid", "mutual_password"):
                 val = getattr(self, "chap_" + attr, None)
                 if val:
@@ -951,7 +951,7 @@ class NodeACL(CFSNode):
         d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
         if self.tag:
             d['tag'] = self.tag
-        if self.has_feature("acls_auth"):
+        if self.has_feature("auth"):
             for attr in ("userid", "password", "mutual_userid", "mutual_password"):
                 val = getattr(self, "chap_" + attr, None)
                 if val:
