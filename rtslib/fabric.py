@@ -46,6 +46,7 @@ Detail of features:
   * auth
   The target's TPGT's support per-TPG authentication, and
   the target's TPGT's ACLs support per-ACL initiator authentication.
+  Fabrics that support auth must support acls.
 
   * nps
   The TPGTs support iSCSI-like IPv4/IPv6 network portals, using IP:PORT
