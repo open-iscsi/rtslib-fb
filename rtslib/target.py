@@ -479,7 +479,16 @@ class TPG(CFSNode):
     chap_mutual_password = property(partial(_get_auth_attr, attribute='auth/password_mutual', ignore=True),
                                     partial(_set_auth_attr, attribute='auth/password_mutual', ignore=True),
                                     doc="Set or get the initiator CHAP auth password.")
-    authenticate_target = property(partial(_get_auth_attr, attribute='auth/authenticate_target', ignore=True),
+
+    def _get_authenticate_target(self):
+        self._check_self()
+        path = "%s/auth/authenticate_target" % self.path
+        try:
+            return bool(int(fread(path)))
+        except:
+            return None
+
+    authenticate_target = property(_get_authenticate_target,
                                    doc="Get the boolean authenticate target flag.")
 
     def dump(self):
@@ -942,7 +951,13 @@ class NodeACL(CFSNode):
     chap_mutual_password = property(partial(_get_auth_attr, attribute='auth/password_mutual'),
                                     partial(_set_auth_attr, attribute='auth/password_mutual'),
                                     doc="Set or get the initiator CHAP auth password.")
-    authenticate_target = property(partial(_get_auth_attr, attribute='auth/authenticate_target'),
+
+    def _get_authenticate_target(self):
+        self._check_self()
+        path = "%s/auth/authenticate_target" % self.path
+        return bool(int(fread(path)))
+
+    authenticate_target = property(_get_authenticate_target,
                                    doc="Get the boolean authenticate target flag.")
 
     def dump(self):
