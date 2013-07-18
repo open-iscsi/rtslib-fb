@@ -29,7 +29,9 @@ from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import fread, fwrite, normalize_wwn, generate_wwn
 from utils import dict_remove, set_attributes, set_parameters, ignored
+from utils import _get_auth_attr, _set_auth_attr
 import tcm
+from functools import partial
 
 class Target(CFSNode):
     '''
@@ -465,6 +467,21 @@ class TPG(CFSNode):
     nexus = property(_get_nexus, _set_nexus,
                      doc="Get or set (once) the TPG's Nexus is used.")
 
+    chap_userid = property(partial(_get_auth_attr, attribute='auth/userid', ignore=True),
+                           partial(_set_auth_attr, attribute='auth/userid', ignore=True),
+                           doc="Set or get the initiator CHAP auth userid.")
+    chap_password = property(partial(_get_auth_attr, attribute='auth/password', ignore=True),
+                             partial(_set_auth_attr, attribute='auth/password', ignore=True),
+                             doc="Set or get the initiator CHAP auth password.")
+    chap_mutual_userid = property(partial(_get_auth_attr, attribute='auth/userid_mutual', ignore=True),
+                                  partial(_set_auth_attr, attribute='auth/userid_mutual', ignore=True),
+                                  doc="Set or get the initiator CHAP auth userid.")
+    chap_mutual_password = property(partial(_get_auth_attr, attribute='auth/password_mutual', ignore=True),
+                                    partial(_set_auth_attr, attribute='auth/password_mutual', ignore=True),
+                                    doc="Set or get the initiator CHAP auth password.")
+    authenticate_target = property(partial(_get_auth_attr, attribute='auth/authenticate_target', ignore=True),
+                                   doc="Get the boolean authenticate target flag.")
+
     def dump(self):
         d = super(TPG, self).dump()
         d['tag'] = self.tag
@@ -472,6 +489,11 @@ class TPG(CFSNode):
         d['luns'] = [lun.dump() for lun in self.luns]
         d['portals'] = [portal.dump() for portal in self.network_portals]
         d['node_acls'] =  [acl.dump() for acl in self.node_acls]
+        if self.has_feature("acls_auth"):
+            for attr in ("userid", "password", "mutual_userid", "mutual_password"):
+                val = getattr(self, "chap_" + attr, None)
+                if val:
+                    d["chap_" + attr] = val
         return d
 
 
@@ -799,70 +821,6 @@ class NodeACL(CFSNode):
     def _get_parent_tpg(self):
         return self._parent_tpg
 
-    def _get_chap_mutual_password(self):
-        self._check_self()
-        path = "%s/auth/password_mutual" % self.path
-        value = fread(path)
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_mutual_password(self, password):
-        self._check_self()
-        path = "%s/auth/password_mutual" % self.path
-        if password.strip() == '':
-            password = "NULL"
-        fwrite(path, "%s" % password)
-
-    def _get_chap_mutual_userid(self):
-        self._check_self()
-        path = "%s/auth/userid_mutual" % self.path
-        value = fread(path)
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_mutual_userid(self, userid):
-        self._check_self()
-        path = "%s/auth/userid_mutual" % self.path
-        if userid.strip() == '':
-            userid = "NULL"
-        fwrite(path, "%s" % userid)
-
-    def _get_chap_password(self):
-        self._check_self()
-        path = "%s/auth/password" % self.path
-        value = fread(path)
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_password(self, password):
-        self._check_self()
-        path = "%s/auth/password" % self.path
-        if password.strip() == '':
-            password = "NULL"
-        fwrite(path, "%s" % password)
-
-    def _get_chap_userid(self):
-        self._check_self()
-        path = "%s/auth/userid" % self.path
-        value = fread(path)
-        if value == "NULL":
-            return ''
-        else:
-            return value
-
-    def _set_chap_userid(self, userid):
-        self._check_self()
-        path = "%s/auth/userid" % self.path
-        if userid.strip() == '':
-            userid = "NULL"
-        fwrite(path, "%s" % userid)
-
     def _get_tcq_depth(self):
         self._check_self()
         path = "%s/cmdsn_depth" % self.path
@@ -893,14 +851,6 @@ class NodeACL(CFSNode):
                 fwrite("%s/tag" % self.path, 'NULL')
             else:
                 fwrite("%s/tag" % self.path, tag_str)
-
-    def _get_authenticate_target(self):
-        self._check_self()
-        path = "%s/auth/authenticate_target" % self.path
-        if fread(path) == "1":
-            return True
-        else:
-            return False
 
     def _list_mapped_luns(self):
         self._check_self()
@@ -966,19 +916,6 @@ class NodeACL(CFSNode):
         return MappedLUN(self, mapped_lun=mapped_lun, tpg_lun=tpg_lun,
                          write_protect=write_protect)
 
-    chap_userid = property(_get_chap_userid, _set_chap_userid,
-                           doc="Set or get the initiator CHAP auth userid.")
-    chap_password = property(_get_chap_password, _set_chap_password,
-                             doc=\
-                             "Set or get the initiator CHAP auth password.")
-    chap_mutual_userid = property(_get_chap_mutual_userid,
-                                  _set_chap_mutual_userid,
-                                  doc=\
-                                  "Set or get the mutual CHAP auth userid.")
-    chap_mutual_password = property(_get_chap_mutual_password,
-                                    _set_chap_mutual_password,
-                                    doc=\
-                                    "Set or get the mutual CHAP password.")
     tcq_depth = property(_get_tcq_depth, _set_tcq_depth,
                          doc="Set or get the TCQ depth for the initiator " \
                          + "sessions matching this NodeACL.")
@@ -988,24 +925,37 @@ class NodeACL(CFSNode):
             doc="Get the parent TPG object.")
     node_wwn = property(_get_node_wwn,
             doc="Get the node wwn.")
-    authenticate_target = property(_get_authenticate_target,
-            doc="Get the boolean authenticate target flag.")
     mapped_luns = property(_list_mapped_luns,
             doc="Get the list of all MappedLUN objects in this NodeACL.")
     session = property(_get_session,
             doc="Gives a snapshot of the current session or C{None}")
 
+    chap_userid = property(partial(_get_auth_attr, attribute='auth/userid'),
+                           partial(_set_auth_attr, attribute='auth/userid'),
+                           doc="Set or get the initiator CHAP auth userid.")
+    chap_password = property(partial(_get_auth_attr, attribute='auth/password'),
+                             partial(_set_auth_attr, attribute='auth/password',),
+                             doc="Set or get the initiator CHAP auth password.")
+    chap_mutual_userid = property(partial(_get_auth_attr, attribute='auth/userid_mutual'),
+                                  partial(_set_auth_attr, attribute='auth/userid_mutual'),
+                                  doc="Set or get the initiator CHAP auth userid.")
+    chap_mutual_password = property(partial(_get_auth_attr, attribute='auth/password_mutual'),
+                                    partial(_set_auth_attr, attribute='auth/password_mutual'),
+                                    doc="Set or get the initiator CHAP auth password.")
+    authenticate_target = property(partial(_get_auth_attr, attribute='auth/authenticate_target'),
+                                   doc="Get the boolean authenticate target flag.")
+
     def dump(self):
         d = super(NodeACL, self).dump()
+        d['node_wwn'] = self.node_wwn
+        d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
+        if self.tag:
+            d['tag'] = self.tag
         if self.has_feature("acls_auth"):
             for attr in ("userid", "password", "mutual_userid", "mutual_password"):
                 val = getattr(self, "chap_" + attr, None)
                 if val:
                     d["chap_" + attr] = val
-        d['node_wwn'] = self.node_wwn
-        d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
-        if self.tag:
-            d['tag'] = self.tag
         return d
 
 

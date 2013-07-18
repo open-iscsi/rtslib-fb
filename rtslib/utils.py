@@ -366,6 +366,48 @@ def ignored(*exceptions):
     except exceptions:
         pass
 
+#
+# These two functions are meant to be used with functools.partial and
+# properties.
+#
+# 'ignore=True' will silently return None if the attribute is not present.
+# This is good for attributes only present in some kernel versions.
+#
+# All curried arguments should be keyword args.
+#
+# These should only be used for attributes that follow the convention of
+# "NULL" having a special sentinel value, such as auth attributes, and
+# that return a string.
+#
+def _get_auth_attr(self, attribute, ignore=False):
+    self._check_self()
+    path = "%s/%s" % (self.path, attribute)
+    try:
+        value = fread(path)
+    except:
+        if not ignore:
+            raise
+        return None
+    if value == "NULL":
+        return ''
+    else:
+        return value
+
+# Auth params take the string "NULL" to unset the attribute
+def _set_auth_attr(self, value, attribute, ignore=False):
+    self._check_self()
+    path = "%s/%s" % (self.path, attribute)
+    value = value.strip()
+    if value == "NULL":
+        raise ValueError("'NULL' is not a permitted value")
+    if value == '':
+        value = "NULL"
+    try:
+        fwrite(path, "%s" % value)
+    except:
+        if not ignore:
+            raise
+
 def set_attributes(obj, attr_dict):
     for name, value in attr_dict.iteritems():
         # Setting some attributes may return an error, before kernel 3.3
