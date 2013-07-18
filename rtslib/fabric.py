@@ -303,6 +303,12 @@ class _BaseFabricModule(CFSNode):
             enable = 0
         fwrite(path, "%s" % enable)
 
+    def _get_discovery_authenticate_target(self):
+        self._check_self()
+        self._assert_feature('discovery_auth')
+        path = "%s/discovery_auth/authenticate_target" % self.path
+        return bool(int(fread(path)))
+
     def _get_wwns(self):
         '''
         Returns either iterable or None. None means fabric allows
@@ -330,6 +336,8 @@ class _BaseFabricModule(CFSNode):
             property(_get_discovery_enable_auth,
                      _set_discovery_enable_auth,
                      doc="Set or get the discovery enable_auth flag.")
+    discovery_authenticate_target = property(_get_discovery_authenticate_target,
+            doc="Get the boolean discovery authenticate target flag.")
 
     targets = property(_list_targets,
                        doc="Get the list of target objects.")
