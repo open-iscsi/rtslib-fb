@@ -8,7 +8,7 @@ generic SCSI target, present in 3.x Linux kernel versions.
 
 rtslib-fb development
 ---------------------
-rtslib-fb is licensed under the Affero GPLv3. Contributions are welcome.
+rtslib-fb is licensed under the Apache 2.0 license. Contributions are welcome.
 
 Since rtslib-fb is used most often with targetcli-fb, the targetcli-fb
 mailing should be used for rtslib-fb discussion.
