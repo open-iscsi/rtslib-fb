@@ -115,11 +115,15 @@ def get_blockdev_size(path):
     '''
     name = os.path.basename(os.path.realpath(path))
 
-    m = re.search(r'([a-z]+)(\d+)$', name)
-    if not m:
+    try:
         return int(fread("/sys/block/%s/size" % name))
-    else:
-        return int(fread("/sys/block/%s/%s/size" % (m.groups()[0], m.group())))
+    except IOError:
+        # Maybe it's a partition?
+        m = re.search(r'([a-z_-]+)(\d+)$', name)
+        if m:
+            return int(fread("/sys/block/%s/%s/size" % (m.groups()[0], m.group())))
+        else:
+            raise
 
 get_block_size = get_blockdev_size
 
