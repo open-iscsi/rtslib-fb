@@ -219,6 +219,16 @@ class Target(CFSNode):
                             err_func("Could not set nodeacl %s attribute '%s'" %
                                      (acl['node_wwn'], name))
 
+            dict_remove(tpg, ('luns', 'portals', 'node_acls', 'tag',
+                              'attributes', 'parameters', 'enable'))
+            for name, value in tpg.iteritems():
+                if value:
+                    try:
+                        setattr(tpg_obj, name, value)
+                    except:
+                        err_func("Could not set tpg %s attribute '%s'" %
+                                 (tpg_obj.tag, name))
+
     def dump(self):
         d = super(Target, self).dump()
         d['wwn'] = self.wwn
