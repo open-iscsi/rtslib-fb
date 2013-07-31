@@ -77,7 +77,7 @@ class RTSRoot(CFSNode):
 
     def _list_storage_objects(self):
         self._check_self()
-        for so in StorageObject.all(self.path):
+        for so in StorageObject.all():
             yield so
 
     def _list_tpgs(self):

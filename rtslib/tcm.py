@@ -96,8 +96,8 @@ class StorageObject(CFSNode):
             fwrite(self.path + "/pr/res_aptpl_metadata", ",".join(res))
 
     @classmethod
-    def all(cls, path):
-        for so_dir in glob.glob("%s/core/*_*/*" % path):
+    def all(cls):
+        for so_dir in glob.glob("%s/core/*_*/*" % cls.configfs_dir):
             if os.path.isdir(so_dir):
                 yield cls.so_from_path(so_dir)
 
