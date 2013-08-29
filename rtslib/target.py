@@ -25,7 +25,6 @@ import uuid
 
 from node import CFSNode
 from os.path import isdir
-from doctest import testmod
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import fread, fwrite, normalize_wwn, generate_wwn
 from utils import dict_remove, set_attributes, set_parameters, ignored
@@ -1182,6 +1181,7 @@ class MappedLUN(CFSNode):
 
 
 def _test():
+    from doctest import testmod
     testmod()
 
 if __name__ == "__main__":
