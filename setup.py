@@ -16,17 +16,15 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import re
 from distutils.core import setup
-import rtslib
 
 setup (
     name = 'rtslib-fb',
     version = '2.1.37',
     description = 'API for Linux kernel SCSI target (aka LIO)',
-    license='AGPLv3',
-    maintainer='Andy Grover',
-    maintainer_email='agrover@redhat.com',
-    url='http://github.com/agrover/rtslib-fb',
-    packages=['rtslib'],
+    license = 'Apache 2.0',
+    maintainer = 'Andy Grover',
+    maintainer_email = 'agrover@redhat.com',
+    url = 'http://github.com/agrover/rtslib-fb',
+    packages = ['rtslib'],
     )
