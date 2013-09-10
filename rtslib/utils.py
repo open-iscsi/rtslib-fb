@@ -119,9 +119,14 @@ def get_blockdev_size(path):
         return int(fread("/sys/block/%s/size" % name))
     except IOError:
         # Maybe it's a partition?
-        m = re.search(r'([a-z_-]+)(\d+)$', name)
+        m = re.search(r'^([a-z0-9_-]+)(\d+)$', name)
         if m:
-            return int(fread("/sys/block/%s/%s/size" % (m.groups()[0], m.group())))
+            # If disk name ends with a digit, Linux sticks a 'p' between it and
+            # the partition number in the blockdev name.
+            disk = m.groups()[0]
+            if disk[-1] == 'p' and disk[-2].isdigit():
+                disk = disk[:-1]
+            return int(fread("/sys/block/%s/%s/size" % (disk, m.group())))
         else:
             raise
 
