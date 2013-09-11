@@ -98,12 +98,12 @@ Sets the name of the kernel module implementing the fabric modules. If
 not specified, it will be assumed to be MODNAME_target_mod, where
 MODNAME is the name of the fabric module, from the fabrics list. Note
 that you must not specify any .ko or such extension here.
-Example: kernel_module = "my_module"
+Example: self.kernel_module = "my_module"
 
-* configfs_group
-Sets the name of the configfs group used by the fabric module. Defaults to the
+* _path
+Sets the path of the configfs group used by the fabric module. Defaults to the
 name of the module from the fabrics list.
-Example: configfs_group = "iscsi"
+Example: self._path = "%s/%s" % (self.configfs_dir, "my_cfs_dir")
 
 '''
 
@@ -403,8 +403,8 @@ class FCoEFabricModule(_BaseFabricModule):
 
         self.features = ("acls",)
         self.kernel_module = "tcm_fc"
-        self.configfs_group = "fc"
         self.wwn_types=('naa',)
+        self._path = "%s/%s" % (self.configfs_dir, "fc")
 
     def to_fabric_wwn(self, wwn):
         # strip 'naa.' and add colons
