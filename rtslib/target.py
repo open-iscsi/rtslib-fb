@@ -952,7 +952,7 @@ class NodeACL(CFSNode):
         set_attributes(acl_obj, acl.get('attributes', {}))
 
         for mlun in acl.get('mapped_luns', []):
-            MappedLun.setup(tpg_obj, acl_obj, mlun, err_func)
+            MappedLUN.setup(tpg_obj, acl_obj, mlun, err_func)
 
         dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
         for name, value in acl.iteritems():
