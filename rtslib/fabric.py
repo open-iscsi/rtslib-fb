@@ -336,10 +336,10 @@ class SBPFabricModule(_BaseFabricModule):
         self.kernel_module = "sbp_target"
 
     def to_fabric_wwn(self, wwn):
-        return "0x" + wwn[4:]
+        return wwn[4:]
 
     def from_fabric_wwn(self, wwn):
-        return "eui." + wwn[2:]
+        return "eui." + wwn
 
     # return 1st local guid (is unique) so our share is named uniquely
     @property
@@ -347,7 +347,10 @@ class SBPFabricModule(_BaseFabricModule):
         for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
             if bool(int(fread(fname))):
                 guid_path = os.path.dirname(fname) + "/guid"
-                yield self.from_fabric_wwn(fread(guid_path))
+                tmp = fread(guid_path)
+                if tmp[0:2] == '0x':
+                    tmp = tmp[2:]
+                yield self.from_fabric_wwn(tmp)
                 break
 
 
