@@ -404,7 +404,6 @@ class TPG(CFSNode):
     @classmethod
     def setup(cls, t_obj, tpg, err_func):
         tpg_obj = cls(t_obj, tag=tpg.get("tag", None))
-        tpg_obj.enable = tpg.get('enable', True)
         set_attributes(tpg_obj, tpg.get('attributes', {}))
         set_parameters(tpg_obj, tpg.get('parameters', {}))
 
@@ -417,6 +416,7 @@ class TPG(CFSNode):
         for acl in tpg.get('node_acls', []):
             NodeACL.setup(tpg_obj, acl, err_func)
 
+        tpg_obj.enable = tpg.get('enable', True)
         dict_remove(tpg, ('luns', 'portals', 'node_acls', 'tag',
                           'attributes', 'parameters', 'enable'))
         for name, value in tpg.iteritems():
