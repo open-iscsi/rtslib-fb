@@ -35,7 +35,7 @@ build-stamp:
 	$(setup) build --build-base $(build_dir) install \
 		--no-compile --install-purelib $(install_dir)/lib/rtslib \
 		--install-scripts $(install_dir)/bin
-	echo "2.5, 2.6" > $(install_dir)/lib/rtslib/.version
+	echo "2.6, 2.7" > $(install_dir)/lib/rtslib/.version
 	mkdir -p $(build_dir) doc
 	cd $(build_dir); epydoc --no-sourcecode --html -n $(name) \
 		--exclude configobj ../$(name)/*.py

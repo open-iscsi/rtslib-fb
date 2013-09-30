@@ -2,12 +2,12 @@ Source: rtslib
 Section: python
 Priority: optional
 Maintainer: Jerome Martin <jxm@risingtidesystems.com>
-Build-Depends: debhelper(>= 7.0.1), python, python-epydoc, python-ipaddr, python-netifaces, python-configobj
+Build-Depends: debhelper(>= 7.0.1), python (>= 2.6)|python2.6|python2.7, python-epydoc, python-ipaddr, python-netifaces, python-configobj
 Standards-Version: 3.8.1
 
 Package: python-rtslib
 Architecture: all
-Depends: python (>= 2.5)|python2.5|python2.6, python-configobj, python-netifaces, python-ipaddr
+Depends: python (>= 2.6)|python2.6|python2.7, python-configobj, python-netifaces, python-ipaddr
 Suggests: rtslib-doc
 Conflicts: rtsadmin-frozen
 Description: RisingTide Systems generic SCSI target API in python.
