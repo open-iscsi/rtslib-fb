@@ -2,7 +2,7 @@ Source: rtslib
 Section: python
 Priority: optional
 Maintainer: Jerome Martin <jxm@risingtidesystems.com>
-Build-Depends: debhelper(>= 7.0.1), python, python-epydoc
+Build-Depends: debhelper(>= 7.0.1), python, python-epydoc, python-ipaddr, python-netifaces, python-configobj
 Standards-Version: 3.8.1
 
 Package: python-rtslib
