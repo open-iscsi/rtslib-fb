@@ -471,6 +471,14 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
             return os.path.realpath(path)
     return ''
 
+def convert_bytes_to_human(size):
+    if not size:
+        return ""
+    for x in ['bytes','K','M','G','T']:
+        if size < 1024.0:
+            return "(%3.1f%s) " % (size, x)
+        size /= 1024.0
+
 def convert_human_to_bytes(hsize, kilo=1024):
     '''
     This function converts human-readable amounts of bytes to bytes.
