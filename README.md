@@ -6,6 +6,8 @@ A Python object API for managing the Linux LIO kernel target
 rtslib-fb is an object-based Python library for configuring the LIO
 generic SCSI target, present in 3.x Linux kernel versions.
 
+This runs with Python 2 and 2to3 is run by setup.py to run on Python 3.
+
 rtslib-fb development
 ---------------------
 rtslib-fb is licensed under the Apache 2.0 license. Contributions are welcome.
