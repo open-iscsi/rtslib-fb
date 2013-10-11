@@ -111,12 +111,18 @@ def is_dev_in_use(path):
 
 def get_blockdev_size(path):
     '''
-    Returns the size in blocks of a disk-type block device.
+    Returns the size in logical blocks of a disk-type block device.
     '''
     name = os.path.basename(os.path.realpath(path))
 
+    # size is in 512-byte sectors, we want to return number of logical blocks
+    def get_size(path):
+        sect_size = int(fread("%s/size" % path))
+        logical_block_size = int(fread("%s/queue/logical_block_size" % path))
+        return sect_size / (logical_block_size / 512)
+
     try:
-        return int(fread("/sys/block/%s/size" % name))
+        return get_size("/sys/block/%s" % name)
     except IOError:
         # Maybe it's a partition?
         m = re.search(r'^([a-z0-9_-]+)(\d+)$', name)
@@ -126,7 +132,7 @@ def get_blockdev_size(path):
             disk = m.groups()[0]
             if disk[-1] == 'p' and disk[-2].isdigit():
                 disk = disk[:-1]
-            return int(fread("/sys/block/%s/%s/size" % (disk, m.group())))
+            return get_size("/sys/block/%s/%s" % (disk, m.group()))
         else:
             raise
 
