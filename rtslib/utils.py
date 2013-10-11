@@ -262,7 +262,7 @@ def generate_wwn(wwn_type):
         return str(uuid.uuid4())
     elif wwn_type == 'iqn':
         localname = socket.gethostname().split(".")[0]
-        localarch = os.uname()[4].replace("_","")
+        localarch = os.uname()[4].replace("_", "")
         prefix = "iqn.2003-01.org.linux-iscsi.%s.%s" % (localname, localarch)
         prefix = prefix.strip().lower()
         serial = "sn.%s" % str(uuid.uuid4())[24:]
@@ -311,15 +311,15 @@ def normalize_wwn(wwn_types, wwn, possible_wwns=None):
     Returns (normalized_wwn, wwn_type), or exception if invalid wwn.
     '''
     wwn_test = {
-    'free' : lambda wwn: True,
-    'iqn' : lambda wwn: \
+    'free': lambda wwn: True,
+    'iqn': lambda wwn: \
         re.match("iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
         and not re.search(' ', wwn) \
         and not re.search('_', wwn),
-    'naa' : lambda wwn: re.match("naa\.[125][0-9a-fA-F]{15}$", wwn),
-    'eui' : lambda wwn: re.match("eui\.[0-9a-f]{16}$", wwn),
-    'ib' : lambda wwn: re.match("ib\.[0-9a-f]{32}$", wwn),
-    'unit_serial' : lambda wwn: \
+    'naa': lambda wwn: re.match("naa\.[125][0-9a-fA-F]{15}$", wwn),
+    'eui': lambda wwn: re.match("eui\.[0-9a-f]{16}$", wwn),
+    'ib': lambda wwn: re.match("ib\.[0-9a-f]{32}$", wwn),
+    'unit_serial': lambda wwn: \
         re.match("[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
     }
 
