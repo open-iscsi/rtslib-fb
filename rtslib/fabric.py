@@ -117,8 +117,8 @@ from target import Target
 from utils import _get_auth_attr, _set_auth_attr
 from functools import partial
 
-version_attributes = set(["lio_version", "version"])
-discovery_auth_attributes = set(["discovery_auth"])
+version_attributes = {"lio_version", "version"}
+discovery_auth_attributes = {"discovery_auth"}
 target_names_excludes = version_attributes | discovery_auth_attributes
 
 

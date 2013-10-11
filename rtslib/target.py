@@ -238,7 +238,7 @@ class TPG(CFSNode):
         if os.path.isfile(path) and (boolean != self._get_enable()):
             try:
                 fwrite(path, str(int(boolean)))
-            except IOError, e:
+            except IOError as e:
                 raise RTSLibError("Cannot change enable state: %s" % e)
 
     def _get_nexus(self):
@@ -696,7 +696,7 @@ class NetworkPortal(CFSNode):
 
         try:
             self._create_in_cfs_ine(mode)
-        except OSError, msg:
+        except OSError as msg:
             raise RTSLibError(msg[1])
 
     def _get_ip_address(self):
@@ -818,7 +818,7 @@ class NodeACL(CFSNode):
         path = "%s/cmdsn_depth" % self.path
         try:
             fwrite(path, "%s" % depth)
-        except IOError, msg:
+        except IOError as msg:
             msg = msg[1]
             raise RTSLibError("Cannot set tcq_depth: %s" % str(msg))
 
