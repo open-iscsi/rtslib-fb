@@ -2,12 +2,14 @@ Source: rtslib-fb
 Section: python
 Priority: optional
 Maintainer: Andy Grover <andy@groveronline.com>
-Build-Depends: debhelper(>= 7.0.1), python, python-epydoc, python-setuptools
-Standards-Version: 3.8.1
+Build-Depends: debhelper(>= 8), python (>= 2.6.6-3~), python-epydoc, python-setuptools
+Standards-Version: 3.9.4
+X-Python-Version: >= 2.6
 
 Package: python-rtslib-fb
 Architecture: all
-Depends: python (>= 2.5)|python2.5|python2.6
+Depends: ${python:Depends}, ${misc:Depends}
+Provides: ${python:Provides}
 Suggests: python-rtslib-fb-doc
 Conflicts: python-rtslib, rtsadmin-frozen
 Description: RisingTide Systems generic SCSI target API in python (free branch).

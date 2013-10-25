@@ -1,3 +1,0 @@
-#!/bin/sh
-rm -f /usr/share/python-support/rtslib/rtslib/*.pyc
-rm -f /usr/share/python-support/rtslib/rtslib/*.pyo

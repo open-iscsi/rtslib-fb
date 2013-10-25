@@ -2,58 +2,24 @@
 
 build_dir   = build
 install_dir = debian/tmp
-setup       = /usr/bin/python ./setup.py --quiet
 pkgname     = rtslib-fb
 name        = rtslib
 
-export PYTHONPATH = $$PYTHONPATH:./$(install_dir)/lib/rtslib/
+#export DH_VERBOSE=1
 
-binary: binary-indep
+#prevent internet access to use PyPi
+export http_proxy = http://127.0.0.1:9
 
-binary-arch:
+%:
+	dh $@ --with python2
 
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_installdocs
-	dh_installman
-	dh_install --list-missing --sourcedir $(install_dir)
-	dh_fixperms
-	dh_compress -X.py
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_installdirs 
-
-build: build-stamp
-build-stamp: 
-	dh_testdir
-	mkdir -p $(install_dir)/lib/rtslib
-	$(setup) build --build-base $(build_dir) install \
-		--no-compile --install-purelib $(install_dir)/lib/rtslib \
-		--install-scripts $(install_dir)/bin
-	echo "2.5, 2.6" > $(install_dir)/lib/rtslib/.version
+override_dh_installdocs:
 	mkdir -p $(build_dir) doc
 	cd $(build_dir); epydoc --no-sourcecode --html -n $(pkgname) \
 		--exclude configobj ../$(name)/*.py
-	cp -r $(build_dir)/html doc/
-	touch build-stamp
+	dh_installdocs $(build_dir)/html
 
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
-	$(setup) clean
-	find . -name "*.pyc" | xargs rm -f
-	find . -name "*.pyo" | xargs rm -f
-	rm -rf $(build_dir) $(install_dir)
-	dh_clean
-
-.PHONY: binary binary-indep install build clean
-
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build
+	rm -rf *.egg-info
