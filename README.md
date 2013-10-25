@@ -20,6 +20,16 @@ mailing should be used for rtslib-fb discussion.
  * Bugs: [GitHub](https://github.com/agrover/rtslib-fb/issues) or [Trac](https://fedorahosted.org/targetcli-fb/)
  * Tarballs: [fedorahosted](https://fedorahosted.org/releases/t/a/targetcli-fb/)
 
+In-repo packaging
+-----------------
+Packaging scripts for RPM and DEB are included, but these are to make end-user
+custom packaging easier -- distributions tend to maintain their own packaging
+scripts separately. If you run into issues with packaging, start with opening
+a bug on your distro's bug reporting system.
+
+Some people do use these scripts, so we want to keep them around. Fixes for
+any breakage you encounter are welcome.
+
 "fb" -- "free branch"
 ---------------------
 
