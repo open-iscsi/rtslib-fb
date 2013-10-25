@@ -3,6 +3,7 @@
 build_dir   = build
 install_dir = debian/tmp
 setup       = /usr/bin/python ./setup.py --quiet
+pkgname     = rtslib-fb
 name        = rtslib
 
 binary: binary-indep
@@ -36,7 +37,7 @@ build-stamp:
 		--install-scripts $(install_dir)/bin
 	echo "2.5, 2.6" > $(install_dir)/lib/rtslib/.version
 	mkdir -p $(build_dir) doc
-	cd $(build_dir); epydoc --no-sourcecode --html -n $(name) \
+	cd $(build_dir); epydoc --no-sourcecode --html -n $(pkgname) \
 		--exclude configobj ../$(name)/*.py
 	cp -r $(build_dir)/html doc/
 	touch build-stamp
