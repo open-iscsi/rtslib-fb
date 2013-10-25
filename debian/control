@@ -1,13 +1,26 @@
-Source: rtslib
+Source: rtslib-fb
 Section: python
 Priority: optional
-Maintainer: Jerome Martin <jxm@risingtidesystems.com>
-Build-Depends: debhelper(>= 7.0.1), python, python-epydoc
-Standards-Version: 3.8.1
+Maintainer: Andy Grover <andy@groveronline.com>
+Build-Depends: debhelper(>= 8), python, python3 , python-epydoc, python-setuptools, python3-setuptools
+Standards-Version: 3.9.4
+X-Python-Version: >= 2.6
+X-Python3-Version: >= 3.1
 
-Package: python-rtslib
+Package: python-rtslib-fb-docs
 Architecture: all
-Depends: python (>= 2.5)|python2.5|python2.6, python-configobj, python-netifaces, python-ipaddr
-Suggests: rtslib-doc
-Conflicts: rtsadmin-frozen
-Description: RisingTide Systems generic SCSI target API in python.
+Description: RisingTide Systems generic SCSI target API in python (Documentation).
+
+Package: python-rtslib-fb
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}
+Provides: ${python:Provides}
+Suggests: python-rtslib-fb-doc
+Conflicts: python-rtslib, rtsadmin-frozen
+Description: RisingTide Systems generic SCSI target API in python (free branch).
+
+Package: python3-rtslib-fb
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Suggests: python-rtslib-fb-doc
+Description: RisingTide Systems generic SCSI target API in python (Python 3).

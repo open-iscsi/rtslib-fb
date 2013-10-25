@@ -1,55 +1,45 @@
 #!/usr/bin/make -f
 
 build_dir   = build
-install_dir = debian/tmp
-setup       = /usr/bin/python ./setup.py --quiet
+install_dir = $(CURDIR)/debian/tmp
+pkgname     = rtslib-fb
 name        = rtslib
 
-binary: binary-indep
+#export DH_VERBOSE=1
 
-binary-arch:
+PYTHON2=$(shell pyversions -vr)
+PYTHON3=$(shell py3versions -vr)
 
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_installdocs
-	dh_installman
-	dh_install --list-missing --sourcedir $(install_dir)
-	dh_fixperms
-	dh_compress -X.py
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+#prevent internet access to use PyPi
+export http_proxy = http://127.0.0.1:9
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_installdirs 
 
-build: build-stamp
-build-stamp: 
-	dh_testdir
-	$(setup) build --build-base $(build_dir) install \
-		--no-compile --install-purelib $(install_dir)/lib/rtslib \
-		--install-scripts $(install_dir)/bin
-	echo "2.5, 2.6" > $(install_dir)/lib/rtslib/.version
-	mkdir -p $(build_dir) doc
-	cd $(build_dir); epydoc --no-sourcecode --html -n $(name) \
+%:
+	dh $@ --with python2,python3
+
+
+build-python%:
+	python$* setup.py build
+
+override_dh_auto_build: $(PYTHON3:%=build-python%)
+	dh_auto_build
+
+
+install-python%:
+	python$* setup.py install --root=$(install_dir) --install-layout=deb
+
+
+override_dh_auto_install: $(PYTHON3:%=install-python%)
+	dh_auto_install
+
+
+override_dh_installdocs:
+	cd $(build_dir); epydoc --no-sourcecode --html -n $(pkgname) \
 		--exclude configobj ../$(name)/*.py
-	cp -r $(build_dir)/html doc/
-	touch build-stamp
+	dh_installdocs $(build_dir)/html
 
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
-	$(setup) clean
-	find . -name "*.pyc" | xargs rm -f
-	find . -name "*.pyo" | xargs rm -f
-	rm -rf $(build_dir) $(install_dir)
-	dh_clean
 
-.PHONY: binary binary-indep install build clean
-
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build
+	rm -rf *.egg-info
