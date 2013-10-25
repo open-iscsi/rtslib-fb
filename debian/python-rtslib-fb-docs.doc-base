@@ -1,0 +1,9 @@
+Document: python-rtslib-fb
+Title: python-rtslib documentation
+Author: Jerome Martin <jxm@risingtidesystems.com>
+Abstract: Python library for configuring the Linux kernel-based multiprotocol SCSI target (LIO)
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-rtslib-fb-docs/html/index.html
+Files: /usr/share/doc/python-rtslib-fb-docs/html/*.html
