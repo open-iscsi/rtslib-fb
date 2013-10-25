@@ -6,6 +6,8 @@ setup       = /usr/bin/python ./setup.py --quiet
 pkgname     = rtslib-fb
 name        = rtslib
 
+export PYTHONPATH = $$PYTHONPATH:./$(install_dir)/lib/rtslib/
+
 binary: binary-indep
 
 binary-arch:
@@ -32,6 +34,7 @@ install: build
 build: build-stamp
 build-stamp: 
 	dh_testdir
+	mkdir -p $(install_dir)/lib/rtslib
 	$(setup) build --build-base $(build_dir) install \
 		--no-compile --install-purelib $(install_dir)/lib/rtslib \
 		--install-scripts $(install_dir)/bin

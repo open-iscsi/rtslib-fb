@@ -2,7 +2,7 @@ Source: rtslib-fb
 Section: python
 Priority: optional
 Maintainer: Andy Grover <andy@groveronline.com>
-Build-Depends: debhelper(>= 7.0.1), python, python-epydoc
+Build-Depends: debhelper(>= 7.0.1), python, python-epydoc, python-setuptools
 Standards-Version: 3.8.1
 
 Package: python-rtslib-fb
