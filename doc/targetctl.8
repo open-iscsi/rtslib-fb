@@ -1,0 +1,63 @@
+.TH targetctl 8
+.SH NAME
+.B targetctl
+\- Save and restore configuration of kernel target
+.SH DESCRIPTION
+.B targetctl
+is a low-level script to save and restore the configuration of the LIO
+kernel target, to and from a file in json format. It is not normally meant to
+be used by end-users directly, but by system init frameworks, or
+advanced end-users who are generating the configuration file
+themselves and need a way to load the configuration without
+relying on the
+.B targetcli
+configuration shell.
+.SH USAGE
+.B targetctl
+must be invoked as root. Exit status will be 0 if successful, or
+nonzero if an error was encountered.
+.P
+.B targetctl save [config-file]
+.P
+Saves the current configuration of the kernel target to a file in json
+format. Since the file may contain cleartext passwords, the file's
+permissions will be set to only allow root access. If
+.B config-file
+is not supplied,
+.B targetctl
+will use the default file location, 
+.BR /etc/target/saveconfig.json.
+.P
+.B targetctl restore [config-file]
+.P
+Removes any existing configuration and replaces it with the
+configuration described in the file. See
+.BR saveconfig.json (5)
+for more details. If parts of the configuration could not be restored,
+those parts will be noted in the error output, and the rest of the
+configuration will still be applied.
+.P
+.B targetctl clear
+.P
+Removes any existing configuration from the running kernel target.
+.P
+.B targetctl --help
+.P
+Displays usage information.
+.P
+.SH SEE ALSO
+.BR targetcli (8),
+.BR targetd (8),
+.BR saveconfig.json (5)
+.SH FILES
+.B /etc/target/saveconfig.json
+.P
+.B /sys/kernel/config/target
+.SH AUTHOR
+Written by Andy Grover <agrover@redhat.com>.
+.br
+Man page written by Andy Grover <agrover@redhat.com>.
+.SH REPORTING BUGS
+Report bugs via <targetcli-fb-devel@lists.fedorahosted.org>
+.br
+or <https://github.com/agrover/rtslib-fb/issues>
