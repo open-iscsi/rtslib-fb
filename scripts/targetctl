@@ -1,0 +1,97 @@
+#!/usr/bin/python
+'''
+targetctl
+
+This file is part of RTSLib.
+Copyright (c) 2013 by Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+'''
+
+#
+# A script to save/restore LIO configuration to/from a file in json format
+#
+
+from __future__ import print_function
+
+from rtslib import RTSRoot
+import os
+import sys
+import stat
+import json
+
+default_save_file = "/etc/target/saveconfig.json"
+err = sys.stderr
+
+def usage():
+    print("syntax: %s save [file_to_save_to]" % sys.argv[0], file=err)
+    print("        %s restore [file_to_restore_from]" % sys.argv[0], file=err)
+    print("  default file is: %s" % default_save_file, file=err)
+    sys.exit(-1)
+
+def save(to_file):
+    with open(to_file+".temp", "w+") as f:
+        os.fchmod(f.fileno(), stat.S_IRUSR | stat.S_IWUSR)
+        f.write(json.dumps(RTSRoot().dump(), sort_keys=True, indent=2))
+        f.write("\n")
+        os.fsync(f.fileno())
+
+    os.rename(to_file+".temp", to_file)
+
+def restore(from_file):
+    if not os.path.isfile(from_file):
+        print("Restore file %s not found" % from_file, file=err)
+        sys.exit(-1)
+
+    with open(from_file, "r") as f:
+        try:
+            config = json.loads(f.read())
+        except ValueError:
+            print("Error parsing savefile: %s" % from_file, file=err)
+            sys.exit(-1)
+
+        errors = RTSRoot().restore(config, clear_existing=True)
+
+        if errors:
+            print("Restore failed, %d errors:" % len(errors), file=err)
+
+            for error in errors:
+                print(error, file=err)
+
+            sys.exit(-1)
+
+funcs = dict(save=save, restore=restore)
+
+def main():
+    if os.geteuid() != 0:
+        print("Must run as root", file=err)
+        sys.exit(-1)
+
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        usage()
+
+    if sys.argv[1] == "--help":
+        usage()
+
+    if sys.argv[1] not in funcs.keys():
+        usage()
+
+    if len(sys.argv) == 3:
+        savefile = os.path.expanduser(sys.argv[1])
+    else:
+        savefile = default_save_file
+
+    funcs[sys.argv[1]](savefile)
+
+if __name__ == "__main__":
+    main()
