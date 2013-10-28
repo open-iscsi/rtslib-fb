@@ -36,6 +36,7 @@ err = sys.stderr
 def usage():
     print("syntax: %s save [file_to_save_to]" % sys.argv[0], file=err)
     print("        %s restore [file_to_restore_from]" % sys.argv[0], file=err)
+    print("        %s clear" % sys.argv[0], file=err)
     print("  default file is: %s" % default_save_file, file=err)
     sys.exit(-1)
 
@@ -70,7 +71,10 @@ def restore(from_file):
 
             sys.exit(-1)
 
-funcs = dict(save=save, restore=restore)
+def clear(unused):
+    RTSRoot().clear_existing(confirm=True)
+
+funcs = dict(save=save, restore=restore, clear=clear)
 
 def main():
     if os.geteuid() != 0:
