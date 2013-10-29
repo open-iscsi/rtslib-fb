@@ -1,0 +1,246 @@
+.TH saveconfig.json 5
+.SH NAME
+.B saveconfig.json
+\- Saved configuration file for rtslib-fb and LIO kernel target
+.SH DESCRIPTION
+.B /etc/target/saveconfig.json
+is the default location for storing the configuration of the Linux
+kernel target, also known as LIO. Since the target is in the kernel, tools like
+.B targetctl
+or
+.B targetcli
+must be used to save and restore the configuration across
+reboots.
+.P
+Generating or modifying this file by hand, or with other tools, is also
+supported. This fills a gap for users whose needs are not met by the
+targetcli configuration shell, who cannot use the rtslib Python
+library, and yet also wish to avoid directly manipulating LIO's
+configfs interface.
+.SH OVERVIEW
+The configuration file is in the "json" text format, which is both
+human- and machine-readable. Its format is very closely modeled on the
+layout and terminology that LIO uses. Attributes may be string,
+boolean, or numeric values. All sizes are expressed in bytes.
+.SH LAYOUT
+.SS TOP LEVEL SUMMARY
+.B storage_objects
+describes mappings of resources on the local machine that can be used
+to emulate block devices.
+.P
+.B fabric_modules
+describes settings for LIO fabrics -- the hardware or software
+protocols that transport SCSI commands -- such as iSCSI or Fibre
+Channel over Ethernet (FCoE).
+.P
+.B targets
+describes the SCSI target endpoints that export storage objects over a
+fabric.
+.SS storage_objects
+All storage objects must contain
+.I name
+and
+.I plugin
+values. Each name must be unique for all storage objects of its plugin
+type.
+.P
+.I plugin
+must be one of:
+.IR fileio ,
+.IR block ,
+.IR pscsi ,
+or
+.IR ramdisk .
+.P
+Objects with plugin value of
+.I fileio
+must also contain
+.IR dev ,
+which is the full path to the file that is backing the storage object.
+Optional
+.I fileio
+attributes are
+.I wwn
+(string),
+.I write_back
+(boolean), and
+.I size
+(number).
+If the file given in
+.I dev
+does not exist, then
+.I size
+must be present, and a backing file of that size will be
+created.
+.P
+Objects with plugin value of
+.I block
+must also contain
+.IR dev ,
+which is the full path to the block device that is backing the storage
+object.
+Optional
+.I block
+attributes are
+.I wwn
+(string),
+.I write_back
+(boolean), and
+.I readonly
+(boolean).
+.P
+Objects with plugin value of
+.I pscsi
+must also contain
+.IR dev ,
+which is the full path to the SCSI device that is backing the storage
+object.
+There are no optional attributes.
+.P
+Objects with plugin value of
+.I ramdisk
+must also contain
+.IR size
+(number), which is the size in bytes of the ramdisk.
+Optional
+.I ramdisk
+attributes are
+.I wwn
+(string), and
+.I nullio
+(boolean).
+.P
+All storage object definitions may also contain an
+.I attributes
+object. This contains LIO attribute values, all of which are also
+optional. Please see LIO documentation for more information on these.
+
+.SS fabric_modules
+This section is limited to setting discovery authentication settings
+for fabrics that support it (currently just iscsi). Objects here
+should contain
+.IR name
+(e.g. "iscsi"),
+.IR userid ,
+.IR password ,
+.IR mutual_userid ,
+and
+.I mutual_password
+string values.
+
+.SS targets
+Target configuration is modeled on iSCSI, in which a named target can
+contain multiple sub-configurations called Target Port Groups
+(TPGs). LIO follows this model for describing configuration even for
+fabrics that do not support TPGs.
+.P
+Objects in
+.I targets
+contain just three attributes:
+.I wwn
+is the world-wide name the target has been given. This may start with
+"iqn", or "naa", for example.
+.I fabric
+is the name of the fabric module this target is exported over. Allowed
+values for this depend on the system configuration, but examples
+include "iscsi", "loopback", and "tcm_fc".
+.I tpgs
+is a list of objects describing 1 or more TPGs, described below.
+
+.SS tpgs
+TPG object attributes are all optional. Values not supplied will be
+set to default values.
+.I tag
+(number) allows the tpg tag to be specified.
+.I enable
+(bool, default to true) allows the TPG to be disabled or enabled.
+.IR luns ,
+.IR portals ,
+and
+.I node_acls
+contain further lists of objects, descibed below.
+Finally,
+.IR userid ,
+.IR password ,
+.IR mutual_userid ,
+and
+.I mutual_password
+allow main-phase authentication values to be set for fabrics (like
+iSCSI) that support TPG-level authentication. (Please see
+.IR targetcli (8)
+for details on TPG versus ACL-based authentication.) Finally, TPGs can
+also contain optional
+.I attributes
+and
+.I parameters
+lists, see LIO documentation for more information.
+
+.SS luns
+This list of objects maps storage objects to the TPG.
+.I index
+is a TPG-unique number for the assignment, which may be used as the LU
+number for fabrics that do not support ACL mappings.
+.I storage_object
+is a string linking back to a storage object, of the format
+"/backstores/<plugin>/<name>", where <plugin> and <name> correspond to
+a storage object defined under
+.IR storage_objects .
+
+.SS portals
+Portals describe connection endpoints for iSCSI targets. Required
+values are
+.I ip_address
+(string) and
+.I port
+(number).
+.I iser
+(boolean) is an optional value to enable iSER.
+
+.SS node_acls
+This contains information about explicit initiator LUN mappings.
+.I node_wwn
+(string) must be present.
+Authentication may also be set on a per-ACL basis with
+.IR userid ,
+.IR password ,
+.IR mutual_userid ,
+and
+.IR mutual_password,
+similar to TPGs.
+.I mapped_luns
+is a list of mapped luns, described below.
+Finally, node_acls can contain an optional
+.I attributes
+list.
+
+.SS mapped_luns
+Objects in
+.I mapped_luns
+contain three required attributes.
+.I write_protect
+(boolean) sets the write-protect status of the mapped LUN.
+.I tpg_lun
+(number) corresponds to an existing entry in the TPG's
+.I luns
+list.
+.I index
+is the LU number that the mapped LUN will claim.
+
+.SH EXAMPLE CONFIGURATION
+Since tools generate this file, one good way to understand its format
+is to use a tool like
+.B targetcli
+to configure a target, then run
+.BR saveconfig,
+and view the resulting json file.
+.SH SEE ALSO
+.BR targetcli (8),
+.BR targetctl (8)
+.SH FILES
+.B /etc/target/saveconfig.json
+.SH AUTHOR
+Man page written by Andy Grover <agrover@redhat.com>.
+.SH REPORTING BUGS
+Report bugs via <targetcli-fb-devel@lists.fedorahosted.org>
+.br
+or <https://github.com/agrover/rtslib-fb/issues>
