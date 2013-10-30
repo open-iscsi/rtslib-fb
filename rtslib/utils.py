@@ -369,6 +369,16 @@ def modprobe(module):
         if process.returncode != 0:
             raise RTSLibError(stderrdata)
 
+def mount_configfs():
+    if not os.path.ismount("/sys/kernel/config"):
+        cmdline = "mount -t configfs none /sys/kernel/config"
+        process = subprocess.Popen(cmdline,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        (stdoutdata, stderrdata) = process.communicate()
+        if process.returncode != 0:
+            raise RTSLibError(stderrdata)
+
 def dict_remove(d, items):
     for item in items:
         if item in d:

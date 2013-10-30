@@ -27,7 +27,7 @@ from target import Target
 from fabric import FabricModule
 from tcm import (StorageObject, FileIOStorageObject, BlockStorageObject,
                  PSCSIStorageObject, RDMCPStorageObject)
-from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import RTSLibError, RTSLibBrokenLink, modprobe, mount_configfs
 from utils import dict_remove, set_attributes
 
 storageobjects = dict(
@@ -70,6 +70,7 @@ class RTSRoot(CFSNode):
         base kernel modules (tcm)
         '''
         super(RTSRoot, self).__init__()
+        mount_configfs()
         modprobe('target_core_mod')
         self._create_in_cfs_ine('any')
 
