@@ -377,7 +377,7 @@ def mount_configfs():
                                    stderr=subprocess.PIPE)
         (stdoutdata, stderrdata) = process.communicate()
         if process.returncode != 0:
-            raise RTSLibError(stderrdata)
+            raise RTSLibError("Cannot mount configfs.")
 
 def dict_remove(d, items):
     for item in items:
