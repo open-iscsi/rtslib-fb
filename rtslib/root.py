@@ -70,6 +70,7 @@ class RTSRoot(CFSNode):
         base kernel modules (tcm)
         '''
         super(RTSRoot, self).__init__()
+        modprobe('configfs')
         mount_configfs()
         modprobe('target_core_mod')
         self._create_in_cfs_ine('any')
