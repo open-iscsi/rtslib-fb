@@ -25,7 +25,7 @@ import uuid
 
 from node import CFSNode
 from os.path import isdir
-from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import RTSLibError, RTSLibBrokenLink
 from utils import fread, fwrite, normalize_wwn, generate_wwn
 from utils import dict_remove, set_attributes, set_parameters, ignored
 from utils import _get_auth_attr, _set_auth_attr
