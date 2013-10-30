@@ -372,7 +372,7 @@ def modprobe(module):
 def mount_configfs():
     if not os.path.ismount("/sys/kernel/config"):
         cmdline = "mount -t configfs none /sys/kernel/config"
-        process = subprocess.Popen(cmdline,
+        process = subprocess.Popen(cmdline.split(),
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         (stdoutdata, stderrdata) = process.communicate()
