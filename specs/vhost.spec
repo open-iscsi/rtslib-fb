@@ -5,7 +5,7 @@ features = nexus, tpgts
 wwn_type = naa
 
 # Non-standard module naming scheme
-kernel_module = tcm_vhost
+kernel_module = vhost_scsi
 
 # The configfs group
 configfs_group = vhost
