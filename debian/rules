@@ -31,6 +31,9 @@ install-python%:
 
 override_dh_auto_install: $(PYTHON3:%=install-python%)
 	dh_auto_install
+	# for using python 3 for targetctl
+	# even though it is overwritten by python2 setup
+	sed -i '1s|/usr/bin/python$$|/usr/bin/python3|' $(install_dir)/usr/bin/targetctl
 
 
 override_dh_installdocs:
