@@ -27,5 +27,6 @@ setup (
     maintainer_email = 'agrover@redhat.com',
     url = 'http://github.com/agrover/rtslib-fb',
     packages = ['rtslib'],
+    scripts = ['scripts/targetctl'],
     use_2to3 = True,
     )
