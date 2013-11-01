@@ -9,7 +9,7 @@ X-Python3-Version: >= 3.1
 
 Package: python-rtslib-fb-docs
 Architecture: all
-Description: RisingTide Systems generic SCSI target API in python (Documentation).
+Description: RisingTide Systems LIO target Python API (Documentation).
 
 Package: python-rtslib-fb
 Architecture: all
@@ -17,10 +17,13 @@ Depends: ${python:Depends}, ${misc:Depends}
 Provides: ${python:Provides}
 Suggests: python-rtslib-fb-doc
 Conflicts: python-rtslib, rtsadmin-frozen
-Description: RisingTide Systems generic SCSI target API in python (free branch).
+Description: RisingTide Systems LIO target Python 2 API (free branch).
 
 Package: python3-rtslib-fb
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}
 Suggests: python-rtslib-fb-doc
-Description: RisingTide Systems generic SCSI target API in python (Python 3).
+Conflicts: lio-utils
+Replaces: targetcli-fb (<< 2.1.fb32)
+Description: RisingTide Systems LIO target Python 3 API (free branch).
+ This includes the LIO rc scripts to start and stop the target.
