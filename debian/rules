@@ -38,6 +38,9 @@ override_dh_installdocs:
 		--exclude configobj ../$(name)/*.py
 	dh_installdocs $(build_dir)/html
 
+override_dh_installinit:
+	dh_installinit --name target
+
 
 override_dh_auto_clean:
 	dh_auto_clean
