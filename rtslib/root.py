@@ -248,7 +248,7 @@ class RTSRoot(CFSNode):
         if not restore_file:
             restore_file = default_save_file
 
-        with open(from_file, "r") as f:
+        with open(restore_file, "r") as f:
             config = json.loads(f.read())
             return self.restore(config, clear_existing=True,
                                 abort_on_error=abort_on_error)

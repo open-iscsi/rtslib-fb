@@ -42,8 +42,7 @@ def save(to_file):
     RTSRoot().save_to_file(save_file=to_file)
 
 def restore(from_file):
-        errors = RTSRoot().restore_from_file(restore_file=from_file,
-                                             clear_existing=True)
+        errors = RTSRoot().restore_from_file(restore_file=from_file)
 
         if errors:
             print("Restore failed, %d errors:" % len(errors), file=err)
