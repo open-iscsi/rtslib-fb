@@ -23,6 +23,8 @@ import stat
 import uuid
 import socket
 import subprocess
+import fcntl
+import time
 from contextlib import contextmanager
 
 class RTSLibError(Exception):
@@ -390,6 +392,35 @@ def ignored(*exceptions):
         yield
     except exceptions:
         pass
+
+@contextmanager
+def file_lock(lock_file, timeout=10):
+    '''
+    A context manager for locking a file, with timeout.
+    '''
+    with open(lock_file, "w") as f:
+        for x in xrange(timeout):
+            try:
+                fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                time.sleep(1)
+            else:
+                try:
+                    yield
+                finally:
+                    fcntl.lockf(f, fcntl.LOCK_UN)
+                break
+        else:
+            raise IOError("Acquiring lock timed out after %d seconds" % timeout)
+
+def locked(func):
+    '''
+    A decorator that enforces mutual exclusion between methods using it.
+    '''
+    def inner(*args, **kwargs):
+        with file_lock("/var/run/target.lock"):
+            return func(*args, **kwargs)
+    return inner
 
 #
 # These two functions are meant to be used with functools.partial and
