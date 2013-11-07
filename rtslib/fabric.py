@@ -368,7 +368,7 @@ class Qla2xxxFabricModule(_BaseFabricModule):
     def from_fabric_wwn(self, wwn):
         if wwn.startswith("0x"):
             wwn = wwn[2:]
-        return "naa." + wwn.translate(None, ":")
+        return "naa." + wwn.replace(":", "")
 
     @property
     def wwns(self):
@@ -392,7 +392,7 @@ class SRPTFabricModule(_BaseFabricModule):
     def from_fabric_wwn(self, wwn):
         if wwn.startswith("0x"):
             wwn = wwn[2:]
-        return "ib." + wwn.translate(None, ":")
+        return "ib." + wwn.replace(":", "")
 
     @property
     def wwns(self):
