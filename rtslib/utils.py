@@ -300,7 +300,7 @@ def _cleanse_wwn(wwn_type, wwn):
     if wwn_type in ('naa', 'eui', 'ib'):
         if wwn.startswith("0x"):
             wwn = wwn[2:]
-        wwn = wwn.translate(None, ":-")
+        wwn = wwn.replace(":-", "")
 
         if not (wwn.startswith("naa.") or wwn.startswith("eui.") or \
             wwn.startswith("ib.")):
