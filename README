@@ -1,10 +1,11 @@
-RTSLib is a python library that provides an object API to the
-LIO Linux SCSI Target as well as third-party target fabric modules written
-for it and backend storage objects.
+RTSlib is a Python library that provides an API to the LIO Linux SCSI Target,
+and its third-party target fabric modules and backend storage objects.
 
-RTSLib was developed by Datera, Inc. (www.daterainc.com). It is useful for
-developing 3rd-party applications, as well as serving as a foundation for
-the Datera userspace tools.
+RTSlib was developed by Datera, Inc. (www.daterainc.com). It is useful for
+developing 3rd-party applications, and as a foundation for the Datera
+userspace tools.
 
-For more information, see the rtslib API reference, available in html format
-as a separate package.
+For more information, please see the RTSlib API Reference Guide:
+
+http://linux-iscsi.org/Doc/rtslib/html
+http://linux-iscsi.org/Doc/rtslib/rtslib-API-reference.pdf
