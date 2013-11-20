@@ -239,7 +239,7 @@ class RTSRoot(CFSNode):
 
         os.rename(save_file+".temp", save_file)
 
-    def restore_from_file(self, restore_file=None, abort_on_error=False):
+    def restore_from_file(self, restore_file=None, clear_existing=True, abort_on_error=False):
         '''
         Restore the configuration from a file in json format.
         Returns a list of non-fatal errors. If abort_on_error is set,
@@ -250,7 +250,7 @@ class RTSRoot(CFSNode):
 
         with open(restore_file, "r") as f:
             config = json.loads(f.read())
-            return self.restore(config, clear_existing=True,
+            return self.restore(config, clear_existing=clear_existing,
                                 abort_on_error=abort_on_error)
 
     targets = property(_list_targets,
