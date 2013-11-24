@@ -116,8 +116,10 @@ def get_blockdev_size(path):
     name = os.path.basename(os.path.realpath(path))
 
     # size is in 512-byte sectors, we want to return number of logical blocks
-    def get_size(path):
+    def get_size(path, is_partition=False):
         sect_size = int(fread("%s/size" % path))
+        if is_partition:
+            path = os.path.split(path)[0]
         logical_block_size = int(fread("%s/queue/logical_block_size" % path))
         return sect_size / (logical_block_size / 512)
 
@@ -132,7 +134,7 @@ def get_blockdev_size(path):
             disk = m.groups()[0]
             if disk[-1] == 'p' and disk[-2].isdigit():
                 disk = disk[:-1]
-            return get_size("/sys/block/%s/%s" % (disk, m.group()))
+            return get_size("/sys/block/%s/%s" % (disk, m.group()), True)
         else:
             raise
 
