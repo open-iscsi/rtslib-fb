@@ -664,11 +664,7 @@ class MappedLUN(CFSNode):
     def _get_write_protect(self):
         self._check_self()
         path = "%s/write_protect" % self.path
-        write_protect = fread(path).strip()
-        if write_protect == "1":
-            return True
-        else:
-            return False
+        return bool(int(fread(path)))
 
     def _get_tpg_lun(self):
         self._check_self()
