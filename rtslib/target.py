@@ -25,7 +25,6 @@ import shutil
 
 from node import CFSNode
 from os.path import isdir
-from doctest import testmod
 from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
@@ -1233,6 +1232,7 @@ class Target(CFSNode):
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
 
 def _test():
+    from doctest import testmod
     testmod()
 
 if __name__ == "__main__":
