@@ -352,6 +352,7 @@ def get_block_type(path):
                               161,  # Carmel 8-port SATA Disks
                               199,  # Veritas volume manager (VxVM) volumes
                               201,  # Veritas VxVM dynamic multipathing driver
+                              202,  # Xen block device
                               230,  # ZFS ZVols
                               240,  # LOCAL/EXPERIMENTAL USE
                               241,  # LOCAL/EXPERIMENTAL USE
