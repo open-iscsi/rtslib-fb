@@ -763,34 +763,35 @@ class _Backstore(CFSNode):
 
         dirp = bs_params[self._so_cls].get("alt_dirprefix", self._plugin)
 
-        # mapping in cache?
-        self._lookup_key = "%s/%s" % (dirp, name)
-        self._index = bs_cache.get(self._lookup_key, None)
-
-        if self._index == None:
-            # cache miss. Check the fs and load cache for next time
+        global bs_cache
+        if not bs_cache:
             for dir in glob.iglob("%s/core/*_*/*/" % self.configfs_dir):
                 parts = dir.split("/")
                 bs_name = parts[-2]
                 bs_dirp, bs_index = parts[-3].rsplit("_", 1)
                 current_key = "%s/%s" % (bs_dirp, bs_name)
-                if current_key == self._lookup_key:
-                    if mode == 'create':
-                        raise RTSLibError("Storage object %s/%s exists" %
-                                          (self._plugin, name))
-                    else:
-                        self._index = int(bs_index)
                 bs_cache[current_key] = int(bs_index)
 
-        if self._index == None:
-            # Allocate new index value
-            for index in xrange(1048576):
-                if index not in bs_cache.values():
-                    self._index = index
-                    bs_cache[self._lookup_key] = self._index
-                    break
+        # mapping in cache?
+        self._lookup_key = "%s/%s" % (dirp, name)
+        self._index = bs_cache.get(self._lookup_key, None)
+
+        if self._index != None and mode == 'create':
+            raise RTSLibError("Storage object %s/%s exists" %
+                              (self._plugin, name))
+        elif self._index == None:
+            if mode == 'lookup':
+                raise RTSLibError("Storage object %s/%s not found" %
+                                  (self._plugin, name))
             else:
-                raise RTSLibError("No available backstore index")
+                # Allocate new index value
+                for index in xrange(1048576):
+                    if index not in bs_cache.values():
+                        self._index = index
+                        bs_cache[self._lookup_key] = self._index
+                        break
+                else:
+                    raise RTSLibError("No available backstore index")
 
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
                                         dirp,
