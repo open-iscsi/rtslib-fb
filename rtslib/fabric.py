@@ -198,7 +198,11 @@ class _BaseFabricModule(CFSNode):
 
     def from_fabric_wwn(self, wwn):
         '''
-        see to_fabric_wwn.
+        Converts from WWN format used in this fabric's LIO configfs to canonical
+        format.
+        Note: If also used by wwns() method, some hackery may be in order, since
+        WWN formats in other places may be different than how the LIO fabric
+        formats them.
         '''
         return wwn
 
@@ -414,14 +418,14 @@ class FCoEFabricModule(_BaseFabricModule):
         return colonize(wwn[4:])
 
     def from_fabric_wwn(self, wwn):
-        return "naa." + wwn[2:]
+        return "naa." + wwn.replace(":", "")
 
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
                 if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
-                    yield self.from_fabric_wwn(fread(wwn_file))
+                    yield "naa." + fread(wwn_file)[2:]
 
 
 class USBGadgetFabricModule(_BaseFabricModule):
