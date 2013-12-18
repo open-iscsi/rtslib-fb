@@ -200,9 +200,8 @@ class _BaseFabricModule(CFSNode):
         '''
         Converts from WWN format used in this fabric's LIO configfs to canonical
         format.
-        Note: If also used by wwns() method, some hackery may be in order, since
-        WWN formats in other places may be different than how the LIO fabric
-        formats them.
+        Note: Do not call from wwns(). There's no guarantee fabric wwn format is
+        the same as wherever wwns() is reading from.
         '''
         return wwn
 
@@ -351,10 +350,7 @@ class SBPFabricModule(_BaseFabricModule):
         for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
             if bool(int(fread(fname))):
                 guid_path = os.path.dirname(fname) + "/guid"
-                tmp = fread(guid_path)
-                if tmp[0:2] == '0x':
-                    tmp = tmp[2:]
-                yield self.from_fabric_wwn(tmp)
+                yield "eui." + fread(guid_path)[2:]
                 break
 
 
@@ -370,8 +366,6 @@ class Qla2xxxFabricModule(_BaseFabricModule):
         return colonize(wwn[4:])
 
     def from_fabric_wwn(self, wwn):
-        if wwn.startswith("0x"):
-            wwn = wwn[2:]
         return "naa." + wwn.replace(":", "")
 
     @property
@@ -379,7 +373,7 @@ class Qla2xxxFabricModule(_BaseFabricModule):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
                 if not fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
-                    yield self.from_fabric_wwn(fread(wwn_file))
+                    yield "naa." + fread(wwn_file)[2:]
 
 
 class SRPTFabricModule(_BaseFabricModule):
@@ -394,14 +388,12 @@ class SRPTFabricModule(_BaseFabricModule):
         return "0x" + wwn[3:]
 
     def from_fabric_wwn(self, wwn):
-        if wwn.startswith("0x"):
-            wwn = wwn[2:]
-        return "ib." + wwn.replace(":", "")
+        return "ib." + wwn[2:]
 
     @property
     def wwns(self):
         for wwn_file in glob("/sys/class/infiniband/*/ports/*/gids/0"):
-            yield self.from_fabric_wwn(fread(wwn_file))
+            yield "ib." + fread(wwn_file).replace(":", "")
 
 
 class FCoEFabricModule(_BaseFabricModule):
