@@ -453,7 +453,7 @@ class LUN(CFSNode):
     # LUN private stuff
 
     def __repr__(self):
-        return "<LUN %d (%s/%s)" % (self.lun, self.storage_object.plugin,
+        return "<LUN %d (%s/%s)>" % (self.lun, self.storage_object.plugin,
                                     self.storage_object.name)
 
     def __init__(self, parent_tpg, lun=None, storage_object=None, alias=None):
@@ -658,7 +658,7 @@ class NetworkPortal(CFSNode):
     # NetworkPortal private stuff
 
     def __repr__(self):
-        return "<NetworkPortal %s port %s" % (self.ip_address, self.port)
+        return "<NetworkPortal %s port %s>" % (self.ip_address, self.port)
 
     def __init__(self, parent_tpg, ip_address, port=3260, mode='any'):
         '''
