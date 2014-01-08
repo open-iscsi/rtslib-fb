@@ -122,8 +122,8 @@ class Target(CFSNode):
 
         try:
             t_obj = Target(fm_obj, t['wwn'])
-        except RTSLibError:
-            err_func("Could not create Target object")
+        except RTSLibError as e:
+            err_func("Could not create Target object: %s" % e)
             return
 
         for tpg in t.get('tpgs', []):
@@ -945,8 +945,8 @@ class NodeACL(CFSNode):
             return
         try:
             acl_obj = cls(tpg_obj, acl['node_wwn'])
-        except RTSLibError:
-            err_func("Error when creating NodeACL for %s" % acl['node_wwn'])
+        except RTSLibError as e:
+            err_func("Error when creating NodeACL for %s: %s" % (acl['node_wwn'], e))
             return
 
         set_attributes(acl_obj, acl.get('attributes', {}))

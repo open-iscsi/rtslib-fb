@@ -199,8 +199,8 @@ class RTSRoot(CFSNode):
                 continue
             try:
                 set_attributes(so_obj, so.get('attributes', {}))
-            except RTSLibError:
-                err_func("Could not set an attribute for %s" % so['name'])
+            except RTSLibError as e:
+                err_func("Could not set an attribute for %s: %s" % (so['name'], e))
 
         # Don't need to create fabric modules
         for index, fm in enumerate(config.get('fabric_modules', [])):
