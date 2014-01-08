@@ -267,17 +267,13 @@ class TPG(CFSNode):
         if self._get_nexus():
             raise RTSLibError("The TPG's nexus initiator WWN is already set.")
 
-        # Nexus wwn type should match parent target
-        wwn_type = self.parent_target.wwn_type
-        if nexus_wwn:
-            # Not using fabric-specific version of normalize_wwn, since we
-            # want to make sure wwn conforms to regexp, but don't check
-            # against target wwn_list, since we're setting the "initiator" here.
-            nexus_wwn = normalize_wwn((wwn_type,), nexus_wwn)[0]
-        else:
-            nexus_wwn = generate_wwn(wwn_type)
-
         fm = self.parent_target.fabric_module
+
+        if nexus_wwn:
+            nexus_wwn = fm.to_normalized_wwn(nexus_wwn)[0]
+        else:
+            # Nexus wwn type should match parent target
+            nexus_wwn = generate_wwn(self.parent_target.wwn_type)
 
         fwrite("%s/nexus" % self.path, fm.to_fabric_wwn(nexus_wwn))
 
