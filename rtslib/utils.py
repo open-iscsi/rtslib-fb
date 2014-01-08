@@ -340,9 +340,6 @@ def normalize_wwn(wwn_types, wwn, possible_wwns=None):
     else:
         raise RTSLibError("WWN not valid as: %s" % ", ".join(wwn_types))
 
-    if possible_wwns is not None and clean_wwn not in possible_wwns:
-        raise RTSLibError("WWN not in possible WWNs")
-
     return (clean_wwn, wwn_type)
 
 def list_loaded_kernel_modules():
