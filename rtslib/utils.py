@@ -311,7 +311,7 @@ def _cleanse_wwn(wwn_type, wwn):
 
     return wwn
 
-def normalize_wwn(wwn_types, wwn, possible_wwns=None):
+def normalize_wwn(wwn_types, wwn):
     '''
     Take a WWN as given by the user and convert it to a standard text
     representation. If possible_wwns is not None, verify that

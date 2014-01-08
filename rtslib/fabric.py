@@ -187,7 +187,7 @@ class _BaseFabricModule(CFSNode):
         according to the spec, and returns a tuple of our preferred string 
         representation of the wwn, and what type it turned out to be.
         '''
-        return normalize_wwn(self.wwn_types, wwn, self.wwns)
+        return normalize_wwn(self.wwn_types, wwn)
 
     def to_fabric_wwn(self, wwn):
         '''
