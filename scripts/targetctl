@@ -42,15 +42,20 @@ def save(to_file):
     RTSRoot().save_to_file(save_file=to_file)
 
 def restore(from_file):
+
+    try:
         errors = RTSRoot().restore_from_file(restore_file=from_file)
+    except IOError:
+        # Not an error is the restore file is not present
+        sys.exit(0)
 
-        if errors:
-            print("Restore failed, %d errors:" % len(errors), file=err)
+    if errors:
+        print("Restore failed, %d errors:" % len(errors), file=err)
 
-            for error in errors:
-                print(error, file=err)
+        for error in errors:
+            print(error, file=err)
 
-            sys.exit(-1)
+        sys.exit(-1)
 
 def clear(unused):
     RTSRoot().clear_existing(confirm=True)
