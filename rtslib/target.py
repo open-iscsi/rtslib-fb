@@ -747,9 +747,9 @@ class NetworkPortal(CFSNode):
         try:
             np = cls(tpg_obj, p['ip_address'], p['port'])
             np.iser = p.get('iser', False)
-        except (RTSLibError, KeyError):
-            err_func("Creating NetworkPortal object %s:%s failed" %
-                     (p['ip_address'], p['port']))
+        except (RTSLibError, KeyError) as e:
+            err_func("Creating NetworkPortal object %s:%s failed: %s" %
+                     (p['ip_address'], p['port'], e))
 
     def dump(self):
         d = super(NetworkPortal, self).dump()
