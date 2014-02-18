@@ -46,7 +46,8 @@ def restore(from_file):
     try:
         errors = RTSRoot().restore_from_file(restore_file=from_file)
     except IOError:
-        # Not an error is the restore file is not present
+        # Not an error if the restore file is not present
+        print("No saved config file at %s, ok, exiting" % from_file)
         sys.exit(0)
 
     if errors:
