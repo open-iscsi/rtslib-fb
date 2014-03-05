@@ -24,6 +24,7 @@ from fabric import FabricModule
 
 from tcm import FileIOStorageObject, BlockStorageObject
 from tcm import PSCSIStorageObject, RDMCPStorageObject
+from tcm import StorageObjectFactory
 
 __version__ = 'GIT_VERSION'
 __author__ = "Jerome Martin <jxm@risingtidesystems.com>"

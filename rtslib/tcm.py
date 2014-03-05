@@ -18,6 +18,7 @@ under the License.
 '''
 
 import os
+import stat
 import re
 import glob
 import resource
@@ -738,6 +739,25 @@ class BlockStorageObject(StorageObject):
         d['wwn'] = self.wwn
         d['dev'] = self.udev_path
         return d
+
+
+class StorageObjectFactory(object):
+    """
+    Create a storage object based on a given path.
+    Only works for file & block.
+    """
+
+    def __new__(cls, path):
+        path = os.path.realpath(path)
+        name = path.strip("/").replace("/", "-")
+        if os.path.exists(path):
+            s = os.stat(path)
+            if stat.S_ISBLK(s.st_mode):
+                return BlockStorageObject(name=name, dev=path)
+            elif stat.S_ISREG(s.st_mode):
+                return FileIOStorageObject(name=name, dev=path, size=s.st_size)
+
+        raise RTSLibError("Can't create storageobject from path: %s" % path)
 
 
 bs_params = {
