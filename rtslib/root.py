@@ -197,10 +197,12 @@ class RTSRoot(CFSNode):
             except (TypeError, ValueError):
                 err_func("Could not create StorageObject %s" % so['name'])
                 continue
-            try:
-                set_attributes(so_obj, so.get('attributes', {}))
-            except RTSLibError as e:
-                err_func("Could not set an attribute for %s: %s" % (so['name'], e))
+
+            # Custom err func to include block name
+            def so_err_func(x):
+                return err_func("Storage Object %s/%s: %s" % (so['plugin'], so['name'], x))
+
+            set_attributes(so_obj, so.get('attributes', {}), so_err_func)
 
         # Don't need to create fabric modules
         for index, fm in enumerate(config.get('fabric_modules', [])):

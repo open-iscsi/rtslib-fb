@@ -433,17 +433,19 @@ def _set_auth_attr(self, value, attribute, ignore=False):
         if not ignore:
             raise
 
-def set_attributes(obj, attr_dict):
+def set_attributes(obj, attr_dict, err_func):
     for name, value in attr_dict.iteritems():
-        # Setting some attributes may return an error, before kernel 3.3
-        with ignored(RTSLibError):
+        try:
             obj.set_attribute(name, value)
+        except RTSLibError as e:
+            err_func(str(e))
 
-def set_parameters(obj, param_dict): 
+def set_parameters(obj, param_dict, err_func):
     for name, value in param_dict.iteritems():
-        # Setting some parameters may return an error, before kernel 3.3
-        with ignored(RTSLibError):
+        try:
             obj.set_parameter(name, value)
+        except RTSLibError as e:
+            err_func(str(e))
 
 def _test():
     '''Run the doctests'''

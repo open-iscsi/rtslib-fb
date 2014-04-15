@@ -400,8 +400,8 @@ class TPG(CFSNode):
     @classmethod
     def setup(cls, t_obj, tpg, err_func):
         tpg_obj = cls(t_obj, tag=tpg.get("tag", None))
-        set_attributes(tpg_obj, tpg.get('attributes', {}))
-        set_parameters(tpg_obj, tpg.get('parameters', {}))
+        set_attributes(tpg_obj, tpg.get('attributes', {}), err_func)
+        set_parameters(tpg_obj, tpg.get('parameters', {}), err_func)
 
         for lun in tpg.get('luns', []):
             LUN.setup(tpg_obj, lun, err_func)
