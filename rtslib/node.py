@@ -172,7 +172,7 @@ class CFSNode(object):
             try:
                 fwrite(path, "%s\n" % str(value))
             except Exception as e:
-                raise RTSLibError("Cannot set attribute %s: %s" % (attribute, e))
+                raise RTSLibError("Cannot set parameter %s: %s" % (parameter, e))
 
     def get_parameter(self, parameter):
         '''
