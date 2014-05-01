@@ -57,12 +57,11 @@ formats, typically in /usr/share/doc/python-rtslib/doc/.
 Depending on your Linux distribution, the documentation might be shipped in a
 separate package.
 
-An other good source of information is the linux-iscsi.org website:
-
-	* RTSlib API Reference Guide at http://linux-iscsi.org/Doc/rtslib/html
-	  or http://linux-iscsi.org/Doc/rtslib/rtslib-API-reference.pdf
-
-	* Targetcli User's Guide at http://linux-iscsi.org/wiki/targetcli
+An other good source of information is the http://linux-iscsi.org wiki,
+offering many resources such as (not necessarily up-to-date) copies of the
+RTSlib API Reference Guide (HTML at http://linux-iscsi.org/Doc/rtslib/html or
+PDF at http://linux-iscsi.org/Doc/rtslib/rtslib-API-reference.pdf), and the
+Targetcli User's Guide at http://linux-iscsi.org/wiki/targetcli.
 
 ## Mailing-list
 
@@ -82,4 +81,4 @@ RTSlib was developed by Datera, Inc.
 http://www.datera.io
 
 The original author and current maintainer is
-Jerome Martin <mailto:jxm@netiant.com>
+Jerome Martin, at <mailto:jxm@netiant.com>
