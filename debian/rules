@@ -2,55 +2,28 @@
 
 build_dir   = build
 install_dir = debian/tmp
-setup       = /usr/bin/python ./setup.py --quiet
-name        = rtslib
 
-binary: binary-indep
 
-binary-arch:
+%:
+	dh $@ --with python2
 
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_installdocs
-	dh_installman
-	dh_install --list-missing --sourcedir $(install_dir)
-	dh_fixperms
-	dh_compress -X.py
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+override_dh_auto_clean:
+	# manually clean any *.pyc files
+	rm -rf rtslib/*.pyc
+	[ ! -d doc ] || rm -rf doc
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_installdirs 
-	cp -R specs $(install_dir)
+override_dh_auto_build:
+	python setup.py build --build-base $(build_dir)
+	test -d doc || mkdir doc
 
-build: build-stamp
-build-stamp: 
-	dh_testdir
-	$(setup) build --build-base $(build_dir) install \
-		--no-compile --install-purelib $(install_dir)/lib/rtslib \
-		--install-scripts $(install_dir)/bin
-	echo "2.6, 2.7" > $(install_dir)/lib/rtslib/.version
-	mkdir -p $(build_dir) doc
-	cd $(build_dir); epydoc --no-sourcecode --html -n $(name) \
-		--exclude configobj ../$(name)/*.py
-	cp -r $(build_dir)/html doc/
-	touch build-stamp
+	mkdir -p doc/pdf
+	epydoc --no-sourcecode --pdf -n rtslib --exclude configobj rtslib/*.py
+	mv pdf/api.pdf doc/pdf/rtslib_API_Documentation.pdf
+	
+	mkdir -p doc/html
+	epydoc --no-sourcecode --html -n rtslib --exclude configobj rtslib/*.py
+	mv html doc/
 
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
-	$(setup) clean
-	find . -name "*.pyc" | xargs rm -f
-	find . -name "*.pyo" | xargs rm -f
-	rm -rf $(build_dir) $(install_dir)
-	dh_clean
-
-.PHONY: binary binary-indep install build clean
-
+override_dh_auto_install:
+	python setup.py install --no-compile --install-purelib \
+		$(install_dir)/lib --install-scripts $(install_dir)/bin

@@ -1,13 +1,18 @@
 Source: rtslib
 Section: python
 Priority: optional
-Maintainer: Jerome Martin <jxm@risingtidesystems.com>
-Build-Depends: debhelper(>= 7.0.1), python (>= 2.6)|python2.6|python2.7, python-epydoc, python-ipaddr, python-netifaces, python-configobj
-Standards-Version: 3.8.1
+Standards-Version: 3.9.2
+Homepage: https://github.com/Datera/rtslib
+Maintainer: Jerome Martin <jxm@netiant.com>
+Build-Depends: debhelper(>= 7.0.50~), python(>= 2.6.6-3~), python-ipaddr, python-netifaces, python-configobj, python-epydoc, python-simpleparse, texlive-latex-base, texlive-latex-extra, texlive-latex-recommended, lmodern, ghostscript, texlive-fonts-recommended
 
 Package: python-rtslib
 Architecture: all
-Depends: python (>= 2.6)|python2.6|python2.7, python-configobj, python-netifaces, python-ipaddr
-Suggests: rtslib-doc
+Depends: ${python:Depends}, ${misc:Depends}, python-ipaddr, python-netifaces, python-configobj
+Provides: ${python:Provides}
 Conflicts: rtsadmin-frozen
-Description: RisingTide Systems generic SCSI target API in python.
+Description: Python API to the Linux Kernel's SCSI Target subsystem (LIO)
+ Provides Python object mappings to LIO and TCM SCSI Target subsystems and
+ fabric modules, like storage objects, SCSI targets and LUNs.
+ .
+ Part of the Linux Kernel SCSI Target's userspace management tools
