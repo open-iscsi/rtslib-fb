@@ -1,6 +1,6 @@
 # RTSLib
 
-RTSlib is a Python library that provides the API to the Linux Kernel SCSI
+RTSLib is a Python library that provides the API to the Linux Kernel SCSI
 Target subsystem (LIO), its backend storage objects subsystem (TCM) as well
 as third-party Target Fabric Modules.
 
@@ -18,7 +18,7 @@ own scripts to configure the SCSI Target subsystem.
 ## Installation
 
 RTSLib is currently part of several Linux distributions, either under the
-rtslib name or python-rtslib. In most cases, simply installing the version
+`rtslib` name or `python-rtslib`. In most cases, simply installing the version
 packaged by your favorite Linux distribution is the best way to get it running.
 
 
@@ -27,10 +27,10 @@ packaged by your favorite Linux distribution is the best way to get it running.
 The packages are very easy to build and install from source as long as
 you're familiar with your Linux Distribution's package manager:
 
-1.  Clone the github repository for rtslib using `git clone
+1.  Clone the github repository for RTSLib using `git clone
     https://github.com/Datera/rtslib.git`.
 
-2.  Make sure build dependencies are installed. To build rtslib, you will need:
+2.  Make sure build dependencies are installed. To build RTSLib, you will need:
 
 	* GNU Make.
 	* python 2.6 or 2.7
@@ -51,14 +51,14 @@ you're familiar with your Linux Distribution's package manager:
 ## Documentation
 
 The RTSLib packages do ship with a full API documentation in both HTML and PDF
-formats, typically in /usr/share/doc/python-rtslib/doc/.
+formats, typically in `/usr/share/doc/python-rtslib/doc/`.
 
 Depending on your Linux distribution, the documentation might be shipped in a
 separate package.
 
 An other good source of information is the http://linux-iscsi.org wiki,
 offering many resources such as (not necessarily up-to-date) copies of the
-RTSlib API Reference Guide (HTML at http://linux-iscsi.org/Doc/rtslib/html or
+RTSLib API Reference Guide (HTML at http://linux-iscsi.org/Doc/rtslib/html or
 PDF at http://linux-iscsi.org/Doc/rtslib/rtslib-API-reference.pdf), and the
 Targetcli User's Guide at http://linux-iscsi.org/wiki/targetcli.
 
@@ -76,7 +76,7 @@ http://dir.gmane.org/gmane.linux.scsi.target.devel
 
 ## Author
 
-RTSlib was developed by Datera, Inc.
+RTSLib was developed by Datera, Inc.
 http://www.datera.io
 
 The original author and current maintainer is
