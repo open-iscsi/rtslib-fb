@@ -1,0 +1,12 @@
+Document: python-rtslib
+Title: python-rtslib online documentation
+Author: Jerome Martin <jxm@netiant.com>
+Abstract: API reference documentation for python-rtslib
+Section: System/Administration
+
+Format: HTML
+Index: /usr/share/doc/python-rtslib/doc/html/index.html
+Files: /usr/share/doc/python-rtslib/doc/html/*.html
+
+Format: PDF
+Files: /usr/share/doc/python-rtslib/doc/pdf/rtslib_API_Documentation.pdf.gz
