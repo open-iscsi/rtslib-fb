@@ -22,3 +22,4 @@ debian/tmp/
 *.spec
 rtslib-*
 \#*#
+*~
