@@ -4,7 +4,7 @@ Priority: optional
 Standards-Version: 3.9.2
 Homepage: https://github.com/Datera/rtslib
 Maintainer: Jerome Martin <jxm@netiant.com>
-Build-Depends: debhelper(>= 7.0.50~), python(>= 2.6.6-3~), python-ipaddr, python-netifaces, python-configobj, python-epydoc, python-simpleparse, texlive-latex-base, texlive-latex-extra, texlive-latex-recommended, lmodern, ghostscript, texlive-fonts-recommended
+Build-Depends: debhelper(>= 7.0.50~), python(>= 2.6.6-3~), python-ipaddr, python-netifaces, python-configobj, python-epydoc, texlive-latex-base, texlive-latex-extra, texlive-latex-recommended, lmodern, ghostscript, texlive-fonts-recommended
 
 Package: python-rtslib
 Architecture: all
