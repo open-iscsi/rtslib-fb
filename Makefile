@@ -29,7 +29,7 @@ all:
 	@echo "  make cleanall    - Also remove dist/*"
 
 clean:
-	@rm -fv ${NAME}/*.pyc ${NAME}/*.html
+	@rm -fv ${NAME}/*.pyc test/*.pyc ${NAME}/*.html
 	@rm -frv doc
 	@rm -frv ${NAME}.egg-info MANIFEST build
 	@rm -frv debian/tmp
