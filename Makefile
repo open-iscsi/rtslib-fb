@@ -29,7 +29,7 @@ all:
 	@echo "  make cleanall    - Also remove dist/*"
 
 clean:
-	@rm -fv ${NAME}/*.pyc test/*.pyc ${NAME}/*.html
+	@rm -fv ${NAME}/*.pyc test/*.pyc ${NAME}/*.html .swp
 	@rm -frv doc
 	@rm -frv ${NAME}.egg-info MANIFEST build
 	@rm -frv debian/tmp
@@ -42,6 +42,7 @@ clean:
 	@rm -frv results
 	@rm -fv rpm/*.spec *.spec rpm/sed* sed*
 	@rm -frv ${NAME}-*
+	@find . -name *~ -exec rm -v {} \;
 	@echo "Finished cleanup."
 
 cleanall: clean
