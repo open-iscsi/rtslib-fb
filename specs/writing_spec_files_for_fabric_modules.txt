@@ -1,5 +1,9 @@
-This directory (normally /var/lib/target) contains the spec files for
+The /var/lib/target directory contains the spec files for
 RisingTide Systems's LIO SCSI target subsystem fabric modules.
+
+To support a new fabric module, a spec file should be installed containing
+information for RTSLib to use it: SCSI Target features supported, WWN scheme,
+kernel module information, etc.
 
 Each spec file should be named MODULE.spec, where MODULE is the name the fabric
 module is to be referred as. It contains a series of KEY = VALUE pairs, one per

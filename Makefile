@@ -23,10 +23,14 @@ all:
 	@echo
 	@echo "  make deb         - Builds debian packages."
 	@echo "  make rpm         - Builds rpm packages."
+	@echo "  make run-tests   - Runs all tests using the repository version."
 	@echo "  make release     - Generates the release tarball."
 	@echo
 	@echo "  make clean       - Cleanup the local repository build files."
 	@echo "  make cleanall    - Also remove dist/*"
+
+run-tests:
+	@(PYTHONPATH=$$(pwd); cd test/ ; python -m unittest discover)
 
 clean:
 	@rm -fv ${NAME}/*.pyc test/*.pyc ${NAME}/*.html .swp
@@ -69,7 +73,7 @@ build/release-stamp:
 		rm -r rpm
 	@echo "Generating rpm changelog..."
 	@( \
-		version=$$(basename $$(git describe HEAD --tags | tr - .)); \
+		version=$$(basename $$(git describe HEAD --tags | tr - . | grep -o '[0-9].*$$')); \
 		author=$$(git show HEAD --format="format:%an <%ae>" -s); \
 		date=$$(git show HEAD --format="format:%ad" -s \
 			| awk '{print $$1,$$2,$$3,$$5}'); \
@@ -79,7 +83,7 @@ build/release-stamp:
 	) >> $$(ls build/${NAME}-${VERSION}/*.spec)
 	@echo "Generating debian changelog..."
 	@( \
-		version=$$(basename $$(git describe HEAD --tags | tr - .)); \
+		version=$$(basename $$(git describe HEAD --tags | tr - . | grep -o '[0-9].*$$')); \
 		author=$$(git show HEAD --format="format:%an <%ae>" -s); \
 		date=$$(git show HEAD --format="format:%aD" -s); \
 		day=$$(git show HEAD --format='format:%ai' -s \

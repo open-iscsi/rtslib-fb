@@ -1,0 +1,19 @@
+storage fileio {
+    disk vm1 {
+        path /tmp/disk1.img
+        size 1MB
+
+        attribute {
+            block_size 512
+            optimal_sectors 1024
+            queue_depth 32
+
+            emulate_tas yes
+            enforce_pr_isids yes
+
+            emulate_dpo no
+            emulate_tpu no
+            is_nonrot no
+        }
+    }
+}

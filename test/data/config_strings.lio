@@ -1,0 +1,24 @@
+# This is a comment before the first statement
+storage fileio {
+    disk This:is:a_long_name_for_disk {
+        path /tmp/disk1.img
+        size 1MB
+        # This is an indented comment after size and before a group
+        attribute {
+            # This is an indented comment after a group
+            block_size 512
+            optimal_sectors 1024
+            queue_depth 32
+            fancy_attribute "This is a fancy attribute that takes a long value"
+
+            emulate_tas yes_I_do_want_to_enable_this_%!?@_functionnality!
+            enforce_pr_isids yes # EOL comment
+
+            emulate_dpo no
+            emulate_tpu no  # Hello there!
+            is_nonrot no  # Does what it says?
+        }
+    }
+}
+
+# Last words comment

@@ -1,0 +1,5 @@
+storage fileio disk vm1 {
+    path /tmp/vm1.img
+    size 1MB
+    attribute block_size 512
+}

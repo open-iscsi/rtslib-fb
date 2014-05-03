@@ -28,6 +28,11 @@ from tcm import FileIOStorageObject, IBlockStorageObject
 from tcm import PSCSIBackstore, RDDRBackstore, RDMCPBackstore
 from tcm import PSCSIStorageObject, RDDRStorageObject, RDMCPStorageObject
 
+from config_filters import *
+from config import Config, ConfigError
+from config_tree import ConfigTree, NO_VALUE
+from config_parser import ConfigParser, PolicyParser, PatternParser
+
 __version__ = 'GIT_VERSION'
 __author__ = "Jerome Martin <jxm@risingtidesystems.com>"
 __url__ = "http://www.risingtidesystems.com"

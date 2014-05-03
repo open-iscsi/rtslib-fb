@@ -1,0 +1,26 @@
+storage fileio disk %str {
+    path %str 
+    size %bytes 
+    buffered %bool(yes)
+    attribute {
+        block_size %int(512)
+        emulate_dpo %bool(no) 
+        emulate_fua_read %bool(no)
+        emulate_fua_write %bool(yes)
+        emulate_rest_reord %bool(no)
+        emulate_tas %bool(yes)
+        emulate_tpu %bool(no)
+        emulate_tpws %bool(no)
+        emulate_ua_intlck_ctrl %bool(no)
+        emulate_write_cache %bool(no)
+        enforce_pr_isids %bool(yes)
+        is_nonrot %bool(no)
+        max_sectors %int(1024)
+        max_unmap_block_desc_count %int(0) 
+        max_unmap_lba_count %int(0)
+        optimal_sectors %int(1024)
+        queue_depth %int(32) 
+        unmap_granularity %int(0) 
+        unmap_granularity_alignment %int(0) 
+    }
+}

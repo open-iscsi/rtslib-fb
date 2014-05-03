@@ -1,0 +1,68 @@
+fabric iscsi {
+    discovery_auth {
+        enable %bool(yes)
+        mutual_password %str("") 
+        mutual_userid %str("")
+        password %str("")
+        userid %str("")
+    }
+    target %iqn tpgt %posint {
+        enable %bool(yes)
+        portal %ipport 
+        acl %str {
+            attribute {
+                dataout_timeout %int(3)
+                dataout_timeout_retries %int(5)
+                default_erl %bool(no)
+                nopin_response_timeout %int(30)
+                nopin_timeout %int(15)
+                random_datain_pdu_offsets %bool(no)
+                random_datain_seq_offsets %bool(no)
+                random_r2t_offsets %bool(no)
+            }
+            auth {
+                password %str("")
+                password_mutual %str("")
+                userid %str("")
+                userid_mutual %str("")
+            }
+            mapped_lun %int {
+                target_lun @(-3 lun)
+                write_protect %bool(no)
+            }
+        }
+        attribute {
+            authentication %bool(no)
+            cache_dynamic_acls %bool(no)
+            default_cmdsn_depth %int(16)
+            demo_mode_write_protect %bool(no)
+            generate_node_acls %bool(no)
+            login_timeout %int(15)
+            netif_timeout %int(2)
+            prod_mode_write_protect %bool(no)
+        }
+        lun %int backend %backend
+        parameter {
+            AuthMethod %str(CHAP)
+            DataDigest %str("CRC32C,None")
+            DataPDUInOrder %bool(yes)
+            DataSequenceInOrder %bool(yes)
+            DefaultTime2Retain %int(20)
+            DefaultTime2Wait %int(2)
+            ErrorRecoveryLevel %bool(no)
+            FirstBurstLength %int(65536)
+            HeaderDigest %str("CRC32C,None")
+            IFMarkInt %str("2048~65535")
+            IFMarker %bool(no)
+            ImmediateData %bool(yes)
+            InitialR2T %bool(yes)
+            MaxBurstLength %int(262144)
+            MaxConnections %int(1)
+            MaxOutstandingR2T %int(1)
+            MaxRecvDataSegmentLength %int(8192)
+            OFMarkInt %str("2048~65535")
+            OFMarker %bool(no)
+            TargetAlias %str("LIO Target")
+        }
+    }
+}

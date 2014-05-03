@@ -1,0 +1,23 @@
+# This is a comment before the first statement
+storage fileio {
+    disk vm1 {
+        path /tmp/disk1.img
+        size 1MB
+        # This is an indented comment after size and before a group
+        attribute {
+            # This is an indented comment after a group
+            block_size 512
+            optimal_sectors 1024
+            queue_depth 32
+
+            emulate_tas yes
+            enforce_pr_isids yes # EOL comment
+
+            emulate_dpo no
+            emulate_tpu no  # Hello there!
+            is_nonrot no  # Does what it says?
+        }
+    }
+}
+
+# Last words comment

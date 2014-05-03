@@ -11,7 +11,7 @@ Source:         %{oname}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-rpmroot
 BuildArch:      noarch
 BuildRequires:  python-devel, epydoc
-Requires:       python-configobj, python-netifaces, python-ipaddr
+Requires:       python-configobj, python-netifaces, python-ipaddr, python-pyparsing
 Vendor:         Datera, Inc.
 
 %description
@@ -30,9 +30,11 @@ mv html doc/
 rm -rf %{buildroot}
 %{__python} setup.py install --skip-build --root %{buildroot} --prefix usr
 mkdir -p %{buildroot}/var/target/fabric
-cp specs/* %{buildroot}/var/target/fabric
+cp specs/*.spec %{buildroot}/var/target/fabric
+mkdir -p %{buildroot}/var/target/policy
+cp policy/*.lio %{buildroot}/var/target/policy
 mkdir -p %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}
-cp -r doc/* %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}/
+cp -r doc/* specs/*.txt %{buildroot}/usr/share/doc/python-rtslib-doc-%{version}/
 
 %clean
 rm -rf %{buildroot}

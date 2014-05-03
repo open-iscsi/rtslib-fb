@@ -1,2 +1,3 @@
 lib/rtslib      usr/share/pyshared
-specs/*.spec	var/target/fabric/
+specs/*.spec   	var/target/fabric
+policy/*.lio   	var/target/policy

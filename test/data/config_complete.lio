@@ -1,0 +1,89 @@
+storage fileio disk disk1 {
+    path /tmp/disk1.img
+    size 1MB
+
+    attribute {
+        block_size 512
+        optimal_sectors 1024
+        queue_depth 32
+
+        emulate_tas yes
+        enforce_pr_isids yes
+
+        emulate_dpo no
+        emulate_tpu no
+        is_nonrot no
+  }
+}
+
+storage fileio disk disk2 {
+    path /tmp/disk2.img
+    size 1M
+    attribute block_size 512
+    attribute optimal_sectors 1024
+    attribute queue_depth 32
+}
+
+
+fabric iscsi discovery_auth {
+    enable yes
+    userid "target1"
+    password "kjh45fDf_"
+    mutual_userid no
+    mutual_password no
+}
+    
+fabric iscsi {
+    target "iqn.2003-01.org.linux-iscsi.targetcli.x8664:sn.4699f8812c88" {
+        tpgt 1 {
+            lun 1 backend fileio:disk1
+            lun 2 backend fileio:disk2
+            portal 192.168.0.65:3260
+
+            attribute {
+                authentication no
+                cache_dynamic_acls no
+                default_cmdsn_depth 16
+                demo_mode_write_protect no
+                generate_node_acls no
+                login_timeout 15
+                netif_timeout 2
+                prod_mode_write_protect no
+            }
+
+            parameter {
+                MaxConnections 12
+                MaxOutstandingR2T 34
+                TargetAlias "LIO Target"
+                AuthMethod "CHAP"
+                ImmediateData yes
+                MaxBurstLength 262144
+                MaxRecvDataSegmentLength 8192
+                HeaderDigest "CRC32C,None"
+                OFMarker no
+            }
+
+            acl "iqn.2003-01.org.linux-iscsi.targetcli.x8664:client1" {
+                attribute {
+                    dataout_timeout 3 
+                    dataout_timeout_retries 5 
+                    default_erl no 
+                    nopin_response_timeout 30 
+                    nopin_timeout 15 
+                    random_datain_pdu_offsets no 
+                    random_datain_seq_offsets no 
+                    random_r2t_offsets no 
+                }
+                auth {
+                    userid jerome
+                    password foobar 
+                    userid_mutual just_the2ofus 
+                    password_mutual mutupass 
+                }
+                mapped_lun 1 target_lun 1
+                mapped_lun 2 target_lun 1 
+                mapped_lun 3 target_lun 1 
+            }
+        }
+    }
+}
