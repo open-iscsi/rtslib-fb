@@ -945,7 +945,7 @@ class NodeACL(CFSNode):
             err_func("Error when creating NodeACL for %s: %s" % (acl['node_wwn'], e))
             return
 
-        set_attributes(acl_obj, acl.get('attributes', {}))
+        set_attributes(acl_obj, acl.get('attributes', {}), err_func)
 
         for mlun in acl.get('mapped_luns', []):
             MappedLUN.setup(tpg_obj, acl_obj, mlun, err_func)
