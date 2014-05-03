@@ -10,7 +10,7 @@ log.setLevel(logging.INFO)
 class TestConfigParser(unittest.TestCase):
 
     parser = config_parser.ConfigParser()
-    samples_dir = 'data'
+    samples_dir = '../data'
 
     def test_one_line(self):
         print

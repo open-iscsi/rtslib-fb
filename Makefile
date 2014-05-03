@@ -23,14 +23,27 @@ all:
 	@echo
 	@echo "  make deb         - Builds debian packages."
 	@echo "  make rpm         - Builds rpm packages."
-	@echo "  make run-tests   - Runs all tests using the repository version."
 	@echo "  make release     - Generates the release tarball."
+	@echo
+	@echo "  make test   	  - Runs the safe tests suite."
+	@echo "  make test-all 	  - Runs all tests, including dangerous system test."
+	@echo "                     This WILL mess-up your system target configuration!"
+	@echo "                     Requires sudo access to root privileges."
 	@echo
 	@echo "  make clean       - Cleanup the local repository build files."
 	@echo "  make cleanall    - Also remove dist/*"
 
-run-tests:
-	@(PYTHONPATH=$$(pwd); cd test/ ; python -m unittest discover)
+test:
+	@echo "Running the safe tests suite..."
+	@(PYTHONPATH=$$(pwd); cd tests/safe ; python -m unittest discover)
+
+test-all: test
+	@echo "Will run the DESTRUCTIVE system tests suite now."
+	@echo "This requires sudo access to root privileges."
+	@echo "These tests WILL mess-up your system target configuration!"
+	@echo "Type CTRL-C to abort now or enter to continue..."
+	@read X
+	@(PYTHONPATH=$$(pwd); cd tests/system ; sudo python -m unittest discover)
 
 clean:
 	@rm -fv ${NAME}/*.pyc test/*.pyc ${NAME}/*.html .swp

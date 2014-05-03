@@ -8,7 +8,7 @@ log.setLevel(logging.INFO)
 
 class TestConfig(unittest.TestCase):
 
-    samples_dir = 'data'
+    samples_dir = '../data'
 
     def test_load_basic(self):
         print
