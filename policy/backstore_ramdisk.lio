@@ -1,6 +1,7 @@
-storage rd_dr disk %str {
+storage rd_mcp disk %str {
     size %bytes
     attribute {
+	nullio %bool(no)
         block_size %int(512)
         emulate_dpo %bool(no)
         emulate_fua_read %bool(no)
