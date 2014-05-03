@@ -1,11 +1,14 @@
 storage rd_mcp disk %str {
     size %bytes
-    attribute {
 	nullio %bool(no)
+    attribute {
         block_size %int(512)
+        emulate_3pc %bool(yes)
+        emulate_caw %bool(yes)
         emulate_dpo %bool(no)
         emulate_fua_read %bool(no)
         emulate_fua_write %bool(yes)
+        emulate_model_alias %bool(no)
         emulate_rest_reord %bool(no)
         emulate_tas %bool(yes)
         emulate_tpu %bool(no)
@@ -13,10 +16,11 @@ storage rd_mcp disk %str {
         emulate_ua_intlck_ctrl %bool(no)
         emulate_write_cache %bool(no)
         enforce_pr_isids %bool(yes)
+        fabric_max_sectors %int(8192)
         is_nonrot %bool(no)
-        max_sectors %int(1024)
         max_unmap_block_desc_count %bool(no)
         max_unmap_lba_count %bool(no)
+        max_write_same_len %int(0)
         optimal_sectors %int(1024)
         queue_depth %int(32)
         unmap_granularity %bool(no)

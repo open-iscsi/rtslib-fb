@@ -38,7 +38,7 @@ fabric iscsi {
         tpgt 1 {
             lun 1 backend fileio:disk3
             lun 2 backend fileio:disk2
-            portal 192.168.0.65:3260
+            portal 0.0.0.0:3260
 
             attribute {
                 authentication no

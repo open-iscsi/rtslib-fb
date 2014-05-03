@@ -46,8 +46,8 @@ class TestConfig(unittest.TestCase):
                  ("storage fileio disk disk1 path /tmp/disk2.img", 'attr', 0),
                  ("storage fileio disk disk1 size 1.0MB", 'attr', 1),
                  ("storage fileio disk disk2 path /tmp/disk2.img", 'attr', 1),
-                 ("storage .* disk .* .* .* .*", 'attr', 38),
-                 ("storage .* disk .* attribute .* .*", 'attr', 38),
+                 ("storage .* disk .* .* .* .*", 'attr', 46),
+                 ("storage .* disk .* attribute .* .*", 'attr', 46),
                  ("storage .* disk .* .* .*", 'attr', 6)]
 
         for pattern, node_type, arity in tests:

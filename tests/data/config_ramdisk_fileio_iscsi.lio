@@ -1,0 +1,194 @@
+storage fileio disk disk1 {
+    path /tmp/disk1.img
+    size 1.0M
+    buffered yes
+    attribute block_size 512
+    attribute emulate_dpo 0
+    attribute emulate_fua_read 0
+    attribute emulate_fua_write 1
+    attribute emulate_rest_reord 0
+    attribute emulate_tas 1
+    attribute emulate_tpu 0
+    attribute emulate_tpws 0
+    attribute emulate_ua_intlck_ctrl 0
+    attribute emulate_write_cache 0
+    attribute enforce_pr_isids 1
+    attribute is_nonrot 0
+    attribute max_unmap_block_desc_count 0
+    attribute max_unmap_lba_count 0
+    attribute optimal_sectors 1024
+    attribute queue_depth 32
+    attribute unmap_granularity 0
+    attribute unmap_granularity_alignment 0
+}
+
+storage fileio disk disk2 {
+    path /tmp/disk2.img
+    size 1.0M
+    buffered yes
+    attribute block_size 512
+    attribute emulate_dpo 0
+    attribute emulate_fua_read 0
+    attribute emulate_fua_write 1
+    attribute emulate_rest_reord 0
+    attribute emulate_tas 1
+    attribute emulate_tpu 0
+    attribute emulate_tpws 0
+    attribute emulate_ua_intlck_ctrl 0
+    attribute emulate_write_cache 0
+    attribute enforce_pr_isids 1
+    attribute is_nonrot 0
+    attribute max_unmap_block_desc_count 0
+    attribute max_unmap_lba_count 0
+    attribute optimal_sectors 1024
+    attribute queue_depth 32
+    attribute unmap_granularity 0
+    attribute unmap_granularity_alignment 0
+}
+
+storage rd_mcp disk test {
+    size 1.0M
+    attribute block_size 512
+    attribute emulate_dpo 0
+    attribute emulate_fua_read 0
+    attribute emulate_fua_write 1
+    attribute emulate_rest_reord 0
+    attribute emulate_tas 1
+    attribute emulate_tpu 0
+    attribute emulate_tpws 0
+    attribute emulate_ua_intlck_ctrl 0
+    attribute emulate_write_cache 0
+    attribute enforce_pr_isids 1
+    attribute is_nonrot 0
+    attribute max_unmap_block_desc_count 0
+    attribute max_unmap_lba_count 0
+    attribute optimal_sectors 1024
+    attribute queue_depth 32
+    attribute unmap_granularity 0
+    attribute unmap_granularity_alignment 0
+}
+
+storage rd_mcp disk test2 {
+    size 1.0M
+    attribute block_size 512
+    attribute emulate_dpo 0
+    attribute emulate_fua_read 0
+    attribute emulate_fua_write 1
+    attribute emulate_rest_reord 0
+    attribute emulate_tas 1
+    attribute emulate_tpu 0
+    attribute emulate_tpws 0
+    attribute emulate_ua_intlck_ctrl 0
+    attribute emulate_write_cache 0
+    attribute enforce_pr_isids 1
+    attribute is_nonrot 0
+    attribute max_unmap_block_desc_count 0
+    attribute max_unmap_lba_count 0
+    attribute optimal_sectors 1024
+    attribute queue_depth 32
+    attribute unmap_granularity 0
+    attribute unmap_granularity_alignment 0
+}
+
+fabric iscsi {
+    discovery_auth enable 1
+    discovery_auth userid target1
+    discovery_auth password kjh45fDf_
+    discovery_auth mutual_userid no
+    discovery_auth mutual_password no
+}
+
+fabric iscsi target iqn.2003-01.org.linux-iscsi.targetcli.x8664:sn.4699f8812c88 tpgt 1 {
+    attribute authentication 0
+    attribute cache_dynamic_acls 0
+    attribute default_cmdsn_depth 16
+    attribute demo_mode_write_protect 0
+    attribute generate_node_acls 0
+    attribute login_timeout 15
+    attribute netif_timeout 2
+    attribute prod_mode_write_protect 0
+    parameter AuthMethod CHAP
+    parameter DataDigest "CRC32C,None"
+    parameter DataPDUInOrder Yes
+    parameter DataSequenceInOrder Yes
+    parameter DefaultTime2Retain 20
+    parameter DefaultTime2Wait 2
+    parameter ErrorRecoveryLevel No
+    parameter FirstBurstLength 65536
+    parameter HeaderDigest "CRC32C,None"
+    parameter IFMarkInt "2048~65535"
+    parameter IFMarker No
+    parameter ImmediateData Yes
+    parameter InitialR2T Yes
+    parameter MaxBurstLength 262144
+    parameter MaxConnections 12
+    parameter MaxOutstandingR2T 34
+    parameter MaxRecvDataSegmentLength 8192
+    parameter OFMarkInt "2048~65535"
+    parameter OFMarker No
+    parameter TargetAlias "LIO Target"
+    lun 1 backend fileio:disk1
+    lun 2 backend fileio:disk2
+    acl iqn.2003-01.org.linux-iscsi.targetcli.x8664:client1 {
+        attribute dataout_timeout 3
+        attribute dataout_timeout_retries 5
+        attribute default_erl 0
+        attribute nopin_response_timeout 30
+        attribute nopin_timeout 15
+        attribute random_datain_pdu_offsets 0
+        attribute random_datain_seq_offsets 0
+        attribute random_r2t_offsets 0
+        auth password foobar
+        auth password_mutual mutupass
+        auth userid jerome
+        auth userid_mutual just_the2ofus
+        mapped_lun 1 {
+             target_lun 1
+             write_protect 0
+        }
+        mapped_lun 2 {
+             target_lun 1
+             write_protect 0
+        }
+        mapped_lun 3 {
+             target_lun 1
+             write_protect 0
+        }
+    }
+    portal 0.0.0.0:3260
+    enable 1
+}
+
+fabric iscsi target iqn.2003-01.org.linux-iscsi.targetcli.x8664:sn.caa307436d89 tpgt 1 {
+    attribute authentication 1
+    attribute cache_dynamic_acls 0
+    attribute default_cmdsn_depth 16
+    attribute demo_mode_write_protect 1
+    attribute generate_node_acls 0
+    attribute login_timeout 15
+    attribute netif_timeout 2
+    attribute prod_mode_write_protect 0
+    parameter AuthMethod CHAP
+    parameter DataDigest "CRC32C,None"
+    parameter DataPDUInOrder Yes
+    parameter DataSequenceInOrder Yes
+    parameter DefaultTime2Retain 20
+    parameter DefaultTime2Wait 2
+    parameter ErrorRecoveryLevel 0
+    parameter FirstBurstLength 65536
+    parameter HeaderDigest "CRC32C,None"
+    parameter IFMarkInt "2048~65535"
+    parameter IFMarker No
+    parameter ImmediateData Yes
+    parameter InitialR2T Yes
+    parameter MaxBurstLength 262144
+    parameter MaxConnections 1
+    parameter MaxOutstandingR2T 1
+    parameter MaxRecvDataSegmentLength 8192
+    parameter OFMarkInt "2048~65535"
+    parameter OFMarker No
+    parameter TargetAlias "LIO Target"
+    lun 0 backend rd_mcp:test
+    lun 1 backend rd_mcp:test2
+    enable 1
+}

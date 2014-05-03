@@ -35,7 +35,7 @@ all:
 
 test:
 	@echo "Running the safe tests suite..."
-	@(PYTHONPATH=$$(pwd); cd tests/safe ; python -m unittest discover)
+	@(PYTHONPATH=$$(pwd); cd tests/safe ; python -u -m unittest discover)
 
 test-all: test
 	@echo "Will run the DESTRUCTIVE system tests suite now."

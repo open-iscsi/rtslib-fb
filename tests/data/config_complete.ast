@@ -494,7 +494,7 @@ sg7
 I13
 sg8
 (S'portal'
-S'192.168.0.65:3260'
+S'0.0.0.0:3260'
 tp130
 saa(lp131
 (dp132
@@ -803,7 +803,7 @@ sg7
 I21
 sg8
 (S'default_erl'
-S'no'
+S'0'
 tp210
 saa(lp211
 (dp212

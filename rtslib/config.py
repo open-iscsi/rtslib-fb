@@ -753,7 +753,9 @@ class Config(object):
                        and node.key[1] != NO_VALUE:
                         if not self.reference.get_path(node.path):
                             diffs['minor'].append(node)
-                            diffs['minor_obj'].append(node.parent)
+                            if node.parent not in diffs['minor_obj'] \
+                               and node.parent not in diffs['major_obj']:
+                                diffs['minor_obj'].append(node.parent)
                     elif node.data['type'] == 'group':
                         for attr in node.nodes:
                             if attr.data['type'] == 'attr' \
@@ -761,5 +763,7 @@ class Config(object):
                                and attr.key[1] != NO_VALUE:
                                 if not self.reference.get_path(attr.path):
                                     diffs['minor'].append(attr)
-                                    diffs['minor_obj'].append(node.parent)
+                                    if node.parent not in diffs['minor_obj'] \
+                                       and node.parent not in diffs['major_obj']:
+                                        diffs['minor_obj'].append(node.parent)
         return diffs

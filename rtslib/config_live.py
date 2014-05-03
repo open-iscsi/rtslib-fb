@@ -99,6 +99,12 @@ def dump_live_storage():
             attrs.append("%spath %s" % (_indent, so.udev_path))
         if so.backstore.plugin in ['fileio', 'rd_dr', 'rd_mcp']:
             attrs.append("%ssize %s" % (_indent, _b2h(so.size)))
+        if so.backstore.plugin in ['rd_mcp']:
+            if so.nullio:
+                nullio = 'yes'
+            else:
+                nullio = 'no'
+            attrs.append("%snullio %s" % (_indent, nullio))
         if so.backstore.plugin in ['fileio']:
             is_buffered = "buffered" in so.mode
             if is_buffered:
@@ -405,12 +411,14 @@ def apply_create_obj(obj):
         # TODO move that to a separate function, use for disk too
         matching_lio_so = [so for so in root.storage_objects if
                            so.backstore.plugin == plugin and so.name == name]
+
         if len(matching_lio_so) > 1:
             raise ConfigError("Detected unsupported configfs storage objects "
-                              "allocation schema for %s" % obj.path_str)
-        elif len(matching_lio_so) == 0:
-            raise ConfigError("Could not find %s disk on system: %s"
+                              "allocation schema for storage object '%s'"
                               % obj.path_str)
+        elif len(matching_lio_so) == 0:
+            raise ConfigError("Could not find storage object '%s %s' for '%s'"
+                              % (plugin, name, obj.path_str))
         else:
             lio_so = matching_lio_so[0]
 
@@ -472,21 +480,20 @@ def apply_create_obj(obj):
             # TODO Add policy for rd_mcp
             lio_bs = RDMCPBackstore(idx)
             size = obj_attr(obj, "size")
-            lio_so = lio_bs.storage_object(name, size, True)
+            nullio = obj_attr(obj, "nullio")
+            lio_so = lio_bs.storage_object(name, size, True, nullio)
             apply_group_attrs(obj, lio_so)
         else:
-            raise ConfigError("Unknown backend plugin %s for %s"
+            raise ConfigError("Unknown backend '%s' for backstore '%s'"
                               % (plugin, obj))
-
 
         matching_lio_so = [so for so in root.storage_objects if
                            so.backstore.plugin == plugin and so.name == name]
         if len(matching_lio_so) > 1:
             raise ConfigError("Detected unsupported configfs storage objects "
-                              "allocation schema for %s" % obj.path_str)
+                              "allocation schema for '%s'" % obj.path_str)
         elif len(matching_lio_so) == 0:
-            raise ConfigError("Could not find %s disk on system: %s"
-                              % obj.path_str)
+            raise ConfigError("Could not find backstore '%s'" % obj.path_str)
         else:
             lio_so = matching_lio_so[0]
 
@@ -604,11 +611,16 @@ def apply_delete_obj(obj):
         name = obj.key[1]
         matching_lio_so = [so for so in root.storage_objects if
                            so.backstore.plugin == plugin and so.name == name]
+        log.debug("Looking for storage object %s in %s"
+                  % (obj.path_str,
+                     str(["%s/%s" % (so.backstore.plugin, so.name)
+                          for so in root.storage_objects])))
         if len(matching_lio_so) > 1:
             raise ConfigError("Detected unsupported configfs storage objects "
-                              "allocation schema for %s" % obj.path_str)
+                              "allocation schema for storage object '%s'"
+                              % obj.path_str)
         elif len(matching_lio_so) == 0:
-            raise ConfigError("Could not find %s disk on system: %s"
+            raise ConfigError("Could not find storage object '%s'"
                               % obj.path_str)
         else:
             lio_so = matching_lio_so[0]

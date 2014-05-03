@@ -228,13 +228,13 @@ class RDMCPBackstore(Backstore):
 
     # RDMCPBackstore public stuff
 
-    def storage_object(self, name, size=None, gen_wwn=True):
+    def storage_object(self, name, size=None, gen_wwn=True, nullio=False):
         '''
         Same as RDMCPStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return RDMCPStorageObject(self, name=name,
-                                  size=size, gen_wwn=gen_wwn)
+        return RDMCPStorageObject(self, name=name, size=size,
+                                  gen_wwn=gen_wwn, nullio=False)
 
 class FileIOBackstore(Backstore):
     '''
