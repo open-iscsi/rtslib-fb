@@ -671,14 +671,14 @@ class BlockStorageObject(StorageObject):
         if dev is not None:
             super(BlockStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(dev, wwn, readonly, write_back)
+                self._configure(dev, wwn, readonly)
             except:
                 self.delete()
                 raise
         else:
             super(BlockStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, dev, wwn, readonly, write_back):
+    def _configure(self, dev, wwn, readonly):
         self._check_self()
         if get_blockdev_type(dev) != 0:
             raise RTSLibError("Device is not a TYPE_DISK block device.")
@@ -689,9 +689,6 @@ class BlockStorageObject(StorageObject):
         self._control("udev_path=%s" % dev)
         self._control("readonly=%d" % readonly)
         self._enable()
-
-        if write_back:
-            self.set_attribute("emulate_write_cache", 1)
 
         super(BlockStorageObject, self)._configure(wwn)
 
