@@ -721,6 +721,7 @@ class Config(object):
             - 'created': list of new objects in the current configuration
         '''
         # FIXME  data['required'] check should be enough without NO_VALUE check
+        # FIXME Can't we just pass the reference config instead of having to preload it?
         diffs = {}
         keys = ('removed', 'major', 'major_obj',
                 'minor', 'minor_obj', 'created')
