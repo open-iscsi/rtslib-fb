@@ -1,0 +1,224 @@
+storage fileio disk test {
+    buffered no 
+    path /tmp/test.img 
+    size 1.0MB 
+    attribute {
+        block_size 512 
+        emulate_3pc yes 
+        emulate_caw yes 
+        emulate_dpo no 
+        emulate_fua_read no 
+        emulate_fua_write yes 
+        emulate_model_alias no 
+        emulate_rest_reord no 
+        emulate_tas yes 
+        emulate_tpu no 
+        emulate_tpws no 
+        emulate_ua_intlck_ctrl no 
+        emulate_write_cache no 
+        enforce_pr_isids yes 
+        fabric_max_sectors 8192 
+        is_nonrot no 
+        max_unmap_block_desc_count 1 
+        max_unmap_lba_count 8192 
+        max_write_same_len 4096 
+        optimal_sectors 8192 
+        queue_depth 128 
+        unmap_granularity 1 
+        unmap_granularity_alignment 0 
+    }
+}
+storage rd_mcp {
+    disk test {
+        nullio no 
+        size 10.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write no 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count no 
+            max_unmap_lba_count no 
+            max_write_same_len 0 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity no 
+            unmap_granularity_alignment no 
+        }
+    }
+    disk test2 {
+        nullio no 
+        size 10.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count no 
+            max_unmap_lba_count no 
+            max_write_same_len 0 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity no 
+            unmap_granularity_alignment no 
+        }
+    }
+    disk test3 {
+        nullio no 
+        size 10.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count no 
+            max_unmap_lba_count no 
+            max_write_same_len 0 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity no 
+            unmap_granularity_alignment no 
+        }
+    }
+    disk test_nullio {
+        nullio yes 
+        size 10.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count no 
+            max_unmap_lba_count no 
+            max_write_same_len 0 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity no 
+            unmap_granularity_alignment no 
+        }
+    }
+}
+fabric iscsi {
+    discovery_auth {
+        enable no 
+        mutual_password "" 
+        mutual_userid "" 
+        password "" 
+        userid "" 
+    }
+    target iqn.2003-01.org.linux-iscsi.ws0.x8664:sn.690f8dd50f79 tpgt 1 {
+        enable yes 
+        attribute {
+            authentication yes 
+            cache_dynamic_acls no 
+            default_cmdsn_depth 64 
+            default_erl 0 
+            demo_mode_discovery yes 
+            demo_mode_write_protect yes 
+            generate_node_acls no 
+            login_timeout 15 
+            netif_timeout 2 
+            prod_mode_write_protect no 
+        }
+        auth {
+            password "" 
+            password_mutual "" 
+            userid "" 
+            userid_mutual "" 
+        }
+        parameter {
+            AuthMethod CHAP 
+            DataDigest "CRC32C,None" 
+            DataPDUInOrder yes 
+            DataSequenceInOrder yes 
+            DefaultTime2Retain 20 
+            DefaultTime2Wait 2 
+            ErrorRecoveryLevel no 
+            FirstBurstLength 65536 
+            HeaderDigest "CRC32C,None" 
+            IFMarkInt "2048~65535" 
+            IFMarker no 
+            ImmediateData yes 
+            InitialR2T yes 
+            MaxBurstLength 262144 
+            MaxConnections 1 
+            MaxOutstandingR2T 1 
+            MaxRecvDataSegmentLength 8192 
+            MaxXmitDataSegmentLength 262144 
+            OFMarkInt "2048~65535" 
+            OFMarker no 
+            TargetAlias "LIO Target" 
+        }
+        lun 0 backend fileio:test 
+        acl iqn.2003-01.org.linux-iscsi.ws0.x8664:client1 {
+            attribute {
+                dataout_timeout 3 
+                dataout_timeout_retries 5 
+                default_erl 0 
+                nopin_response_timeout 30 
+                nopin_timeout 15 
+                random_datain_pdu_offsets no 
+                random_datain_seq_offsets no 
+                random_r2t_offsets no 
+            }
+            auth {
+                password "" 
+                password_mutual "" 
+                userid "" 
+                userid_mutual "" 
+            }
+            mapped_lun 0 {
+                target_lun 0 
+                write_protect no 
+            }
+        }
+    }
+}

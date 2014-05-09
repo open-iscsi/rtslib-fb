@@ -1,0 +1,204 @@
+storage fileio {
+    disk file_no_option_2MB {
+        buffered yes 
+        path /tmp/file_no_option_2MB 
+        size 2.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache yes 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
+            max_write_same_len 4096 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity 1 
+            unmap_granularity_alignment 0 
+        }
+    }
+    disk file_sparse_1MB {
+        buffered yes 
+        path /tmp/file_sparse_1MB 
+        size 1.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache yes 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
+            max_write_same_len 4096 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity 1 
+            unmap_granularity_alignment 0 
+        }
+    }
+    disk file_unbuffered_1MB {
+        buffered yes 
+        path /tmp/file_unbuffered_1MB 
+        size 1.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache yes 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
+            max_write_same_len 4096 
+            optimal_sectors 8192 
+            queue_depth 128 
+            unmap_granularity 1 
+            unmap_granularity_alignment 0 
+        }
+    }
+}
+fabric iscsi {
+    discovery_auth {
+        enable no 
+        mutual_password "" 
+        mutual_userid "" 
+        password "" 
+        userid "" 
+    }
+    target iqn.2003-01.org.linux-iscsi.ws0.x8664:sn.31631c361eba tpgt 1 {
+        enable yes 
+        attribute {
+            authentication yes 
+            cache_dynamic_acls no 
+            default_cmdsn_depth 64 
+            default_erl 0 
+            demo_mode_discovery yes 
+            demo_mode_write_protect yes 
+            generate_node_acls no 
+            login_timeout 15 
+            netif_timeout 2 
+            prod_mode_write_protect no 
+        }
+        auth {
+            password "" 
+            password_mutual "" 
+            userid "" 
+            userid_mutual "" 
+        }
+        parameter {
+            AuthMethod CHAP 
+            DataDigest "CRC32C,None" 
+            DataPDUInOrder yes 
+            DataSequenceInOrder yes 
+            DefaultTime2Retain 20 
+            DefaultTime2Wait 2 
+            ErrorRecoveryLevel no 
+            FirstBurstLength 65536 
+            HeaderDigest "CRC32C,None" 
+            IFMarkInt "2048~65535" 
+            IFMarker no 
+            ImmediateData yes 
+            InitialR2T yes 
+            MaxBurstLength 262144 
+            MaxConnections 1 
+            MaxOutstandingR2T 1 
+            MaxRecvDataSegmentLength 8192 
+            MaxXmitDataSegmentLength 262144 
+            OFMarkInt "2048~65535" 
+            OFMarker no 
+            TargetAlias "LIO Target" 
+        }
+        lun 1 backend fileio:file_no_option_2MB 
+        lun 2 backend fileio:file_sparse_1MB 
+        acl iqn.2003-01.org.linux-iscsi.ws0.x8664:client1 {
+            attribute {
+                dataout_timeout 3 
+                dataout_timeout_retries 5 
+                default_erl 0 
+                nopin_response_timeout 30 
+                nopin_timeout 15 
+                random_datain_pdu_offsets no 
+                random_datain_seq_offsets no 
+                random_r2t_offsets no 
+            }
+            auth {
+                password "" 
+                password_mutual "" 
+                userid "" 
+                userid_mutual "" 
+            }
+            mapped_lun 1 {
+                target_lun 1 
+                write_protect no 
+            }
+            mapped_lun 2 {
+                target_lun 2 
+                write_protect no 
+            }
+        }
+        acl iqn.2003-01.org.linux-iscsi.ws0.x8664:client2 {
+            attribute {
+                dataout_timeout 3 
+                dataout_timeout_retries 5 
+                default_erl 0 
+                nopin_response_timeout 30 
+                nopin_timeout 15 
+                random_datain_pdu_offsets no 
+                random_datain_seq_offsets no 
+                random_r2t_offsets no 
+            }
+            auth {
+                password "" 
+                password_mutual "" 
+                userid "" 
+                userid_mutual "" 
+            }
+            mapped_lun 1 {
+                target_lun 1 
+                write_protect no 
+            }
+            mapped_lun 2 {
+                target_lun 2 
+                write_protect no 
+            }
+        }
+    }
+}
+fabric loopback target naa.60014054793b60dd {
+    lun 0 backend fileio:file_no_option_2MB 
+    lun 1 backend fileio:file_sparse_1MB 
+    lun 2 backend fileio:file_unbuffered_1MB 
+}
