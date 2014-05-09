@@ -450,7 +450,7 @@ def apply_create_obj(obj):
     elif obj.key[0] == 'disk':
         plugin = obj.parent.key[1]
         name = obj.key[1]
-        idx = max([b.index for b in root.backstores if b.plugin == plugin]) + 1
+        idx = max([0] + [b.index for b in root.backstores if b.plugin == plugin]) + 1
         if plugin == 'fileio':
             dev = obj_attr(obj, "path")
             size = obj_attr(obj, "size")
@@ -625,3 +625,14 @@ def apply_delete_obj(obj):
         else:
             lio_so = matching_lio_so[0]
             lio_so.delete()
+
+def clear_configfs():
+    '''
+    Clears the live configfs by deleteing all nodes.
+    '''
+    root = get_root()
+    for target in root.targets:
+        target.delete()
+    for backstore in root.backstores:
+        backstore.delete()
+    
