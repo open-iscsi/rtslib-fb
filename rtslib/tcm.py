@@ -234,7 +234,7 @@ class RDMCPBackstore(Backstore):
         '''
         self._check_self()
         return RDMCPStorageObject(self, name=name, size=size,
-                                  gen_wwn=gen_wwn, nullio=False)
+                                  gen_wwn=gen_wwn, nullio=nullio)
 
 class FileIOBackstore(Backstore):
     '''
