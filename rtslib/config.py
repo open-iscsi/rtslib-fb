@@ -685,7 +685,7 @@ class Config(object):
 
         if brute_force:
             from config_live import apply_create_obj, clear_configfs
-            yield "[clear] Clearing running configuration"
+            yield "[clear] delete all live objects"
             clear_configfs()
             for obj in self.current.walk(get_filter_on_type(['obj'])):
                 yield("[create] %s" % obj.path_str)
