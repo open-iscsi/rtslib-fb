@@ -291,16 +291,16 @@ def apply_group_attrs(obj, lio_obj):
                 if attr.data['type'] == 'attr' \
                    and not attr.data['required']:
                     name = attr.key[0]
-                    value = str(obj_attr(group, name))
+                    value = obj_attr(group, name)
                     if group_name == 'auth':
                         log.debug("Setting auth %s to %s" % (name, value))
-                        lio_obj.set_auth_attr(name, str(value))
+                        lio_obj.set_auth_attr(name, value)
                     elif group_name == 'attribute':
                         log.debug("Setting attribute %s to %s" % (name, value))
-                        lio_obj.set_attribute(name, str(value))
+                        lio_obj.set_attribute(name, value)
                     elif group_name == 'parameter':
                         log.debug("Setting parameter %s to %s" % (name, value))
-                        lio_obj.set_parameter(name, str(value))
+                        lio_obj.set_parameter(name, value)
                     elif group_name == 'discovery_auth':
                         log.debug("Setting discovery_auth %s to %s" % (name, value))
                         if name == 'enable':
