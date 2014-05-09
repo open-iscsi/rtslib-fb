@@ -789,10 +789,9 @@ class RDMCPStorageObject(StorageObject):
         @param gen_wwn: Should we generate a T10 WWN Unit Serial ?
         @type gen_wwn: bool
         @param nullio: If rd should be created w/o backing page store.
-        @type nullio: boolean
+        @type nullio: bool
         @return: A RDMCPStorageObject object.
         '''
-
         if size is not None:
             super(RDMCPStorageObject, self).__init__(backstore,
                                                      RDMCPBackstore,
