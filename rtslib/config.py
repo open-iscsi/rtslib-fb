@@ -671,7 +671,7 @@ class Config(object):
         '''
         return {}
 
-    def apply(self):
+    def apply(self, brute_force=True):
         '''
         Applies the configuration to the live system:
             - Remove objects absent from the configuration and objects in the
@@ -682,17 +682,26 @@ class Config(object):
             - Update relevant fabric objects
         '''
         from config_live import apply_create_obj, apply_delete_obj
-        # TODO for minor_obj, update instead of create/delete
-        diff = self.diff_live()
-        delete_list = diff['removed'] + diff['major_obj'] + diff['minor_obj']
-        delete_list.reverse()
-        for obj in delete_list:
-            yield "[delete] %s" % obj.path_str
-            apply_delete_obj(obj)
 
-        for obj in diff['created'] + diff['major_obj'] + diff['minor_obj']:
-            yield "[create] %s" % obj.path_str
-            apply_create_obj(obj)
+        if brute_force:
+            from config_live import apply_create_obj, clear_configfs
+            yield "[clear] Clearing running configuration"
+            clear_configfs()
+            for obj in self.current.walk(get_filter_on_type(['obj'])):
+                yield("[create] %s" % obj.path_str)
+                apply_create_obj(obj)
+        else:
+            # TODO for minor_obj, update instead of create/delete
+            diff = self.diff_live()
+            delete_list = diff['removed'] + diff['major_obj'] + diff['minor_obj']
+            delete_list.reverse()
+            for obj in delete_list:
+                yield "[delete] %s" % obj.path_str
+                apply_delete_obj(obj)
+
+            for obj in diff['created'] + diff['major_obj'] + diff['minor_obj']:
+                yield "[create] %s" % obj.path_str
+                apply_create_obj(obj)
 
     def diff_live(self):
         '''
