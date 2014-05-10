@@ -442,6 +442,9 @@ def apply_create_obj(obj):
         lio_fabric = FabricModule(fabric.key[1])
         lio_target = Target(lio_fabric, wwn=wwn)
         apply_group_attrs(obj, lio_target)
+        if not lio_target.has_feature("tpgts"):
+            lio_tpg = TPG(lio_target, 1)
+            lio_tpg.enable = True
 
     elif obj.key[0] == 'fabric':
         lio_fabric = FabricModule(obj.key[1])
