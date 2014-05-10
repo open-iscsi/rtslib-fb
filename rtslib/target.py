@@ -1132,6 +1132,14 @@ class TPG(CFSNode):
         self._check_self()
         return LUN(self, lun=lun, storage_object=storage_object, alias=alias)
 
+    def has_enable(self):
+        '''
+        Returns True if the TPG has the enable attribute, else False.
+        '''
+        self._check_self()
+        path = "%s/enable" % self.path
+        return os.path.isfile(path)
+
     alua_metadata_path = property(_get_alua_metadata_path,
                                   doc="Get the ALUA metadata directory path " \
                                   + "for the TPG.")

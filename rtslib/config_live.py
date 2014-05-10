@@ -150,10 +150,13 @@ def dump_live_fabric():
                 if tpg.has_feature("tpgts"):
                     head = ("fabric %s target %s tpgt %s"
                             % (fm.name, tg.wwn, tpg.tag))
-                    enable = int(tpg.enable)
                 else:
                     head = ("fabric %s target %s"
                             % (fm.name, tg.wwn))
+
+                if tpg.has_enable():
+                    enable = int(tpg.enable)
+                else:
                     enable = None
 
                 section = []
@@ -428,12 +431,15 @@ def apply_create_obj(obj):
     elif obj.key[0] == 'tpgt':
         target = obj.parent
         fabric = target.parent
-        enable = obj_attr(obj, "enable")
+        has_enable = len(obj.search([("enable", ".*")])) != 0
+        if has_enable:
+            enable = obj_attr(obj, "enable")
         lio_fabric = FabricModule(fabric.key[1])
         lio_target = Target(lio_fabric, wwn=target.key[1], mode='lookup')
         tpgt = int(obj.key[1])
         lio_tpg = TPG(lio_target, tpgt)
-        lio_tpg.enable = enable
+        if has_enable:
+            lio_tpg.enable = enable
         apply_group_attrs(obj, lio_tpg)
 
     elif obj.key[0] == 'target':
@@ -444,7 +450,8 @@ def apply_create_obj(obj):
         apply_group_attrs(obj, lio_target)
         if not lio_target.has_feature("tpgts"):
             lio_tpg = TPG(lio_target, 1)
-            lio_tpg.enable = True
+            if len(obj.search([("enable", ".*")])) != 0:
+                lio_tpg.enable = True
 
     elif obj.key[0] == 'fabric':
         lio_fabric = FabricModule(obj.key[1])
