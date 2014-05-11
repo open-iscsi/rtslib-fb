@@ -16,7 +16,7 @@
 
 NAME = rtslib
 GIT_BRANCH = $$(git branch | grep \* | tr -d \*)
-VERSION = $$(basename $$(git describe --tags | tr - .))
+VERSION = $$(basename $$(git describe --tags | tr - . | grep -o '[0-9].*$$'))
 
 all:
 	@echo "Usage:"

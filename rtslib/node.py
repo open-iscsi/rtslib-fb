@@ -24,8 +24,6 @@ from utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
 
 class CFSNode(object):
 
-    # Where do we store the fabric modules spec files ?
-    spec_dir = "/var/target/fabric"
     # Where is the configfs base LIO directory ?
     configfs_dir = '/sys/kernel/config/target'
     # TODO: Make the ALUA path generic, not iscsi-centric
@@ -51,11 +49,11 @@ class CFSNode(object):
 
     def _create_in_cfs_ine(self, mode):
         '''
-        Creates the configFS node if it does not already exists depending on
+        Creates the configFS node if it does not already exist depending on
         the mode.
-        any -> makes sure it exists, also works if the node already does exists
-        lookup -> make sure it does NOT exists
-        create -> create the node which must not exists beforehand
+        any -> makes sure it exists, also works if the node already does exist
+        lookup -> make sure it does NOT exist
+        create -> create the node which must not exist beforehand
         Upon success (no exception raised), self._fresh is True if a node was
         created, else self._fresh is False.
         '''
@@ -67,11 +65,16 @@ class CFSNode(object):
         elif not self and mode == 'lookup':
             raise RTSLibNotInCFS("No such %s in configfs: %s."
                                  % (self.__class__.__name__, self.path))
-        if not self:
+        if self:
+            self._fresh = False
+            return
+
+        try:
             os.mkdir(self.path)
             self._fresh = True
-        else:
-            self._fresh = False
+        except:
+            raise RTSLibError("Could not create %s in configFS."
+                              % self.__class__.__name__)
 
     def _exists(self):
         return bool(self)

@@ -49,42 +49,15 @@ class RTSLibNotInCFS(RTSLibError):
     '''
     The underlying configfs object does not exist. Happens when
     calling methods of an object that is instantiated but have
-    been deleted from congifs, or when trying to lookup an
+    been deleted from configs, or when trying to lookup an
     object that does not exist.
     '''
     pass
 
-def flatten_nested_list(nested_list):
-    '''
-    Function to flatten a nested list.
-
-    >>> import rtslib.utils as utils
-    >>> utils.flatten_nested_list([[1,2,3,[4,5,6]],[7,8],[[[9,10]],[11,]]])
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-
-    @param nested_list: A nested list (list of lists of lists etc.)
-    @type nested_list: list
-    @return: A list with only non-list elements
-    '''
-    return list(gen_list_item(nested_list))
-
-def gen_list_item(nested_list):
-    '''
-    The generator for flatten_nested_list().
-    It returns one by one items that are not a list, and recurses when
-    he finds an item that is a list.
-    '''
-    for item in nested_list:
-        if type(item) is list:
-            for nested_item in gen_list_item(item):
-                yield nested_item
-        else:
-            yield item
-
 def fwrite(path, string):
     '''
     This function writes a string to a file, and takes care of
-    opening it and closing it. If the file does not exists, it
+    opening it and closing it. If the file does not exist, it
     will be created.
 
     >>> from rtslib.utils import *
@@ -629,7 +602,7 @@ def modprobe(module):
             else:
                 return True
         else:
-            raise RTSLibError("Kernel module %s does not exists on disk "
+            raise RTSLibError("Kernel module %s does not exist on disk "
                                   % module + "and is not loaded.")
     else:
         return False

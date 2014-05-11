@@ -47,24 +47,17 @@ class Backstore(CFSNode):
                                         self._index)
         self._create_in_cfs_ine(mode)
 
-    def _get_plugin(self):
-        return self._plugin
-
     def _get_index(self):
         return self._index
 
     def _list_storage_objects(self):
         self._check_self()
-        storage_objects = []
         storage_object_names = [os.path.basename(s)
                                 for s in os.listdir(self.path)
                                 if s not in set(["hba_info", "hba_mode"])]
 
         for storage_object_name in storage_object_names:
-            storage_objects.append(self._storage_object_class(
-                self, storage_object_name))
-
-        return storage_objects
+            yield self._storage_object_class(self, storage_object_name)
 
     def _create_in_cfs_ine(self, mode):
         try:
@@ -113,8 +106,6 @@ class Backstore(CFSNode):
             doc="Get the list of StorageObjects attached to the backstore.")
     version = property(_get_version,
             doc="Get the Backstore plugin version string.")
-    plugin = property(_get_plugin,
-            doc="Get the Backstore plugin name.")
     name = property(_get_name,
             doc="Get the backstore name.")
 
@@ -420,13 +411,11 @@ class StorageObject(CFSNode):
 
     def _list_attached_luns(self):
         '''
-        Just returns a set of all luns attached to a storage object.
+        Generates all luns attached to a storage object.
         '''
         self._check_self()
-        luns = set([])
         for lun in self._gen_attached_luns():
-            luns.add(lun)
-        return luns
+            yield lun
 
     # StorageObject public stuff
 
@@ -472,7 +461,7 @@ class StorageObject(CFSNode):
     wwn = property(_get_wwn, _set_wwn,
             doc="Get or set the StorageObject T10 WWN Serial as a string.")
     status = property(_get_status,
-            doc="Get the storage object status, depending on wether or not it"\
+            doc="Get the storage object status, depending on whether or not it"\
                 + "is used by any LUN")
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
@@ -961,7 +950,6 @@ class FileIOStorageObject(StorageObject):
                                   + "%s is already in use." % dev)
             if is_disk_partition(rdev):
                 size = get_disk_size(rdev)
-                print "fd_dev_name=%s,fd_dev_size=%d" % (dev, size)
                 self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
             else:
                 self._control("fd_dev_name=%s" % dev)

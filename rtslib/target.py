@@ -25,11 +25,13 @@ import shutil
 
 from node import CFSNode
 from os.path import isdir
-from doctest import testmod
 from configobj import ConfigObj
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
+
+# Where do we store the fabric modules spec files ?
+spec_dir = "/var/target/fabric"
 
 class FabricModule(CFSNode):
     '''
@@ -44,6 +46,14 @@ class FabricModule(CFSNode):
     discovery_auth_attributes = set(["discovery_auth"])
     target_names_excludes = version_attributes | discovery_auth_attributes
 
+    @classmethod
+    def all(cls):
+        mod_names = [mod_name[:-5] for mod_name in os.listdir(spec_dir)
+                     if mod_name.endswith('.spec')]
+        for name in mod_names:
+            yield FabricModule(name)
+
+
     # FabricModule private stuff
     def __init__(self, name):
         '''
@@ -53,8 +63,8 @@ class FabricModule(CFSNode):
         @type name: str
         '''
         super(FabricModule, self).__init__()
-        self.name = name
-        self.spec = self._parse_spec()
+        self.name = str(name)
+        self.spec = self._parse_spec("%s/%s.spec" % (spec_dir, name))
         self._path = "%s/%s" % (self.configfs_dir,
                                 self.spec['configfs_group'])
     # FabricModule public stuff
@@ -97,7 +107,7 @@ class FabricModule(CFSNode):
             yield ('create_cfs_group', self._fresh,
                    "Created '%s'." % self.path)
 
-    def _parse_spec(self):
+    def _parse_spec(self, spec_file):
         '''
         Parses the fabric module spec file.
         '''
@@ -112,7 +122,6 @@ class FabricModule(CFSNode):
                         wwn_from_cmds_filter='',
                         wwn_type='free')
 
-        spec_file = "%s/%s.spec" % (self.spec_dir, self.name)
         spec = ConfigObj(spec_file).dict()
         if spec:
             self.spec_file = spec_file
@@ -196,13 +205,10 @@ class FabricModule(CFSNode):
 
     def _list_targets(self):
         if self.exists:
-            return set(
-                [Target(self, wwn, 'lookup')
-                 for wwn in os.listdir(self.path)
-                 if os.path.isdir("%s/%s" % (self.path, wwn))
-                 if wwn not in self.target_names_excludes])
-        else:
-            return set([])
+            for wwn in os.listdir(self.path):
+                if os.path.isdir("%s/%s" % (self.path, wwn)) and \
+                        wwn not in self.target_names_excludes:
+                    yield Target(self, wwn, 'lookup')
 
     def _get_version(self):
         if self.exists:
@@ -313,7 +319,7 @@ class FabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/enforce_discovery_auth" % self.path
-        if enable:
+        if int(enable):
             enable = 1
         else:
             enable = 0
@@ -500,12 +506,15 @@ class LUN(CFSNode):
 
     def delete(self):
         '''
-        If the underlying configFS object does not exists, this method does
+        If the underlying configFS object does not exist, this method does
         nothing. If the underlying configFS object exists, this method attempts
         to delete it along with all MappedLUN objects referencing that LUN.
         '''
         self._check_self()
-        [mlun.delete() for mlun in self._list_mapped_luns()]
+
+        for mlun in self.mapped_luns:
+            mlun.delete()
+
         try:
             link = self.alias
         except RTSLibBrokenLink:
@@ -654,11 +663,7 @@ class MappedLUN(CFSNode):
     def _get_write_protect(self):
         self._check_self()
         path = "%s/write_protect" % self.path
-        write_protect = fread(path).strip()
-        if write_protect == "1":
-            return True
-        else:
-            return False
+        return bool(int(fread(path)))
 
     def _get_tpg_lun(self):
         self._check_self()
@@ -757,12 +762,9 @@ class NodeACL(CFSNode):
 
     def _list_mapped_luns(self):
         self._check_self()
-        mapped_luns = []
-        mapped_lun_dirs = glob.glob("%s/lun_*" % self.path)
-        for mapped_lun_dir in mapped_lun_dirs:
+        for mapped_lun_dir in glob.glob("%s/lun_*" % self.path):
             mapped_lun = int(os.path.basename(mapped_lun_dir).split("_")[1])
-            mapped_luns.append(MappedLUN(self, mapped_lun))
-        return mapped_luns
+            yield MappedLUN(self, mapped_lun)
 
     # NodeACL public stuff
     def has_feature(self, feature):
@@ -968,10 +970,9 @@ class TPG(CFSNode):
     def _list_network_portals(self):
         self._check_self()
         if not self.has_feature('nps'):
-            return []
-        network_portals = []
-        network_portal_dirs = os.listdir("%s/np" % self.path)
-        for network_portal_dir in network_portal_dirs:
+            return
+
+        for network_portal_dir in os.listdir("%s/np" % self.path):
             if network_portal_dir.startswith('['):
                 # IPv6 portals are [IPv6]:PORT
                 (ip_address, port) = \
@@ -982,9 +983,7 @@ class TPG(CFSNode):
                 (ip_address, port) = \
                         os.path.basename(network_portal_dir).split(":")
             port = int(port)
-            network_portals.append(
-                NetworkPortal(self, ip_address, port, 'lookup'))
-        return network_portals
+            yield NetworkPortal(self, ip_address, port, 'lookup')
 
     def _get_enable(self):
         self._check_self()
@@ -992,22 +991,22 @@ class TPG(CFSNode):
         # If the TPG does not have the enable attribute, then it is always
         # enabled.
         if os.path.isfile(path):
-            return int(fread(path))
+            return bool(int(fread(path)))
         else:
-            return 1
+            return True
 
     def _set_enable(self, boolean):
         '''
         Enables or disables the TPG. Raises an error if trying to disable a TPG
-        without en enable attribute (but enabling works in that case).
+        without an enable attribute (but enabling works in that case).
         '''
         self._check_self()
         path = "%s/enable" % self.path
-        if os.path.isfile(path):
-            if boolean and not self._get_enable():
-                fwrite(path, "1")
-            elif not boolean and self._get_enable():
-                fwrite(path, "0")
+        if os.path.isfile(path) and (boolean != self._get_enable()):
+            try:
+                fwrite(path, str(int(boolean)))
+            except IOError, e:
+                raise RTSLibError("Cannot change enable state: %s" % e)
         elif not boolean:
             raise RTSLibError("TPG cannot be disabled.")
 
@@ -1051,24 +1050,21 @@ class TPG(CFSNode):
     def _list_node_acls(self):
         self._check_self()
         if not self.has_feature('acls'):
-            return []
-        node_acls = []
+            return
+
         node_acl_dirs = [os.path.basename(path)
                          for path in os.listdir("%s/acls" % self.path)]
         for node_acl_dir in node_acl_dirs:
-            node_acls.append(NodeACL(self, node_acl_dir, 'lookup'))
-        return node_acls
+            yield NodeACL(self, node_acl_dir, 'lookup')
 
     def _list_luns(self):
         self._check_self()
-        luns = []
         lun_dirs = [os.path.basename(path)
                     for path in os.listdir("%s/lun" % self.path)]
         for lun_dir in lun_dirs:
             lun = lun_dir.split('_')[1]
             lun = int(lun)
-            luns.append(LUN(self, lun))
-        return luns
+            yield LUN(self, lun)
 
     def _control(self, command):
         self._check_self()
@@ -1218,13 +1214,10 @@ class Target(CFSNode):
 
     def _list_tpgs(self):
         self._check_self()
-        tpgs = []
-        tpg_dirs = glob.glob("%s/tpgt*" % self.path)
-        for tpg_dir in tpg_dirs:
+        for tpg_dir in glob.glob("%s/tpgt*" % self.path):
             tag = os.path.basename(tpg_dir).split('_')[1]
             tag = int(tag)
-            tpgs.append(TPG(self, tag, 'lookup'))
-        return tpgs
+            yield TPG(self, tag, 'lookup')
 
     # Target public stuff
 
@@ -1247,6 +1240,7 @@ class Target(CFSNode):
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
 
 def _test():
+    from doctest import testmod
     testmod()
 
 if __name__ == "__main__":
