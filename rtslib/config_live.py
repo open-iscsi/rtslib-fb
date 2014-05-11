@@ -276,6 +276,8 @@ def obj_attr(obj, attr):
     elif val_type == 'backend':
         (plugin, _, name) = string.partition(':')
         valid_value = (plugin, name)
+    elif val_type == 'raw':
+        valid_value = string
     elif ref_path:
         valid_value = ref_path
     else:

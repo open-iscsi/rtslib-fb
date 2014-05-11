@@ -150,7 +150,8 @@ class Config(object):
                                   source=source, target='policy')
 
     def _load_parse_tree(self, parse_tree, cur_stage=None,
-                         replace=False, source=None, target='config'):
+                         replace=False, source=None,
+                         target='config', allow_new_attrs=False):
         '''
         target can be 'config', 'policy' or 'reference'
         '''
@@ -197,7 +198,7 @@ class Config(object):
                 elif token['type'] == 'attr':
                     log.debug("Loading attr token: %s" % token)
                     if target != 'policy':
-                        token = self.validate_attr(token, cur)
+                        token = self.validate_attr(token, cur, allow_new_attrs)
                     old_nodes = cur.search([(token['key'][0], ".*")])
                     for old_node in old_nodes:
                         log.debug("Deleting old value: %s\nnew is: %s"
@@ -224,7 +225,8 @@ class Config(object):
                         log.debug("_load_parse_tree recursion on block "
                                   "statement: %s" % [statement])
                         loaded.extend(self._load_parse_tree(
-                            [statement], cur, source=source, target=target))
+                            [statement], cur, source=source,
+                            target=target, allow_new_attrs=allow_new_attrs))
 
         if update_target:
             if target == 'config':
@@ -378,7 +380,7 @@ class Config(object):
                                  token['key'][1],
                                  ", ".join(expected_val_types)))
 
-    def validate_attr(self, token, parent):
+    def validate_attr(self, token, parent, allow_new_attr=False):
         log.debug("validate_attr(%s, %s)" % (token, parent.data))
         if token['key'][1] is None:
             return token
@@ -431,8 +433,17 @@ class Config(object):
                     return valid_token
 
         if not policy_nodes:
-            attr_name = ("%s %s" % (parent.path_str, token['key'][0])).strip()
-            raise ConfigError("Unknown attribute: %s" % attr_name)
+            if allow_new_attr:
+                valid_token['required'] = False
+                valid_token['comment'] = "Unknown"
+                valid_token['val_dfl'] = valid_token['key'][1]
+                valid_token['val_type'] = "raw"
+                valid_token['ref_path'] = None
+                return valid_token
+            else:
+                attr_name = ("%s %s"
+                             % (parent.path_str, token['key'][0])).strip()
+                raise ConfigError("Unknown attribute: %s" % attr_name)
         else:
             raise ConfigError("Invalid %s value '%s': expected type %s"
                               % (token['key'][0],
@@ -510,7 +521,7 @@ class Config(object):
         self.current = stage
         return deleted
 
-    def load(self, filepath):
+    def load(self, filepath, allow_new_attrs=False):
         '''
         Loads an LIO configuration file and replace the current configuration
         with it.
@@ -526,7 +537,8 @@ class Config(object):
                   'filepath': filepath,
                   'timestamp': time.time(),
                   'mtime': os.path.getmtime(filepath)}
-        self._load_parse_tree(parse_tree, replace=True, source=source)
+        self._load_parse_tree(parse_tree, replace=True,
+                              source=source, allow_new_attrs=allow_new_attrs)
 
     def load_live(self):
         '''
@@ -537,7 +549,8 @@ class Config(object):
         parse_tree = self._parser.parse_string(live)
         source = {'operation': 'resync',
                   'timestamp': time.time()}
-        self._load_parse_tree(parse_tree, replace=True, source=source)
+        self._load_parse_tree(parse_tree, replace=True,
+                              source=source, allow_new_attrs=True)
 
     def update(self, filepath):
         '''
@@ -713,7 +726,8 @@ class Config(object):
         source = {'operation': 'load',
                   'timestamp': time.time()}
         self._load_parse_tree(parse_tree, replace=True,
-                              source=source, target='reference')
+                              source=source, target='reference',
+                              allow_new_attrs=True)
         return self.diff()
 
     def diff(self):
