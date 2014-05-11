@@ -1,5 +1,5 @@
 fabric vhost {
-    target %naa tpgt %posint {
+    target %naa tpgt %int {
         lun %int backend %backend
     }
 }

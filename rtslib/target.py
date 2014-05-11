@@ -939,8 +939,8 @@ class TPG(CFSNode):
         except ValueError:
             raise RTSLibError("Invalid Tag.")
 
-        if tag < 1:
-            raise RTSLibError("Invalig Tag, it must be >0.")
+        if tag < 0:
+            raise RTSLibError("Invalig Tag, it must be 0 or more.")
 
         if isinstance(parent_target, Target):
             self._parent_target = parent_target

@@ -6,7 +6,7 @@ fabric iscsi {
         password %str("")
         userid %str("")
     }
-    target %iqn tpgt %posint {
+    target %iqn tpgt %int {
         enable %bool(yes)
         portal %ipport 
         acl %str {
