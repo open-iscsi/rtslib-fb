@@ -7,7 +7,7 @@ storage rd_mcp disk %str {
         emulate_caw %bool(yes)
         emulate_dpo %bool(no)
         emulate_fua_read %bool(no)
-        emulate_fua_write %bool(yes)
+        emulate_fua_write %bool(no)
         emulate_model_alias %bool(no)
         emulate_rest_reord %bool(no)
         emulate_tas %bool(yes)
