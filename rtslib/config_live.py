@@ -263,10 +263,10 @@ def obj_attr(obj, attr):
     elif val_type == 'int':
         valid_value = int(string)
     elif val_type == 'ipport':
-        (addr, _, port) = value.rpartition(":")
+        (addr, _, port) = string.rpartition(":")
         valid_value = (addr, int(port))
     elif val_type == 'posint':
-        valid_value = int(value)
+        valid_value = int(string)
     elif val_type == 'str':
         valid_value = string
     elif val_type == 'iqn':
