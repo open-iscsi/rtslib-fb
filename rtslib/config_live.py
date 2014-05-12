@@ -223,6 +223,8 @@ def obj_attr(obj, attr):
     Else, the attribute's value will be converted from its internal string
     representation to whatever rtslib expects.
     '''
+    # TODO Factorize a bit the val_type switch.
+    # TODO Maybe consolidate with validate_val in config.py
     log.debug("obj_attr(%s, %s)" % (obj, attr))
     matches = obj.search([(attr, ".*")])
     if len(matches) != 1:
