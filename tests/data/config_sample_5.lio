@@ -1,0 +1,254 @@
+storage fileio {
+    disk disk1 {
+        buffered yes 
+        path /tmp/disk1.img 
+        size 1.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count 0 
+            max_unmap_lba_count 0 
+            max_write_same_len 4096 
+            optimal_sectors 1024 
+            queue_depth 32 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
+        }
+    }
+    disk disk2 {
+        buffered yes 
+        path /tmp/disk2.img 
+        size 1.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count 0 
+            max_unmap_lba_count 0 
+            max_write_same_len 4096 
+            optimal_sectors 1024 
+            queue_depth 32 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
+        }
+    }
+}
+storage rd_mcp {
+    disk test {
+        nullio no 
+        size 1.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count no 
+            max_unmap_lba_count no 
+            max_write_same_len 0 
+            optimal_sectors 1024 
+            queue_depth 32 
+            unmap_granularity no 
+            unmap_granularity_alignment no 
+        }
+    }
+    disk test2 {
+        nullio no 
+        size 1.0MB 
+        attribute {
+            block_size 512 
+            emulate_3pc yes 
+            emulate_caw yes 
+            emulate_dpo no 
+            emulate_fua_read no 
+            emulate_fua_write yes 
+            emulate_model_alias no 
+            emulate_rest_reord no 
+            emulate_tas yes 
+            emulate_tpu no 
+            emulate_tpws no 
+            emulate_ua_intlck_ctrl no 
+            emulate_write_cache no 
+            enforce_pr_isids yes 
+            fabric_max_sectors 8192 
+            is_nonrot no 
+            max_unmap_block_desc_count no 
+            max_unmap_lba_count no 
+            max_write_same_len 0 
+            optimal_sectors 1024 
+            queue_depth 32 
+            unmap_granularity no 
+            unmap_granularity_alignment no 
+        }
+    }
+}
+fabric iscsi {
+    discovery_auth {
+        enable yes 
+        mutual_password no 
+        mutual_userid no 
+        password kjh45fDf_ 
+        userid target1 
+    }
+    target iqn.2003-01.org.linux-iscsi.targetcli.x8664:sn.4699f8812c88 tpgt 1 {
+        enable yes 
+        attribute {
+            authentication no 
+            cache_dynamic_acls no 
+            default_cmdsn_depth 16 
+            default_erl 0 
+            demo_mode_discovery yes 
+            demo_mode_write_protect no 
+            generate_node_acls no 
+            login_timeout 15 
+            netif_timeout 2 
+            prod_mode_write_protect no 
+        }
+        auth {
+            password "" 
+            password_mutual "" 
+            userid "" 
+            userid_mutual "" 
+        }
+        parameter {
+            AuthMethod CHAP 
+            DataDigest "CRC32C,None" 
+            DataPDUInOrder yes 
+            DataSequenceInOrder yes 
+            DefaultTime2Retain 20 
+            DefaultTime2Wait 2 
+            ErrorRecoveryLevel no 
+            FirstBurstLength 65536 
+            HeaderDigest "CRC32C,None" 
+            IFMarkInt "2048~65535" 
+            IFMarker no 
+            ImmediateData yes 
+            InitialR2T yes 
+            MaxBurstLength 262144 
+            MaxConnections 12 
+            MaxOutstandingR2T 34 
+            MaxRecvDataSegmentLength 8192 
+            MaxXmitDataSegmentLength 262144 
+            OFMarkInt "2048~65535" 
+            OFMarker no 
+            TargetAlias "LIO Target" 
+        }
+        lun 1 backend fileio:disk1 
+        lun 2 backend fileio:disk2 
+        acl iqn.2003-01.org.linux-iscsi.targetcli.x8664:client1 {
+            attribute {
+                dataout_timeout 3 
+                dataout_timeout_retries 5 
+                default_erl 0 
+                nopin_response_timeout 30 
+                nopin_timeout 15 
+                random_datain_pdu_offsets no 
+                random_datain_seq_offsets no 
+                random_r2t_offsets no 
+            }
+            auth {
+                password foobar 
+                password_mutual mutupass 
+                userid jerome 
+                userid_mutual just_the2ofus 
+            }
+            mapped_lun 1 {
+                target_lun 1 
+                write_protect no 
+            }
+            mapped_lun 2 {
+                target_lun 1 
+                write_protect no 
+            }
+            mapped_lun 3 {
+                target_lun 1 
+                write_protect no 
+            }
+        }
+        portal 0.0.0.0:3260 
+    }
+    target iqn.2003-01.org.linux-iscsi.targetcli.x8664:sn.caa307436d89 tpgt 1 {
+        enable yes 
+        attribute {
+            authentication yes 
+            cache_dynamic_acls no 
+            default_cmdsn_depth 16 
+            default_erl 0 
+            demo_mode_discovery yes 
+            demo_mode_write_protect yes 
+            generate_node_acls no 
+            login_timeout 15 
+            netif_timeout 2 
+            prod_mode_write_protect no 
+        }
+        auth {
+            password "" 
+            password_mutual "" 
+            userid "" 
+            userid_mutual "" 
+        }
+        parameter {
+            AuthMethod CHAP 
+            DataDigest "CRC32C,None" 
+            DataPDUInOrder yes 
+            DataSequenceInOrder yes 
+            DefaultTime2Retain 20 
+            DefaultTime2Wait 2 
+            ErrorRecoveryLevel no 
+            FirstBurstLength 65536 
+            HeaderDigest "CRC32C,None" 
+            IFMarkInt "2048~65535" 
+            IFMarker no 
+            ImmediateData yes 
+            InitialR2T yes 
+            MaxBurstLength 262144 
+            MaxConnections 1 
+            MaxOutstandingR2T 1 
+            MaxRecvDataSegmentLength 8192 
+            MaxXmitDataSegmentLength 262144 
+            OFMarkInt "2048~65535" 
+            OFMarker no 
+            TargetAlias "LIO Target" 
+        }
+        lun 0 backend rd_mcp:test 
+        lun 1 backend rd_mcp:test2 
+    }
+}
