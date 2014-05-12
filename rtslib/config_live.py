@@ -29,9 +29,11 @@ from rtslib.utils import convert_bytes_to_human, convert_human_to_bytes
 
 from rtslib import (RTSRoot, Target, FabricModule, LUN, MappedLUN,
                     NetworkPortal, TPG, NodeACL, FileIOBackstore,
-                    FileIOStorageObject, IBlockBackstore, IBlockStorageObject,
-                    PSCSIBackstore, PSCSIStorageObject, RDDRBackstore,
-                    RDDRStorageObject, RDMCPBackstore, RDMCPStorageObject)
+                    FileIOStorageObject, IBlockBackstore,
+                    IBlockStorageObject, PSCSIBackstore,
+                    PSCSIStorageObject, RDDRBackstore,
+                    RDDRStorageObject, RDMCPBackstore,
+                    RDMCPStorageObject, RTSLibError)
 
 # TODO There seems to be a bug in LIO, affecting both this API and rtslib:
 # when a tpg does not contain any objects, it cannot be removed.
@@ -291,6 +293,8 @@ def apply_group_attrs(obj, lio_obj):
     '''
     Applies group attributes obj to the live lio_obj.
     '''
+    # TODO Split that one up, too much indentation there!
+    unsupported_fmt = "Unsupported %s %s: consider upgrading your kernel"
     for group in obj.nodes:
         if group.data['type'] == 'group':
             group_name = group.key[0]
@@ -300,14 +304,29 @@ def apply_group_attrs(obj, lio_obj):
                     name = attr.key[0]
                     value = obj_attr(group, name)
                     if group_name == 'auth':
-                        log.debug("Setting auth %s to %s" % (name, value))
-                        lio_obj.set_auth_attr(name, value)
+                        try:
+                            lio_obj.get_auth_attr(name)
+                        except RTSLibError:
+                            log.info(unsupported_fmt % ("auth attribute", name))
+                        else:
+                            log.debug("Setting auth %s to %s" % (name, value))
+                            lio_obj.set_auth_attr(name, value)
                     elif group_name == 'attribute':
-                        log.debug("Setting attribute %s to %s" % (name, value))
-                        lio_obj.set_attribute(name, value)
+                        try:
+                            lio_obj.get_attribute(name)
+                        except RTSLibError:
+                            log.info(unsupported_fmt % ("attribute", name))
+                        else:
+                            log.debug("Setting attribute %s to %s" % (name, value))
+                            lio_obj.set_attribute(name, value)
                     elif group_name == 'parameter':
-                        log.debug("Setting parameter %s to %s" % (name, value))
-                        lio_obj.set_parameter(name, value)
+                        try:
+                            lio_obj.get_parameter(name)
+                        except RTSLibError:
+                            log.info(unsupported_fmt % ("parameter", name))
+                        else:
+                            log.debug("Setting parameter %s to %s" % (name, value))
+                            lio_obj.set_parameter(name, value)
                     elif group_name == 'discovery_auth':
                         log.debug("Setting discovery_auth %s to %s" % (name, value))
                         if name == 'enable':
