@@ -24,7 +24,7 @@ import glob
 from node import CFSNode
 from target import Target, FabricModule
 from tcm import FileIOBackstore, IBlockBackstore
-from tcm import PSCSIBackstore, RDDRBackstore, RDMCPBackstore
+from tcm import PSCSIBackstore, RDMCPBackstore
 from utils import RTSLibError, RTSLibBrokenLink, modprobe
 
 class RTSRoot(CFSNode):
@@ -88,8 +88,6 @@ class RTSRoot(CFSNode):
                         yield PSCSIBackstore(int(regex.group(3)), 'lookup')
                     elif regex.group(1) == "iblock":
                         yield IBlockBackstore(int(regex.group(3)), 'lookup')
-                    elif regex.group(1) == "rd_dr":
-                        yield RDDRBackstore(int(regex.group(3)), 'lookup')
                     elif regex.group(1) == "rd_mcp":
                         yield RDMCPBackstore(int(regex.group(3)), 'lookup')
 

@@ -31,8 +31,7 @@ from rtslib import (RTSRoot, Target, FabricModule, LUN, MappedLUN,
                     NetworkPortal, TPG, NodeACL, FileIOBackstore,
                     FileIOStorageObject, IBlockBackstore,
                     IBlockStorageObject, PSCSIBackstore,
-                    PSCSIStorageObject, RDDRBackstore,
-                    RDDRStorageObject, RDMCPBackstore,
+                    PSCSIStorageObject, RDMCPBackstore,
                     RDMCPStorageObject, RTSLibError)
 
 # TODO There seems to be a bug in LIO, affecting both this API and rtslib:
@@ -99,7 +98,7 @@ def dump_live_storage():
         attrs = []
         if so.backstore.plugin in ['fileio', 'pscsi', 'iblock']:
             attrs.append("%spath %s" % (_indent, so.udev_path))
-        if so.backstore.plugin in ['fileio', 'rd_dr', 'rd_mcp']:
+        if so.backstore.plugin in ['fileio', 'rd_mcp']:
             attrs.append("%ssize %s" % (_indent, _b2h(so.size)))
         if so.backstore.plugin in ['rd_mcp']:
             if so.nullio:
@@ -502,12 +501,6 @@ def apply_create_obj(obj):
             lio_bs = PSCSIBackstore(idx)
             dev = obj_attr(obj, "path")
             lio_so = lio_bs.storage_object(name, dev)
-            apply_group_attrs(obj, lio_so)
-        elif plugin == 'rd_dr':
-            # TODO Add policy for rd_dr
-            lio_bs = RDDRBackstore(idx)
-            size = obj_attr(obj, "size")
-            lio_so = lio_bs.storage_object(name, size, True)
             apply_group_attrs(obj, lio_so)
         elif plugin == 'rd_mcp':
             # TODO Add policy for rd_mcp
