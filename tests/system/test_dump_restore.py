@@ -1,4 +1,4 @@
-import os, sys, logging, unittest, tempfile, difflib, rtslib
+import os, sys, glob, logging, unittest, tempfile, difflib, rtslib
 from pyparsing import ParseException
 
 logging.basicConfig()
@@ -25,14 +25,36 @@ class TestDumpRestore(unittest.TestCase):
 
     samples_dir = '../data'
 
+    def cleanup(self):
+        # Clear configfs
+        list(rtslib.Config().apply())
+        # Remove test scsi_debug symlinks
+        for test_blockdev in glob.glob("/tmp/test_blockdev_*"):
+            os.unlink(test_blockdev)
+        os.system("rmmod scsi_debug 2> /dev/null")
+
     def setUp(self):
+        # Backup system config
         self.config_backup = rtslib.Config()
         self.config_backup.load_live()
+
+        self.cleanup()
+
+        # Create scsi_debug devices
+        os.system("modprobe scsi_debug dev_size_mb=500 add_host=4")
+        scsi_debug_blockdevs = "/sys/devices/pseudo_*/adapter*" \
+                               "/host*/target*/*/block"
+        test_blockdevs = ["/dev/%s" % name
+                          for path in glob.glob(scsi_debug_blockdevs)
+                          for name in os.listdir(path)]
+        for i, test_blockdev in enumerate(test_blockdevs):
+            os.symlink(test_blockdev, "/tmp/test_blockdev_%d" % i)
         print
         log.info(self._testMethodName)
 
     def tearDown(self):
         print("Restoring initial config...")
+        self.cleanup()
         for step in self.config_backup.apply():
             print(step)
 
