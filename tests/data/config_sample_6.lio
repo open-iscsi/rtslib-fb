@@ -1,6 +1,5 @@
 storage iblock {
     disk test0 {
-        buffered yes 
         path /tmp/test_blockdev_0 
         attribute {
             block_size 512 
@@ -29,7 +28,6 @@ storage iblock {
         }
     }
     disk test1 {
-        buffered yes 
         path /tmp/test_blockdev_1 
         attribute {
             block_size 512 
@@ -58,7 +56,6 @@ storage iblock {
         }
     }
     disk test2 {
-        buffered yes 
         path /tmp/test_blockdev_2 
         attribute {
             block_size 512 
@@ -108,13 +105,13 @@ storage rd_mcp {
             enforce_pr_isids yes 
             fabric_max_sectors 8192 
             is_nonrot no 
-            max_unmap_block_desc_count no 
-            max_unmap_lba_count no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
             max_write_same_len 0 
             optimal_sectors 8192 
             queue_depth 128 
-            unmap_granularity no 
-            unmap_granularity_alignment no 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
         }
     }
     disk test2 {
@@ -137,13 +134,13 @@ storage rd_mcp {
             enforce_pr_isids yes 
             fabric_max_sectors 8192 
             is_nonrot no 
-            max_unmap_block_desc_count no 
-            max_unmap_lba_count no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
             max_write_same_len 0 
             optimal_sectors 8192 
             queue_depth 128 
-            unmap_granularity no 
-            unmap_granularity_alignment no 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
         }
     }
     disk test3 {
@@ -166,13 +163,13 @@ storage rd_mcp {
             enforce_pr_isids yes 
             fabric_max_sectors 8192 
             is_nonrot no 
-            max_unmap_block_desc_count no 
-            max_unmap_lba_count no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
             max_write_same_len 0 
             optimal_sectors 8192 
             queue_depth 128 
-            unmap_granularity no 
-            unmap_granularity_alignment no 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
         }
     }
     disk test_nullio {
@@ -195,13 +192,13 @@ storage rd_mcp {
             enforce_pr_isids yes 
             fabric_max_sectors 8192 
             is_nonrot no 
-            max_unmap_block_desc_count no 
-            max_unmap_lba_count no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 4096 
             max_write_same_len 0 
             optimal_sectors 8192 
             queue_depth 128 
-            unmap_granularity no 
-            unmap_granularity_alignment no 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
         }
     }
 }

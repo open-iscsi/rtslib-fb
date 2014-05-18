@@ -16,13 +16,13 @@ storage iblock disk %str {
         emulate_write_cache %bool(no)
         enforce_pr_isids %bool(yes)
         fabric_max_sectors %int(8192)
-        is_nonrot %bool(no)
-        max_unmap_block_desc_count %int(1)
-        max_unmap_lba_count %int(8192)
-        max_write_same_len %int(4096)
+        is_nonrot %bool(yes)
+        max_unmap_block_desc_count %int(0)
+        max_unmap_lba_count %int(0)
+        max_write_same_len %int(65535)
         optimal_sectors %int(8192)
         queue_depth %int(128)
-        unmap_granularity %int(1)
+        unmap_granularity %int(0)
         unmap_granularity_alignment %int(0)
     }
 }

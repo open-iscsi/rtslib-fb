@@ -81,13 +81,13 @@ storage rd_mcp {
             enforce_pr_isids yes 
             fabric_max_sectors 8192 
             is_nonrot no 
-            max_unmap_block_desc_count no 
-            max_unmap_lba_count no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
             max_write_same_len 0 
             optimal_sectors 1024 
             queue_depth 32 
-            unmap_granularity no 
-            unmap_granularity_alignment no 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
         }
     }
     disk test2 {
@@ -110,13 +110,13 @@ storage rd_mcp {
             enforce_pr_isids yes 
             fabric_max_sectors 8192 
             is_nonrot no 
-            max_unmap_block_desc_count no 
-            max_unmap_lba_count no 
+            max_unmap_block_desc_count 1 
+            max_unmap_lba_count 8192 
             max_write_same_len 0 
             optimal_sectors 1024 
             queue_depth 32 
-            unmap_granularity no 
-            unmap_granularity_alignment no 
+            unmap_granularity 0 
+            unmap_granularity_alignment 0 
         }
     }
 }

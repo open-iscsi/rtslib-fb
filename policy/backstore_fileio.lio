@@ -15,7 +15,7 @@ storage fileio disk %str {
         emulate_tpu %bool(no)
         emulate_tpws %bool(no)
         emulate_ua_intlck_ctrl %bool(no)
-        emulate_write_cache %bool(no)
+        emulate_write_cache %bool(yes)
         enforce_pr_isids %bool(yes)
         fabric_max_sectors %int(8192)
         is_nonrot %bool(no)

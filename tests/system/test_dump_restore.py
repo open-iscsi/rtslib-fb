@@ -41,7 +41,7 @@ class TestDumpRestore(unittest.TestCase):
         self.cleanup()
 
         # Create scsi_debug devices
-        os.system("modprobe scsi_debug dev_size_mb=500 add_host=4")
+        os.system("modprobe scsi_debug dev_size_mb=1 add_host=4")
         scsi_debug_blockdevs = "/sys/devices/pseudo_*/adapter*" \
                                "/host*/target*/*/block"
         test_blockdevs = ["/dev/%s" % name
