@@ -21,6 +21,7 @@ from root import RTSRoot
 from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 
 from target import LUN, MappedLUN
+from target import list_specfiles, parse_specfile
 from target import NodeACL, NetworkPortal, TPG, Target, FabricModule
 
 from tcm import FileIOBackstore, IBlockBackstore

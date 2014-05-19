@@ -33,6 +33,110 @@ from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
 # Where do we store the fabric modules spec files ?
 spec_dir = "/var/target/fabric"
 
+def list_specfiles():
+    '''
+    Returns the list of all specfile paths found on the system.
+    '''
+    return ["%s/%s" % (spec_dir, name)
+            for name in os.listdir(spec_dir)
+            if name.endswith('.spec')]
+
+def parse_specfile(spec_file):
+    '''
+    Parses the fabric module spec file.
+    @param spec_file: the path to the specfile to parse.
+    @type spec_file: str
+    @return: a dict of spec options
+    '''
+    # Recognized options and their default values
+    name = os.path.basename(spec_file).partition(".")[0]
+    defaults = dict(features=['discovery_auth', 'acls', 'acls_auth', 'nps',
+                              'tpgts'],
+                    kernel_module="%s_target_mod" % name,
+                    configfs_group=name,
+                    wwn_from_files=[],
+                    wwn_from_files_filter='',
+                    wwn_from_cmds=[],
+                    wwn_from_cmds_filter='',
+                    wwn_type='free')
+
+    spec = ConfigObj(spec_file).dict()
+
+    # Do not allow unknown options
+    unknown_options =  set(spec.keys()) - set(defaults.keys())
+    if unknown_options:
+        raise RTSLibError("Unknown option(s) in %s: %s"
+                          % (spec_file, list(unknown_options)))
+
+    # Use defaults for missing options
+    missing_options = set(defaults.keys()) - set(spec.keys())
+    for option in missing_options:
+        spec[option] = defaults[option]
+
+    # Type conversion and checking
+    for option in spec:
+        spec_type = type(spec[option]).__name__
+        defaults_type = type(defaults[option]).__name__
+        if spec_type != defaults_type:
+            # Type mismatch, go through acceptable conversions
+            if spec_type == 'str' and defaults_type == 'list':
+                spec[option] = [spec[option]]
+            else:
+                raise RTSLibError("Wrong type for option '%s' in %s. "
+                                  % (option, spec_file)
+                                  + "Expected type '%s' and got '%s'."
+                                  % (defaults_type, spec_type))
+
+    # Generate the list of fixed WWNs if not empty
+    wwn_list = None
+    wwn_type = spec['wwn_type']
+
+    if spec['wwn_from_files']:
+        for wwn_pattern in spec['wwn_from_files']:
+            for wwn_file in glob.iglob(wwn_pattern):
+                wwns_in_file = [wwn for wwn in
+                                re.split('\t|\0|\n| ', fread(wwn_file))
+                                if wwn.strip()]
+                if spec['wwn_from_files_filter']:
+                    wwns_filtered = []
+                    for wwn in wwns_in_file:
+                        filter = "echo %s|%s" \
+                                % (wwn, spec['wwn_from_files_filter'])
+                        wwns_filtered.append(exec_argv(filter, shell=True))
+                else:
+                    wwns_filtered = wwns_in_file
+
+                if wwn_list is None:
+                    wwn_list = set([])
+                wwn_list.update(set([wwn for wwn in wwns_filtered
+                                     if is_valid_wwn(wwn_type, wwn)
+                                     if wwn]
+                                   ))
+    if spec['wwn_from_cmds']:
+        for wwn_cmd in spec['wwn_from_cmds']:
+            cmd_result = exec_argv(wwn_cmd, shell=True)
+            wwns_from_cmd = [wwn for wwn in
+                             re.split('\t|\0|\n| ', cmd_result)
+                             if wwn.strip()]
+            if spec['wwn_from_cmds_filter']:
+                wwns_filtered = []
+                for wwn in wwns_from_cmd:
+                    filter = "echo %s|%s" \
+                            % (wwn, spec['wwn_from_cmds_filter'])
+                    wwns_filtered.append(exec_argv(filter, shell=True))
+            else:
+                wwns_filtered = wwns_from_cmd
+
+            if wwn_list is None:
+                wwn_list = set([])
+            wwn_list.update(set([wwn for wwn in wwns_filtered
+                                 if is_valid_wwn(wwn_type, wwn)
+                                 if wwn]
+                               ))
+
+    spec['wwn_list'] = wwn_list
+    return spec
+
 class FabricModule(CFSNode):
     '''
     This is an interface to RTS Target Fabric Modules.
@@ -48,9 +152,8 @@ class FabricModule(CFSNode):
 
     @classmethod
     def all(cls):
-        mod_names = [mod_name[:-5] for mod_name in os.listdir(spec_dir)
-                     if mod_name.endswith('.spec')]
-        for name in mod_names:
+        for name in [os.path.basename(path).partition(".")[0]
+                     for path in list_specfiles()]:
             yield FabricModule(name)
 
 
@@ -64,7 +167,8 @@ class FabricModule(CFSNode):
         '''
         super(FabricModule, self).__init__()
         self.name = str(name)
-        self.spec = self._parse_spec("%s/%s.spec" % (spec_dir, name))
+        self.spec_file = "%s/%s.spec" % (spec_dir, name)
+        self.spec = parse_specfile(self.spec_file)
         self._path = "%s/%s" % (self.configfs_dir,
                                 self.spec['configfs_group'])
         self._create_in_cfs_ine('any')
@@ -79,102 +183,6 @@ class FabricModule(CFSNode):
             return True
         else:
             return False
-
-    def _parse_spec(self, spec_file):
-        '''
-        Parses the fabric module spec file.
-        '''
-        # Recognized options and their default values
-        defaults = dict(features=['discovery_auth', 'acls', 'acls_auth', 'nps',
-                                  'tpgts'],
-                        kernel_module="%s_target_mod" % self.name,
-                        configfs_group=self.name,
-                        wwn_from_files=[],
-                        wwn_from_files_filter='',
-                        wwn_from_cmds=[],
-                        wwn_from_cmds_filter='',
-                        wwn_type='free')
-
-        spec = ConfigObj(spec_file).dict()
-        if spec:
-            self.spec_file = spec_file
-        else:
-            self.spec_file = ''
-
-        # Do not allow unknown options
-        unknown_options =  set(spec.keys()) - set(defaults.keys())
-        if unknown_options:
-            raise RTSLibError("Unknown option(s) in %s: %s"
-                              % (spec_file, list(unknown_options)))
-
-        # Use defaults for missing options
-        missing_options = set(defaults.keys()) - set(spec.keys())
-        for option in missing_options:
-            spec[option] = defaults[option]
-
-        # Type conversion and checking
-        for option in spec:
-            spec_type = type(spec[option]).__name__
-            defaults_type = type(defaults[option]).__name__
-            if spec_type != defaults_type:
-                # Type mismatch, go through acceptable conversions
-                if spec_type == 'str' and defaults_type == 'list':
-                    spec[option] = [spec[option]]
-                else:
-                    raise RTSLibError("Wrong type for option '%s' in %s. "
-                                      % (option, spec_file)
-                                      + "Expected type '%s' and got '%s'."
-                                      % (defaults_type, spec_type))
-
-        # Generate the list of fixed WWNs if not empty
-        wwn_list = None
-        wwn_type = spec['wwn_type']
-
-        if spec['wwn_from_files']:
-            for wwn_pattern in spec['wwn_from_files']:
-                for wwn_file in glob.iglob(wwn_pattern):
-                    wwns_in_file = [wwn for wwn in
-                                    re.split('\t|\0|\n| ', fread(wwn_file))
-                                    if wwn.strip()]
-                    if spec['wwn_from_files_filter']:
-                        wwns_filtered = []
-                        for wwn in wwns_in_file:
-                            filter = "echo %s|%s" \
-                                    % (wwn, spec['wwn_from_files_filter'])
-                            wwns_filtered.append(exec_argv(filter, shell=True))
-                    else:
-                        wwns_filtered = wwns_in_file
-
-                    if wwn_list is None:
-                        wwn_list = set([])
-                    wwn_list.update(set([wwn for wwn in wwns_filtered
-                                         if is_valid_wwn(wwn_type, wwn)
-                                         if wwn]
-                                       ))
-        if spec['wwn_from_cmds']:
-            for wwn_cmd in spec['wwn_from_cmds']:
-                cmd_result = exec_argv(wwn_cmd, shell=True)
-                wwns_from_cmd = [wwn for wwn in
-                                 re.split('\t|\0|\n| ', cmd_result)
-                                 if wwn.strip()]
-                if spec['wwn_from_cmds_filter']:
-                    wwns_filtered = []
-                    for wwn in wwns_from_cmd:
-                        filter = "echo %s|%s" \
-                                % (wwn, spec['wwn_from_cmds_filter'])
-                        wwns_filtered.append(exec_argv(filter, shell=True))
-                else:
-                    wwns_filtered = wwns_from_cmd
-
-                if wwn_list is None:
-                    wwn_list = set([])
-                wwn_list.update(set([wwn for wwn in wwns_filtered
-                                     if is_valid_wwn(wwn_type, wwn)
-                                     if wwn]
-                                   ))
-
-        spec['wwn_list'] = wwn_list
-        return spec
 
     def _list_targets(self):
         if self.exists:
