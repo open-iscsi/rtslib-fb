@@ -144,7 +144,10 @@ class ConfigParser(object):
         return self._parser.parseFile(filepath, parseAll=True).asList()
 
     def parse_string(self, string):
-        return self._parser.parseString(string, parseAll=True).asList()
+        if string.strip():
+            return self._parser.parseString(string, parseAll=True).asList()
+        else:
+            return []
 
 class PolicyParser(ConfigParser):
     '''
