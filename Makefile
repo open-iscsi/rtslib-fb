@@ -40,6 +40,10 @@ test:
 	@(PYTHONPATH=$$(pwd); cd tests/safe ; python -u -m unittest discover)
 
 test-all: test
+	@if [ ! -d "/sys/kernel/config/target" ]; then \
+		echo "Cannot run system tests, target is stopped."; \
+		exit 1; \
+	fi
 	@echo "Will run the DESTRUCTIVE system tests suite now."
 	@echo "This requires sudo access to root privileges."
 	@echo "These tests WILL mess-up your system target configuration!"
