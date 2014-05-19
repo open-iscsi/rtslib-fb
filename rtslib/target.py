@@ -720,15 +720,14 @@ class NodeACL(CFSNode):
         @param node_wwn: The wwn of the initiator node for which the ACL is
         created.
         @type node_wwn: string
-        @param mode:An optionnal string containing the object creation mode:
+        @param mode: An optionnal string containing the object creation mode:
             - I{'any'} means the configFS object will be either looked up or
             created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
-        @type mode:string
+        @type mode: string
         @return: A NodeACL object.
         '''
-
         super(NodeACL, self).__init__()
 
         if isinstance(parent_tpg, TPG):
