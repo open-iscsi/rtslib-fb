@@ -48,7 +48,7 @@ test-all: test
 	@(PYTHONPATH=$$(pwd); cd tests/system ; sudo python -m unittest discover)
 
 clean:
-	@rm -fv ${NAME}/*.pyc test/*.pyc ${NAME}/*.html .swp
+	@rm -fv ${NAME}/*${NAME}/*.html
 	@rm -frv doc
 	@rm -frv ${NAME}.egg-info MANIFEST build
 	@rm -frv debian/tmp
@@ -61,6 +61,8 @@ clean:
 	@rm -frv results
 	@rm -fv rpm/*.spec *.spec rpm/sed* sed*
 	@rm -frv ${NAME}-*
+	@find . -name *.swp -exec rm -v {} \;
+	@find . -name *.pyc -exec rm -vf {} \;
 	@find . -name *~ -exec rm -v {} \;
 	@find . -name \#*\# -exec rm -v {} \;
 	@echo "Finished cleanup."
