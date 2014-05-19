@@ -13,7 +13,7 @@ fabric iscsi {
             attribute {
                 dataout_timeout %int(3)
                 dataout_timeout_retries %int(5)
-                default_erl %int(0) # TODO 0 1 2 only
+                default_erl %erl(0)
                 nopin_response_timeout %int(30)
                 nopin_timeout %int(15)
                 random_datain_pdu_offsets %bool(no)
@@ -39,7 +39,7 @@ fabric iscsi {
         }
         attribute {
             authentication %bool(no)
-            default_erl %int(0) # TODO 0 1 or 2
+            default_erl %erl(0)
             demo_mode_discovery %bool(yes)
             cache_dynamic_acls %bool(no)
             default_cmdsn_depth %int(16)

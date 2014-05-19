@@ -272,6 +272,8 @@ def obj_attr(obj, attr):
         valid_value = int(string)
     elif val_type == 'str':
         valid_value = string
+    elif val_type == 'erl':
+        valid_value = int(string)
     elif val_type == 'iqn':
         valid_value = string
     elif val_type == 'naa':

@@ -332,6 +332,9 @@ class Config(object):
                 if char in valid_value:
                     valid_value = None
                     break
+        elif val_type == 'erl':
+            if value in ["0", "1", "2"]:
+                valid_value = value
         elif val_type == 'iqn':
             if is_valid_wwn('iqn', value):
                 valid_value = value
