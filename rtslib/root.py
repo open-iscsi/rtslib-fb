@@ -125,11 +125,6 @@ class RTSRoot(CFSNode):
         for mod in FabricModule.all():
             yield mod
 
-    def _list_loaded_fabric_modules(self):
-        for module in self._list_fabric_modules():
-            if module.exists:
-                yield module
-
     def __str__(self):
         return "rtslib"
 
@@ -150,8 +145,6 @@ class RTSRoot(CFSNode):
             doc="Get the list of all existing LUN objects.")
     fabric_modules = property(_list_fabric_modules,
             doc="Get the list of all FabricModule objects.")
-    loaded_fabric_modules = property(_list_loaded_fabric_modules,
-            doc="Get the list of all loaded FabricModule objects.")
 
 def _test():
     '''Run the doctests.'''

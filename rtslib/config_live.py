@@ -128,7 +128,7 @@ def dump_live_fabric():
     running on the live system, in LIO configuration file format.
     '''
     dump = []
-    for fm in sorted(get_root().loaded_fabric_modules, key=lambda fm: fm.name):
+    for fm in sorted(get_root().fabric_modules, key=lambda fm: fm.name):
         if fm.has_feature('discovery_auth'):
             dump.append("fabric %s {" % fm.name)
             dump.append("%sdiscovery_auth enable %s"

@@ -154,8 +154,12 @@ class FabricModule(CFSNode):
     def all(cls):
         for name in [os.path.basename(path).partition(".")[0]
                      for path in list_specfiles()]:
-            yield FabricModule(name)
-
+            try:
+                fabric = FabricModule(name)
+            except:
+                pass
+            else:
+                yield fabric
 
     # FabricModule private stuff
     def __init__(self, name):

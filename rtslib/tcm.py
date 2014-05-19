@@ -358,7 +358,7 @@ class StorageObject(CFSNode):
         rtsroot = RTSRoot()
         target_names_excludes = FabricModule.target_names_excludes
 
-        for fabric_module in rtsroot.loaded_fabric_modules:
+        for fabric_module in rtsroot.fabric_modules:
             base = fabric_module.path
             for tgt_dir in listdir(base):
                 if tgt_dir not in target_names_excludes:
