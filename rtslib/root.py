@@ -63,7 +63,6 @@ class RTSRoot(CFSNode):
         base kernel modules (tcm )
         '''
         super(RTSRoot, self).__init__()
-        self._create_in_cfs_ine('any')
 
     def _list_targets(self):
         self._check_self()
