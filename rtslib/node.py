@@ -72,9 +72,9 @@ class CFSNode(object):
         try:
             os.mkdir(self.path)
             self._fresh = True
-        except:
-            raise RTSLibError("Could not create %s in configFS."
-                              % self.__class__.__name__)
+        except Exception as e:
+            raise RTSLibError("Could not create %s: %s"
+                              % (self.path, e))
 
     def _exists(self):
         return bool(self)
