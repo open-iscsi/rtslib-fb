@@ -26,7 +26,7 @@ import shutil
 from node import CFSNode
 from os.path import isdir
 from configobj import ConfigObj
-from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import RTSLibError, RTSLibBrokenLink
 from utils import is_ipv6_address, is_ipv4_address
 from utils import fread, fwrite, generate_wwn, is_valid_wwn, exec_argv
 
@@ -67,6 +67,8 @@ class FabricModule(CFSNode):
         self.spec = self._parse_spec("%s/%s.spec" % (spec_dir, name))
         self._path = "%s/%s" % (self.configfs_dir,
                                 self.spec['configfs_group'])
+        self._create_in_cfs_ine('any')
+
     # FabricModule public stuff
 
     def has_feature(self, feature):
@@ -77,35 +79,6 @@ class FabricModule(CFSNode):
             return True
         else:
             return False
-
-    def load(self, yield_steps=False):
-        '''
-        Attempt to load the target fabric kernel module as defined in the
-        specfile.
-        @param yield_steps: Whether or not to yield an (action, taken, desc)
-        tuple at each step: action is either 'load_module' or
-        'create_cfs_group', 'taken' is a bool indicating whether the action was
-        taken (if needed) or not, and desc is a text description of the step
-        suitable for logging.
-        @type yield_steps: bool
-        @raises RTSLibError: For failure to load kernel module and/or create
-        configfs group.
-        '''
-        module = self.spec['kernel_module']
-        load_module = modprobe(module)
-        if yield_steps:
-            yield ('load_module', load_module,
-                   "Loaded %s kernel module." % module)
-
-        # TODO: Also load saved targets and config if needed. For that, support
-        #  XXX: from the configfs side would be nice: have a config ID present
-        #  XXX: both on the on-disk saved config and a configfs attibute.
-
-        # Create the configfs group
-        self._create_in_cfs_ine('any')
-        if yield_steps:
-            yield ('create_cfs_group', self._fresh,
-                   "Created '%s'." % self.path)
 
     def _parse_spec(self, spec_file):
         '''

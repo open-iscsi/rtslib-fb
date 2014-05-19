@@ -586,28 +586,6 @@ def list_loaded_kernel_modules():
     return [line.split(" ")[0] for line in
             fread("/proc/modules").split('\n') if line]
 
-def modprobe(module):
-    '''
-    Load the specified kernel module if needed.
-    @param module: The name of the kernel module to be loaded.
-    @type module: str
-    @return: Whether of not we had to load the module.
-    '''
-    if module not in list_loaded_kernel_modules():
-        if module in list_available_kernel_modules():
-            try:
-                exec_argv(["modprobe", module])
-            except Exception, msg:
-                raise RTSLibError("Kernel module %s exists "
-                                  % module + "but fails to load: %s" % msg)
-            else:
-                return True
-        else:
-            raise RTSLibError("Kernel module %s does not exist on disk "
-                                  % module + "and is not loaded.")
-    else:
-        return False
-
 def exec_argv(argv, strip=True, shell=False):
     '''
     Executes a command line given as an argv table and either:

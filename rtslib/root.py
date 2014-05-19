@@ -25,7 +25,7 @@ from node import CFSNode
 from target import Target, FabricModule
 from tcm import FileIOBackstore, IBlockBackstore
 from tcm import PSCSIBackstore, RDMCPBackstore
-from utils import RTSLibError, RTSLibBrokenLink, modprobe
+from utils import RTSLibError, RTSLibBrokenLink
 
 class RTSRoot(CFSNode):
     '''
@@ -63,7 +63,6 @@ class RTSRoot(CFSNode):
         base kernel modules (tcm )
         '''
         super(RTSRoot, self).__init__()
-        modprobe(self.target_core_mod)
         self._create_in_cfs_ine('any')
 
     def _list_targets(self):
