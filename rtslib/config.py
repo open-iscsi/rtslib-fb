@@ -23,7 +23,7 @@ under the License.
 '''
 import os, re, time, copy, logging
 
-from rtslib.utils import is_ipv4_address, is_ipv6_address, is_valid_wwn
+from rtslib.utils import is_valid_wwn, list_eth_ips
 
 from config_filters import *
 from config_tree import ConfigTree, NO_VALUE
@@ -315,7 +315,13 @@ class Config(object):
             except:
                 pass
             else:
-                if is_ipv4_address(addr) or is_ipv6_address(addr):
+                try:
+                    listen_all = int(addr.replace(".", "")) == 0
+                except:
+                    listen_all = False
+                if listen_all:
+                    valid_value = "0.0.0.0:%s" % port
+                elif addr in list_eth_ips():
                     valid_value = value
         elif val_type == 'posint':
             try:
