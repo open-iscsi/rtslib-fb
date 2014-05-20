@@ -813,7 +813,11 @@ class _Backstore(CFSNode):
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
                                         dirp,
                                         self._index)
-        self._create_in_cfs_ine(mode)
+        try:
+            self._create_in_cfs_ine(mode)
+        except:
+            del bs_cache[self._lookup_key]
+            raise
 
     def delete(self):
         super(_Backstore, self).delete()
