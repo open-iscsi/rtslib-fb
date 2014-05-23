@@ -2,7 +2,7 @@
 #
 
 # The iscsi fabric module features set.
-features = discovery_auth, acls, acls_auth, nps, tpgts
+features = discovery_auth, acls, acls_auth, acls_tcq_depth, nps, tpgts
 
 # Obviously, this module uses IQN strings as WWNs.
 wwn_type = iqn
