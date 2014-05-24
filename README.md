@@ -1,8 +1,8 @@
 # RTSLib
 
 RTSLib is a Python library that provides the API to the Linux Kernel SCSI
-Target subsystem (LIO), its backend storage objects subsystem (TCM) as well
-as third-party Target Fabric Modules.
+Target subsystem, its backend storage objects subsystem as well
+as third-party Target Fabric Modules. It is part of LIO(tm).
 
 RTSLib allows direct manipulation of all SCSI Target objects like storage
 objects, SCSI targets, TPGs, LUNs and ACLs. It is part of the Linux Kernel's
@@ -76,7 +76,7 @@ http://dir.gmane.org/gmane.linux.scsi.target.devel
 
 ## Author
 
-RTSLib was developed by Datera, Inc.
+LIO(tm) was developed by Datera, Inc.
 http://www.datera.io
 
 The original author and current maintainer is
