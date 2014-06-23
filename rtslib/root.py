@@ -25,17 +25,9 @@ import json
 from node import CFSNode
 from target import Target
 from fabric import FabricModule
-from tcm import (StorageObject, FileIOStorageObject, BlockStorageObject,
-                 PSCSIStorageObject, RDMCPStorageObject)
+from tcm import so_mapping, StorageObject
 from utils import RTSLibError, RTSLibBrokenLink, modprobe, mount_configfs
 from utils import dict_remove, set_attributes
-
-storageobjects = dict(
-    fileio=FileIOStorageObject,
-    block=BlockStorageObject,
-    pscsi=PSCSIStorageObject,
-    ramdisk=RDMCPStorageObject,
-    )
 
 default_save_file = "/etc/target/saveconfig.json"
 
@@ -186,7 +178,7 @@ class RTSRoot(CFSNode):
                 err_func("'name' not defined in storage object %d" % index)
                 continue
             try:
-                so_cls = storageobjects[so['plugin']]
+                so_cls = so_mapping[so['plugin']]
             except KeyError:
                 err_func("'plugin' not defined or invalid in storageobject %s" % so['name'])
                 continue

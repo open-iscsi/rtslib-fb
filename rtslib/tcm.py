@@ -107,15 +107,9 @@ class StorageObject(CFSNode):
         '''
         Build a StorageObject of the correct type from a configfs path.
         '''
-        mapping = dict(
-            fileio=FileIOStorageObject,
-            pscsi=PSCSIStorageObject,
-            iblock=BlockStorageObject,
-            rd_mcp=RDMCPStorageObject,
-            )
         so_name = os.path.basename(path)
         so_type = path.split("/")[-2].rsplit("_", 1)[0]
-        return mapping[so_type](so_name)
+        return so_mapping[so_type](so_name)
         
     def _get_wwn(self):
         self._check_self()
@@ -755,6 +749,18 @@ class StorageObjectFactory(object):
                 return FileIOStorageObject(name=name, dev=path, size=s.st_size)
 
         raise RTSLibError("Can't create storageobject from path: %s" % path)
+
+
+# Used to convert either dirprefix or plugin to the SO. Instead of two
+# almost-identical dicts we just have some duplicate entries.
+so_mapping = {
+    "pscsi": PSCSIStorageObject,
+    "rd_mcp": RDMCPStorageObject,
+    "ramdisk": RDMCPStorageObject,
+    "fileio": FileIOStorageObject,
+    "iblock": BlockStorageObject,
+    "block": BlockStorageObject,
+}
 
 
 bs_params = {
