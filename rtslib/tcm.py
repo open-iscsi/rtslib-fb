@@ -3,6 +3,7 @@ Implements the RTS Target backstore and storage object classes.
 
 This file is part of RTSLib.
 Copyright (c) 2011-2013 by Datera, Inc
+Copyright (c) 2011-2014 by Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may
 not use this file except in compliance with the License. You may obtain
