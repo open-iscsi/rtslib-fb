@@ -733,6 +733,86 @@ class BlockStorageObject(StorageObject):
         return d
 
 
+class UserBackedStorageObject(StorageObject):
+    '''
+    An interface to configFS storage objects for userspace-backed backstore.
+    '''
+
+    def __init__(self, name, size=None, wwn=None, config=None, level=None):
+        '''
+        @param name: The name of the UserBackedStorageObject.
+        @type name: string
+        @param dev: The path to the backend block device to be used.
+            - Example: I{dev="/dev/sda"}.
+            - The only device type that is accepted I{TYPE_DISK}.
+              For other device types, use pscsi.
+        @type dev: string
+        @param size: The size of the device to create, in bytes.
+        @type size: int
+        @param config: user-handler-specific config string.
+            - e.g. "rbd://machine1@snap4"
+        @type config: string
+        @param level: TCMU emulation level, 1, 2, or 3
+        @type level: int
+        @return: A UserBackedStorageObject object.
+        '''
+
+        if size is not None:
+            super(UserBackedStorageObject, self).__init__(name, 'create')
+            try:
+                self._configure(size, wwn, config, level)
+            except:
+                self.delete()
+                raise
+        else:
+            super(UserBackedStorageObject, self).__init__(name, 'lookup')
+
+    def _configure(self, size, wwn, config, level):
+        self._check_self()
+
+        if config:
+            if ':' in config:
+                raise RTSLibError("':' not allowed in config string")
+            self._control("dev_config=%s" % config)
+        if level:
+            self._control("pass_level=%d" % int(level))
+        self._control("dev_size=%d" % size)
+        self._enable()
+
+        super(UserBackedStorageObject, self)._configure(wwn)
+
+    def _get_size(self):
+        self._check_self()
+        return int(self._parse_info('Dev_size'))
+
+    def _get_level(self):
+        self._check_self()
+        return int(self._parse_info('Pass_level'))
+
+    def _get_config(self):
+        self._check_self()
+        val = self._parse_info('Config')
+        if val == "NULL":
+            return None
+        return val
+
+    size = property(_get_size,
+            doc="Get the size in bytes.")
+    level = property(_get_level,
+            doc="Get the command emulation level.")
+    config = property(_get_config,
+            doc="Get the TCMU config.")
+
+    def dump(self):
+        d = super(UserBackedStorageObject, self).dump()
+        d['wwn'] = self.wwn
+        d['size'] = self.size
+        d['level'] = self.level
+        if self.config:
+            d['config'] = self.config
+        return d
+
+
 class StorageObjectFactory(object):
     """
     Create a storage object based on a given path.
@@ -761,6 +841,7 @@ so_mapping = {
     "fileio": FileIOStorageObject,
     "iblock": BlockStorageObject,
     "block": BlockStorageObject,
+    "user": UserBackedStorageObject,
 }
 
 
@@ -769,6 +850,7 @@ bs_params = {
     RDMCPStorageObject: dict(name='ramdisk', alt_dirprefix='rd_mcp'),
     FileIOStorageObject: dict(name='fileio'),
     BlockStorageObject: dict(name='block', alt_dirprefix='iblock'),
+    UserBackedStorageObject: dict(name='user'),
     }
 
 bs_cache = {}
