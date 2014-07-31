@@ -34,7 +34,7 @@ you're familiar with your Linux Distribution's package manager:
 
 	* GNU Make.
 	* python 2.6 or 2.7
-	* A few python libraries: ipaddr, netifaces, configobj, python-epydoc
+	* A few python libraries: pyparsing, ipaddr, netifaces, configobj, python-epydoc
 	* A working LaTeX installation and ghostscript for building the
 	  documentation, for example texlive-latex.
 	* Your favorite distribution's package developement tools, like rpm for
