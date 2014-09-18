@@ -281,9 +281,9 @@ def generate_wwn(wwn_type):
         # 5 = IEEE registered
         # 001405 = OpenIB OUI (they let us use it I guess?)
         # rest = random
-        return "naa.5001405" + uuid.uuid4().get_hex()[-9:]
+        return "naa.5001405" + uuid.uuid4().hex[-9:]
     elif wwn_type == 'eui':
-        return "eui.001405" + uuid.uuid4().get_hex()[-10:]
+        return "eui.001405" + uuid.uuid4().hex[-10:]
     else:
         raise ValueError("Unknown WWN type: %s." % wwn_type)
 
