@@ -172,7 +172,7 @@ class StorageObject(CFSNode):
 
     def _get_status(self):
         self._check_self()
-        return self._parse_info('Status')
+        return self._parse_info('Status').lower()
 
     def _gen_attached_luns(self):
         '''
