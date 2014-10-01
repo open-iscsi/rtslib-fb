@@ -24,7 +24,7 @@ from target import NodeACL, NetworkPortal, TPG, Target
 from fabric import FabricModule
 
 from tcm import FileIOStorageObject, BlockStorageObject
-from tcm import PSCSIStorageObject, RDMCPStorageObject
+from tcm import PSCSIStorageObject, RDMCPStorageObject, UserBackedStorageObject
 from tcm import StorageObjectFactory
 
 __version__ = 'GIT_VERSION'
