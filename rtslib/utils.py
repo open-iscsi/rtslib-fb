@@ -341,7 +341,8 @@ def get_block_type(path):
                               251,  # LOCAL/EXPERIMENTAL USE
                               252,  # LOCAL/EXPERIMENTAL USE
                               253,  # LOCAL/EXPERIMENTAL USE
-                              254   # LOCAL/EXPERIMENTAL USE
+                              254,  # LOCAL/EXPERIMENTAL USE
+                              259   # NVME namespaces
                              ]
     if major in type_disk_known_majors:
         return 0
