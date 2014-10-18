@@ -21,8 +21,7 @@ GIT_LAST_TAG = $$(git describe --tags --abbrev=0 | grep -o '[0-9].*$$')
 GIT_PKG_TAG = $$(echo $(GIT_LAST_TAG) | tr - \~)
 VERSION = $$(echo $(GIT_DESC) | sed s/^$(GIT_LAST_TAG)/$(GIT_PKG_TAG)/)
 
-version:
-	@echo $(VERSION)
+.PHONY : all version test clean cleanall release deb debinstall rpm
 
 all:
 	@echo "Usage:"
@@ -40,6 +39,9 @@ all:
 	@echo
 	@echo "  make clean       - Cleanup the local repository build files."
 	@echo "  make cleanall    - Also remove dist/*"
+
+version:
+	@echo $(VERSION)
 
 test:
 	@echo "Running the safe tests suite..."
