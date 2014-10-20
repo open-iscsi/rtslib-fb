@@ -98,7 +98,6 @@ def fread(path):
 
     '''
     path = os.path.realpath(str(path))
-    string = ""
     file_fd = open(path, 'r')
     try:
         string = file_fd.read()
@@ -106,6 +105,29 @@ def fread(path):
         file_fd.close()
 
     return string
+
+def fread_pages(path):
+    '''
+    This function reads a file a file in chunks matching the system PAGE_SIZE.
+    Each read page is yielded.
+
+    @param path: The path to the file to read from.
+    @type path: string
+    @return: None, but yields strings
+
+    '''
+    page_size = os.sysconf("SC_PAGE_SIZE")
+    path = os.path.realpath(str(path))
+    file_fd = open(path, 'rb')
+    try:
+        while True:
+            page = file_fd.read(page_size)
+            if not page:
+                break
+            else:
+                yield page
+    finally:
+        file_fd.close()
 
 def is_dev_in_use(path):
     '''

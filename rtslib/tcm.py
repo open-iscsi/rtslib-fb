@@ -22,7 +22,8 @@ import re
 
 from target import LUN, TPG, Target, FabricModule
 from node import CFSNode
-from utils import fread, fwrite, RTSLibError, list_scsi_hbas, generate_wwn
+from utils import (fread, fread_pages, fwrite,
+                   RTSLibError, list_scsi_hbas, generate_wwn)
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from utils import convert_human_to_bytes, is_dev_in_use, get_block_type
 from utils import is_disk_partition, get_disk_size
@@ -265,6 +266,8 @@ class StorageObject(CFSNode):
     This is an interface to storage objects in configFS. A StorageObject is
     identified by its backstore and its name.
     '''
+    pr_aptpl_metadata_dir = "/var/target/pr"
+
     # StorageObject private stuff
 
     def __init__(self, backstore, backstore_class, name, mode):
@@ -416,6 +419,21 @@ class StorageObject(CFSNode):
             return False
         else:
             return True
+
+    def load_pr_aptpl_from_file(path=None):
+        '''
+        Loads PR metadata from the file at path.  This only works if
+        the StorageObject is not in use currently, else an IO error
+        will occur.  If no path is passed, the default system location
+        for PR APTPL metadata will be used.
+
+        @param path: The PR metadata file path.
+        @type path: string or None
+        '''
+        if path is None:
+            path = "%saptpl_/%s" % (self.pr_aptpl_metadata_dir, self.wwn)
+        for page in fread_pages(path):
+            fwrite(path, page)
 
     backstore = property(_get_backstore,
             doc="Get the backstore object.")
