@@ -1,12 +1,10 @@
-storage iblock disk %str {
-    path %str
+storage pscsi disk %str {
+    path %str 
     attribute {
-        block_size %int(512)
         emulate_3pc %bool(yes)
         emulate_caw %bool(yes)
         emulate_dpo %bool(no)
         emulate_fua_read %bool(no)
-        emulate_fua_write %bool(yes)
         emulate_model_alias %bool(no)
         emulate_rest_reord %bool(no)
         emulate_tas %bool(yes)
@@ -20,7 +18,6 @@ storage iblock disk %str {
         max_unmap_block_desc_count %int(0)
         max_unmap_lba_count %int(0)
         max_write_same_len %int(65535)
-        optimal_sectors %int(8192)
         queue_depth %int(128)
         unmap_granularity %int(0)
         unmap_granularity_alignment %int(0)
