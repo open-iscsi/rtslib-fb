@@ -139,7 +139,23 @@ class CFSNode(object):
         '''
         self._check_self()
         path = "%s/attrib" % self.path
-        return self._list_files(path, writable)
+        attributes = self._list_files(path, writable)
+
+        # FIXME Bug in the pSCSI kernel implementation, these should be ro
+        backstore = getattr(self, "backstore", None)
+        plugin = getattr(backstore, "plugin", None)
+        edited_attributes = []
+        force_ro_attrs = ["block_size", "emulate_fua_write", "optimal_sectors"]
+
+        if writable is True and plugin == "pscsi":
+            edited_attributes = [attr for attr in attributes
+                                 if attr not in force_ro_attrs]
+        elif writable is False and plugin == "pscsi":
+            edited_attributes = list(set(attributes + force_ro_attrs))
+        else:
+            edited_attributes = attributes
+
+        return edited_attributes
 
     def list_auth_attrs(self, writable=None):
         '''
