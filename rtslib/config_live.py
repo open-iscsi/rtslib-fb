@@ -488,15 +488,17 @@ def apply_create_obj(obj):
         if plugin == 'fileio':
             dev = obj_attr(obj, "path")
             size = obj_attr(obj, "size")
+            wwn = None
             buffered = obj_attr(obj, "buffered")
             lio_bs = FileIOBackstore(idx)
-            lio_so = lio_bs.storage_object(name, dev, size, True, buffered)
+            lio_so = lio_bs.storage_object(name, dev, size, wwn, buffered)
             apply_group_attrs(obj, lio_so)
         elif plugin == 'iblock':
             # TODO Add policy for iblock
             lio_bs = IBlockBackstore(idx)
             dev = obj_attr(obj, "path")
-            lio_so = lio_bs.storage_object(name, dev, True)
+            wwn = None
+            lio_so = lio_bs.storage_object(name, dev, wwn)
             apply_group_attrs(obj, lio_so)
         elif plugin == 'pscsi':
             # TODO Add policy for pscsi
@@ -508,8 +510,9 @@ def apply_create_obj(obj):
             # TODO Add policy for rd_mcp
             lio_bs = RDMCPBackstore(idx)
             size = obj_attr(obj, "size")
+            wwn = None
             nullio = obj_attr(obj, "nullio")
-            lio_so = lio_bs.storage_object(name, size, True, nullio)
+            lio_so = lio_bs.storage_object(name, size, wwn, nullio)
             apply_group_attrs(obj, lio_so)
         else:
             raise ConfigError("Unknown backend '%s' for backstore '%s'"
