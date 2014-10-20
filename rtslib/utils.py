@@ -473,7 +473,7 @@ def convert_bytes_to_human(size):
         return ""
     for x in ['bytes','K','M','G','T']:
         if size < 1024.0:
-            return "(%3.1f%s) " % (size, x)
+            return "%3.1f%s" % (size, x)
         size /= 1024.0
 
 def convert_human_to_bytes(hsize, kilo=1024):

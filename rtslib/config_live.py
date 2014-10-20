@@ -50,8 +50,7 @@ else:
     log.setLevel(logging.INFO)
 
 def _b2h(b):
-    # FIXME: Fix convert_bytes_to_human() instead of juggling here
-    return convert_bytes_to_human(b)[1:-2]
+    return convert_bytes_to_human(b)
 
 def get_root():
     global _rtsroot
