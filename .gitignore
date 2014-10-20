@@ -21,4 +21,5 @@ debian/rtslib-doc.debhelper.log
 debian/tmp/
 rtslib-*
 \#*#
+.#*
 *~
