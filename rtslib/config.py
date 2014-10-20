@@ -23,7 +23,7 @@ under the License.
 '''
 import os, re, time, copy, logging
 
-from rtslib.utils import is_valid_wwn, list_eth_ips
+from rtslib.utils import is_valid_wwn, list_eth_ips, fread
 
 from config_filters import *
 from config_tree import ConfigTree, NO_VALUE
@@ -541,13 +541,15 @@ class Config(object):
         If an error occurs, the operation will be aborted, leaving the current
         configuration intact.
         '''
-        parse_tree = self._parser.parse_file(filepath)
-        source = {'operation': 'load',
-                  'filepath': filepath,
-                  'timestamp': time.time(),
-                  'mtime': os.path.getmtime(filepath)}
-        self._load_parse_tree(parse_tree, replace=True,
-                              source=source, allow_new_attrs=allow_new_attrs)
+        for c in fread(filepath):
+            if c not in ["\n", "\t", " "]:
+                parse_tree = self._parser.parse_file(filepath)
+                source = {'operation': 'load',
+                          'filepath': filepath,
+                          'timestamp': time.time(),
+                          'mtime': os.path.getmtime(filepath)}
+                self._load_parse_tree(parse_tree, replace=True,
+                                      source=source, allow_new_attrs=allow_new_attrs)
 
     def load_live(self):
         '''
