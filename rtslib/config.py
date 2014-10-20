@@ -550,6 +550,7 @@ class Config(object):
                           'mtime': os.path.getmtime(filepath)}
                 self._load_parse_tree(parse_tree, replace=True,
                                       source=source, allow_new_attrs=allow_new_attrs)
+                break
 
     def load_live(self):
         '''
