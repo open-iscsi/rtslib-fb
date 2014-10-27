@@ -151,12 +151,12 @@ class PSCSIBackstore(Backstore):
 
     # PSCSIBackstore public stuff
 
-    def storage_object(self, name, dev=None, wwn=None):
+    def storage_object(self, name, dev=None):
         '''
         Same as PSCSIStorageObject() without specifying the backstore
         '''
         self._check_self()
-        return PSCSIStorageObject(self, name=name, dev=dev, wwn=wwn)
+        return PSCSIStorageObject(self, name=name, dev=dev)
 
     legacy_mode = property(_get_legacy,
             doc="Get the legacy mode flag. If True, the Vitualbackstore "
@@ -456,7 +456,7 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject private stuff
 
-    def __init__(self, backstore, name, dev=None, wwn=None):
+    def __init__(self, backstore, name, dev=None):
         '''
         A PSCSIStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -482,8 +482,6 @@ class PSCSIStorageObject(StorageObject):
               Note that if the parent Backstore is in legacy mode, the device
               must have the same backstore index as the parent backstore.
         @type dev: string
-        @param wwn: Either None (use random or hardware unit serial) or the WWN to use as T10 Unit Serial.
-        @type wwn: None or string
         @return: A PSCSIStorageObject object.
         '''
         if dev is not None:
@@ -491,7 +489,7 @@ class PSCSIStorageObject(StorageObject):
                                                      PSCSIBackstore,
                                                      name, 'create')
             try:
-                self._configure(dev, wwn)
+                self._configure(dev)
             except:
                 self.delete()
                 raise
@@ -500,7 +498,7 @@ class PSCSIStorageObject(StorageObject):
                                                      PSCSIBackstore,
                                                      name, 'lookup')
 
-    def _configure(self, dev, wwn):
+    def _configure(self, dev):
         self._check_self()
         parent_hostid = self.backstore.index
         legacy = self.backstore.legacy_mode
@@ -577,8 +575,6 @@ class PSCSIStorageObject(StorageObject):
                           + "scsi_lun_id=%d" % lunid)
         self._set_udev_path(udev_path)
         self._enable()
-        if not self.wwn:
-            self.wwn = wwn
 
     def _get_model(self):
         self._check_self()
@@ -614,6 +610,9 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject public stuff
 
+    wwn = property(StorageObject._get_wwn,
+            doc="Get the StorageObject T10 WWN Unit Serial as a string."
+            + " You cannot set it for pscsi-backed StorageObjects.")
     model = property(_get_model,
             doc="Get the SCSI device model string")
     vendor = property(_get_vendor,
