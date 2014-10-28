@@ -95,6 +95,8 @@ def dump_live_storage():
         dump.append("storage %s disk %s {"
                     % (so.backstore.plugin, so.name))
         attrs = []
+        if so.backstore.plugin in ['fileio', 'rd_mcp', 'iblock']:
+            attrs.append("%swwn %s" % (_indent, so.wwn))
         if so.backstore.plugin in ['fileio', 'pscsi', 'iblock']:
             attrs.append("%spath %s" % (_indent, so.udev_path))
         if so.backstore.plugin in ['fileio', 'rd_mcp']:
@@ -487,7 +489,10 @@ def apply_create_obj(obj):
         if plugin == 'fileio':
             dev = obj_attr(obj, "path")
             size = obj_attr(obj, "size")
-            wwn = None
+            try:
+                wwn = obj_attr(obj, "wwn")
+            except ConfigError:
+                wwn = None
             buffered = obj_attr(obj, "buffered")
             lio_bs = FileIOBackstore(idx)
             lio_so = lio_bs.storage_object(name, dev, size, wwn, buffered)
@@ -496,7 +501,7 @@ def apply_create_obj(obj):
             # TODO Add policy for iblock
             lio_bs = IBlockBackstore(idx)
             dev = obj_attr(obj, "path")
-            wwn = None
+            wwn = obj_attr(obj, "wwn")
             lio_so = lio_bs.storage_object(name, dev, wwn)
             apply_group_attrs(obj, lio_so)
         elif plugin == 'pscsi':
@@ -509,7 +514,7 @@ def apply_create_obj(obj):
             # TODO Add policy for rd_mcp
             lio_bs = RDMCPBackstore(idx)
             size = obj_attr(obj, "size")
-            wwn = None
+            wwn = obj_attr(obj, "wwn")
             nullio = obj_attr(obj, "nullio")
             lio_so = lio_bs.storage_object(name, size, wwn, nullio)
             apply_group_attrs(obj, lio_so)

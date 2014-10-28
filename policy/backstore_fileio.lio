@@ -1,6 +1,7 @@
 storage fileio disk %str {
-    path %str 
-    size %bytes 
+    wwn %str
+    path %str
+    size %bytes
     buffered %bool(yes)
     attribute {
         block_size %int(512)

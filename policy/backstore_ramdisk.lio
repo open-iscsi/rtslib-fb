@@ -1,4 +1,5 @@
 storage rd_mcp disk %str {
+    wwn %str
     size %bytes
 	nullio %bool(no)
     attribute {

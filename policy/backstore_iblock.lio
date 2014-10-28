@@ -1,4 +1,5 @@
 storage iblock disk %str {
+    wwn %str
     path %str
     attribute {
         block_size %int(512)
