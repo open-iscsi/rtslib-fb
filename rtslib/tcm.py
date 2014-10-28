@@ -22,7 +22,7 @@ import re
 
 from target import LUN, TPG, Target, FabricModule
 from node import CFSNode
-from utils import (fread, fread_pages, fwrite,
+from utils import (fread, fwrite,
                    RTSLibError, list_scsi_hbas, generate_wwn)
 from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from utils import convert_human_to_bytes, is_dev_in_use, get_block_type
@@ -420,20 +420,34 @@ class StorageObject(CFSNode):
         else:
             return True
 
-    def load_pr_aptpl_from_file(path=None):
+    def restore_pr_aptpl(self, src_path=None):
         '''
-        Loads PR metadata from the file at path.  This only works if
-        the StorageObject is not in use currently, else an IO error
-        will occur.  If no path is passed, the default system location
-        for PR APTPL metadata will be used.
+        Restores StorageObject persistent reservations read from src_path.
+        If src_path is omitted, uses the default LIO PR APTPL system
+        path if it exists. This only works if the StorageObject is not
+        in use currently, else an IO error will occur.
 
-        @param path: The PR metadata file path.
-        @type path: string or None
+        @param src_path: The PR metadata file path.
+        @type src_path: string or None
         '''
-        if path is None:
-            path = "%saptpl_/%s" % (self.pr_aptpl_metadata_dir, self.wwn)
-        for page in fread_pages(path):
-            fwrite(path, page)
+        dst_path = "%s/pr/res_aptpl_metadata" % self.path
+        if src_path is None:
+            src_path = "%s/aptpl_%s" % (self.pr_aptpl_metadata_dir, self.wwn)
+
+        if not os.path.isfile(src_path):
+            return
+
+        lines = fread(src_path).split()
+        if not lines[0].startswith("PR_REG_START:"):
+            return
+
+        for line in lines:
+            if line.startswith("PR_REG_START:"):
+                pr_lines = []
+            elif line.startswith("PR_REG_END:"):
+                fwrite(dst_path, ",".join(pr_lines))
+            else:
+                pr_lines.append(line.strip())
 
     backstore = property(_get_backstore,
             doc="Get the backstore object.")
@@ -702,6 +716,7 @@ class RDMCPStorageObject(StorageObject):
             self._control("rd_nullio=1")
         self._enable()
         self.wwn = wwn
+        self.restore_pr_aptpl()
 
     def _get_page_size(self):
         self._check_self()
@@ -850,6 +865,7 @@ class FileIOStorageObject(StorageObject):
             self._set_buffered_mode()
         self._enable()
         self.wwn = wwn
+        self.restore_pr_aptpl()
 
     def _get_mode(self):
         self._check_self()
@@ -948,6 +964,7 @@ class IBlockStorageObject(StorageObject):
             self._enable()
 
         self.wwn = wwn
+        self.restore_pr_aptpl()
 
     def _get_major(self):
         self._check_self()
