@@ -1,5 +1,6 @@
 fabric vhost {
     target %naa tpgt %int {
+        nexus_wwn %naa
         lun %int backend %backend
     }
 }

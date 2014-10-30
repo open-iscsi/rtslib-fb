@@ -901,18 +901,21 @@ class TPG(CFSNode):
 
     # TPG private stuff
 
-    def __init__(self, parent_target, tag, mode='any'):
+    def __init__(self, parent_target, tag, mode='any', nexus_wwn=None):
         '''
         @param parent_target: The parent Target object of the TPG.
         @type parent_target: Target
         @param tag: The TPG Tag (TPGT).
         @type tag: int > 0
-        @param mode:An optionnal string containing the object creation mode:
+        @param mode: An optionnal string containing the object creation mode:
             - I{'any'} means the configFS object will be either looked up or
               created.
             - I{'lookup'} means the object MUST already exist configFS.
             - I{'create'} means the object must NOT already exist in configFS.
-        @type mode:string
+        @type mode: string
+        @param nexus: An optionnal naa WWN that makes sense only for fabrics
+            supporting that feature, like the loopback fabric.
+        @type nexus: string
         @return: A TPG object.
         '''
 
@@ -943,7 +946,7 @@ class TPG(CFSNode):
 
         self._create_in_cfs_ine(mode)
         if self.has_feature('nexus') and not self._get_nexus():
-            self._set_nexus()
+            self._set_nexus(nexus_wwn)
 
     def _get_tag(self):
         return self._tag
@@ -1143,8 +1146,8 @@ class TPG(CFSNode):
                     doc="Get the list of LUN objects currently attached " \
                     + "to the TPG.")
 
-    nexus = property(_get_nexus, _set_nexus,
-                     doc="Get or set (once) the TPG's Nexus is used.")
+    nexus_wwn = property(_get_nexus, _set_nexus,
+                         doc="Get or set (once) the TPG's Nexus initiator WWN.")
 
 class Target(CFSNode):
     '''

@@ -162,6 +162,9 @@ def dump_live_fabric():
                     enable = None
 
                 section = []
+                if tpg.has_feature("nexus"):
+                    section.append("%snexus_wwn %s" % (_indent, tpg.nexus_wwn))
+
                 attrs = ["%s%s" % (_indent, attr)
                          for attr in _list_live_group_attrs(tpg)]
                 if attrs:
@@ -462,7 +465,11 @@ def apply_create_obj(obj):
         lio_fabric = FabricModule(fabric.key[1])
         lio_target = Target(lio_fabric, wwn=target.key[1], mode='lookup')
         tpgt = int(obj.key[1])
-        lio_tpg = TPG(lio_target, tpgt)
+        try:
+            nexus_wwn = obj_attr(obj, "nexus_wwn")
+            lio_tpg = TPG(lio_target, tpgt, nexus_wwn=nexus_wwn)
+        except ConfigError:
+            lio_tpg = TPG(lio_target, tpgt)
         if has_enable:
             lio_tpg.enable = enable
         apply_group_attrs(obj, lio_tpg)
@@ -474,7 +481,11 @@ def apply_create_obj(obj):
         lio_target = Target(lio_fabric, wwn=wwn)
         apply_group_attrs(obj, lio_target)
         if not lio_target.has_feature("tpgts"):
-            lio_tpg = TPG(lio_target, 1)
+            try:
+                nexus_wwn = obj_attr(obj, "nexus_wwn")
+                lio_tpg = TPG(lio_target, 1, nexus_wwn=nexus_wwn)
+            except ConfigError:
+                lio_tpg = TPG(lio_target, 1)
             if len(obj.search([("enable", ".*")])) != 0:
                 lio_tpg.enable = True
 

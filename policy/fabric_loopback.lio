@@ -1,1 +1,6 @@
-fabric loopback target %naa lun %int backend %backend
+fabric loopback {
+    target %naa {
+        nexus_wwn %naa
+        lun %int backend %backend
+    }
+}
