@@ -670,4 +670,3 @@ def clear_configfs():
         target.delete()
     for backstore in root.backstores:
         backstore.delete()
-    
