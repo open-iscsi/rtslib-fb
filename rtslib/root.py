@@ -187,8 +187,8 @@ class RTSRoot(CFSNode):
             dict_remove(kwargs, ('exists', 'attributes', 'plugin', 'buffered_mode'))
             try:
                 so_obj = so_cls(**kwargs)
-            except (TypeError, ValueError):
-                err_func("Could not create StorageObject %s" % so['name'])
+            except Exception as e:
+                err_func("Could not create StorageObject %s: %s" % (so['name'], e))
                 continue
 
             # Custom err func to include block name
