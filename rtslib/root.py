@@ -163,7 +163,7 @@ class RTSRoot(CFSNode):
         '''
         if clear_existing:
             self.clear_existing(confirm=True)
-        elif list(self.storage_objects) or list(self.targets):
+        elif any(self.storage_objects) or any(self.targets):
             raise RTSLibError("storageobjects or targets present, not restoring")
 
         errors = []
