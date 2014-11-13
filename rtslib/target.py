@@ -175,17 +175,17 @@ class TPG(CFSNode):
                     tag = index
                     break
             if tag is None:
-                raise RTSLibError("Cannot find an available TPG Tag.")
+                raise RTSLibError("Cannot find an available TPG Tag")
         else:
             tag = int(tag)
             if not tag > 0:
-                raise RTSLibError("The TPG Tag must be >0.")
+                raise RTSLibError("The TPG Tag must be >0")
         self._tag = tag
 
         if isinstance(parent_target, Target):
             self._parent_target = parent_target
         else:
-            raise RTSLibError("Invalid parent Target.")
+            raise RTSLibError("Invalid parent Target")
 
         self._path = "%s/tpgt_%d" % (self.parent_target.path, self.tag)
 
@@ -195,7 +195,7 @@ class TPG(CFSNode):
                 if filename.startswith("tpgt_") \
                    and os.path.isdir("%s/%s" % (target_path, filename)) \
                    and filename != "tpgt_%d" % self.tag:
-                    raise RTSLibError("Target cannot have multiple TPGs.")
+                    raise RTSLibError("Target cannot have multiple TPGs")
 
         self._create_in_cfs_ine(mode)
         if self.has_feature('nexus') and not self._get_nexus():
@@ -263,9 +263,9 @@ class TPG(CFSNode):
         self._check_self()
 
         if not self.has_feature('nexus'):
-            raise RTSLibError("The TPG does not use a nexus.")
+            raise RTSLibError("The TPG does not use a nexus")
         if self._get_nexus():
-            raise RTSLibError("The TPG's nexus initiator WWN is already set.")
+            raise RTSLibError("The TPG's nexus initiator WWN is already set")
 
         fm = self.parent_target.fabric_module
 
@@ -480,7 +480,7 @@ class LUN(CFSNode):
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
         else:
-            raise RTSLibError("Invalid parent TPG.")
+            raise RTSLibError("Invalid parent TPG")
 
         if lun is None:
             luns = [l.lun for l in self.parent_tpg.luns]
@@ -501,7 +501,7 @@ class LUN(CFSNode):
 
         if storage_object is None and alias is not None:
             raise RTSLibError("The alias parameter has no meaning " \
-                              + "without the storage_object parameter.")
+                              + "without the storage_object parameter")
 
         if storage_object is not None:
             self._create_in_cfs_ine('create')
@@ -527,7 +527,7 @@ class LUN(CFSNode):
         if storage_object.exists:
             source = storage_object.path
         else:
-            raise RTSLibError("storage_object does not exist in configFS.")
+            raise RTSLibError("storage_object does not exist in configFS")
 
         os.symlink(source, destination)
 
@@ -680,12 +680,12 @@ class NetworkPortal(CFSNode):
         try:
             self._port = int(port)
         except ValueError:
-            raise RTSLibError("Invalid port.")
+            raise RTSLibError("Invalid port")
 
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
         else:
-            raise RTSLibError("Invalid parent TPG.")
+            raise RTSLibError("Invalid parent TPG")
 
         self._path = "%s/np/%s:%d" \
             % (self.parent_tpg.path, self.ip_address, self.port)
@@ -693,7 +693,7 @@ class NetworkPortal(CFSNode):
         try:
             self._create_in_cfs_ine(mode)
         except OSError as msg:
-            raise RTSLibError(msg[1])
+            raise RTSLibError(msg)
 
     def _get_ip_address(self):
         return self._ip_address
@@ -791,7 +791,7 @@ class NodeACL(CFSNode):
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
         else:
-            raise RTSLibError("Invalid parent TPG.")
+            raise RTSLibError("Invalid parent TPG")
 
         fm = self.parent_tpg.parent_target.fabric_module
         self._node_wwn, self.wwn_type = normalize_wwn(fm.wwn_types, node_wwn)
@@ -1015,23 +1015,23 @@ class MappedLUN(CFSNode):
 
         if not isinstance(parent_nodeacl, NodeACL):
             raise RTSLibError("The parent_nodeacl parameter must be " \
-                              + "a NodeACL object.")
+                              + "a NodeACL object")
         else:
             self._parent_nodeacl = parent_nodeacl
             if not parent_nodeacl.exists:
-                raise RTSLibError("The parent_nodeacl does not exist.")
+                raise RTSLibError("The parent_nodeacl does not exist")
 
         try:
             self._mapped_lun = int(mapped_lun)
         except ValueError:
             raise RTSLibError("The mapped_lun parameter must be an " \
-                              + "integer value.")
+                              + "integer value")
 
         self._path = "%s/lun_%d" % (self.parent_nodeacl.path, self.mapped_lun)
 
         if tpg_lun is None and write_protect is not None:
             raise RTSLibError("The write_protect parameter has no " \
-                              + "meaning without the tpg_lun parameter.")
+                              + "meaning without the tpg_lun parameter")
 
         if tpg_lun is not None:
             self._create_in_cfs_ine('create')
@@ -1052,14 +1052,14 @@ class MappedLUN(CFSNode):
                 tpg_lun = int(tpg_lun)
             except ValueError:
                 raise RTSLibError("The tpg_lun must be either an "
-                                  + "integer or a LUN object.")
+                                  + "integer or a LUN object")
         # Check that the tpg_lun exists in the TPG
         for lun in self.parent_nodeacl.parent_tpg.luns:
             if lun.lun == tpg_lun:
                 tpg_lun = lun
                 break
         if not (isinstance(tpg_lun, LUN) and tpg_lun):
-            raise RTSLibError("LUN %s does not exist in this TPG."
+            raise RTSLibError("LUN %s does not exist in this TPG"
                               % str(tpg_lun))
         os.symlink(tpg_lun.path, "%s/%s"
                    % (self.path, str(uuid.uuid4())[-10:]))

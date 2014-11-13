@@ -44,7 +44,7 @@ class StorageObject(CFSNode):
         super(StorageObject, self).__init__()
         if "/" in name or " " in name or "\t" in name or "\n" in name:
             raise RTSLibError("A storage object's name cannot contain "
-                              " /, newline or spaces/tabs.")
+                              " /, newline or spaces/tabs")
         else:
             self._name = name
         self._backstore = _Backstore(name, type(self), mode)
@@ -119,7 +119,7 @@ class StorageObject(CFSNode):
             return fread(path).partition(":")[2].strip()
         else:
             raise RTSLibError("Cannot read a T10 WWN Unit Serial from "
-                              + "an unconfigured StorageObject.")
+                              + "an unconfigured StorageObject")
 
     def _set_wwn(self, wwn):
         self._check_self()
@@ -128,7 +128,7 @@ class StorageObject(CFSNode):
             fwrite(path, "%s\n" % wwn)
         else:
             raise RTSLibError("Cannot write a T10 WWN Unit Serial to "
-                              + "an unconfigured StorageObject.")
+                              + "an unconfigured StorageObject")
 
     def _set_udev_path(self, udev_path):
         self._check_self()
@@ -326,14 +326,14 @@ class PSCSIStorageObject(StorageObject):
                 raise RTSLibError("Cannot find SCSI device by "
                                   + "path, and dev "
                                   + "parameter not in H:C:T:L "
-                                  + "format: %s." % dev)
+                                  + "format: %s" % dev)
             else:
                 udev_path = convert_scsi_hctl_to_path(hostid,
                                                             channelid,
                                                             targetid,
                                                             lunid)
             if not udev_path:
-                raise RTSLibError("SCSI device does not exist.")
+                raise RTSLibError("SCSI device does not exist")
         else:
             udev_path = dev.strip()
 
@@ -342,7 +342,7 @@ class PSCSIStorageObject(StorageObject):
                               + "device %s (SCSI %d:%d:%d:%d) "
                               % (udev_path, hostid, channelid,
                                  targetid, lunid)
-                              + "is already in use.")
+                              + "is already in use")
 
         self._control("scsi_host_id=%d," % hostid \
                       + "scsi_channel_id=%d," % channelid \
@@ -567,10 +567,10 @@ class FileIOStorageObject(StorageObject):
         block_type = get_blockdev_type(dev)
         if block_type is None: # a file
             if os.path.exists(os.path.realpath(dev)) and not os.path.isfile(dev):
-                raise RTSLibError("Path not to a file or block device.")
+                raise RTSLibError("Path not to a file or block device")
 
             if size is None:
-                raise RTSLibError("Path is to a file, size needed.")
+                raise RTSLibError("Path is to a file, size needed")
 
             self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
 
@@ -579,10 +579,10 @@ class FileIOStorageObject(StorageObject):
             # dump() saves it and thus restore() will call us with it.
 
             if block_type != 0:
-                raise RTSLibError("Device is not a TYPE_DISK block device.")
+                raise RTSLibError("Device is not a TYPE_DISK block device")
 
             if is_dev_in_use(dev):
-                raise RTSLibError("Device %s is already in use." % dev)
+                raise RTSLibError("Device %s is already in use" % dev)
 
             self._control("fd_dev_name=%s" % dev)
 
@@ -676,10 +676,10 @@ class BlockStorageObject(StorageObject):
     def _configure(self, dev, wwn, readonly):
         self._check_self()
         if get_blockdev_type(dev) != 0:
-            raise RTSLibError("Device is not a TYPE_DISK block device.")
+            raise RTSLibError("Device is not a TYPE_DISK block device")
         if is_dev_in_use(dev):
             raise RTSLibError("Cannot configure StorageObject because "
-                              + "device %s is already in use." % dev)
+                              + "device %s is already in use" % dev)
         self._set_udev_path(dev)
         self._control("udev_path=%s" % dev)
         self._control("readonly=%d" % readonly)
@@ -761,7 +761,7 @@ class UserBackedStorageObject(StorageObject):
         if size is not None:
             if level is None or config is None:
                 raise RTSLibError("'size', 'level', and 'config' must be set when "
-                                  "creating a new UserBackedStorageObject.")
+                                  "creating a new UserBackedStorageObject")
             if '/' not in config:
                 raise RTSLibError("'config' must contain a '/' separating subtype "
                                   "from its configuration string")

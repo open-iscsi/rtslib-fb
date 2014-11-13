@@ -47,17 +47,17 @@ class CFSNode(object):
         if mode not in ['any', 'lookup', 'create']:
             raise RTSLibError("Invalid mode: %s" % mode)
         if self.exists and mode == 'create':
-            raise RTSLibError("This %s already exists in configFS."
+            raise RTSLibError("This %s already exists in configFS"
                               % self.__class__.__name__)
         elif not self.exists and mode == 'lookup':
-            raise RTSLibNotInCFS("No such %s in configfs: %s."
+            raise RTSLibNotInCFS("No such %s in configfs: %s"
                                  % (self.__class__.__name__, self.path))
 
         if not self.exists:
             try:
                 os.mkdir(self.path)
             except:
-                raise RTSLibError("Could not create %s in configFS."
+                raise RTSLibError("Could not create %s in configFS"
                                   % self.__class__.__name__)
 
     def _exists(self):
@@ -65,7 +65,7 @@ class CFSNode(object):
 
     def _check_self(self):
         if not self.exists:
-            raise RTSLibNotInCFS("This %s does not exist in configFS."
+            raise RTSLibNotInCFS("This %s does not exist in configFS"
                                  % self.__class__.__name__)
 
     def _list_files(self, path, writable=None):
@@ -134,7 +134,7 @@ class CFSNode(object):
         self._check_self()
         path = "%s/attrib/%s" % (self.path, str(attribute))
         if not os.path.isfile(path):
-            raise RTSLibError("Cannot find attribute: %s."
+            raise RTSLibError("Cannot find attribute: %s"
                               % str(attribute))
         else:
             try:
@@ -150,8 +150,7 @@ class CFSNode(object):
         self._check_self()
         path = "%s/attrib/%s" % (self.path, str(attribute))
         if not os.path.isfile(path):
-            raise RTSLibError("Cannot find attribute: %s."
-                              % str(attribute))
+            raise RTSLibError("Cannot find attribute: %s" % attribute)
         else:
             return fread(path)
 
@@ -167,8 +166,7 @@ class CFSNode(object):
         self._check_self()
         path = "%s/param/%s" % (self.path, str(parameter))
         if not os.path.isfile(path):
-            raise RTSLibError("Cannot find parameter: %s."
-                              % str(parameter))
+            raise RTSLibError("Cannot find parameter: %s" % parameter)
         else:
             try:
                 fwrite(path, "%s\n" % str(value))
@@ -184,8 +182,7 @@ class CFSNode(object):
         self._check_self()
         path = "%s/param/%s" % (self.path, str(parameter))
         if not os.path.isfile(path):
-            raise RTSLibError("Cannot find RFC-3720 parameter: %s."
-                              % str(parameter))
+            raise RTSLibError("Cannot find RFC-3720 parameter: %s" % parameter)
         else:
             return fread(path)
 

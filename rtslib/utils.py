@@ -245,7 +245,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
         lun = int(lun)
     except ValueError:
         raise RTSLibError(
-            "The host, controller, target and lun parameter must be integers.")
+            "The host, controller, target and lun parameter must be integers")
 
     for devname in os.listdir("/sys/block"):
         path = "/dev/%s" % devname
@@ -285,7 +285,7 @@ def generate_wwn(wwn_type):
     elif wwn_type == 'eui':
         return "eui.001405" + uuid.uuid4().hex[-10:]
     else:
-        raise ValueError("Unknown WWN type: %s." % wwn_type)
+        raise ValueError("Unknown WWN type: %s" % wwn_type)
 
 def colonize(str):
     '''
@@ -378,7 +378,7 @@ def mount_configfs():
                                    stderr=subprocess.PIPE)
         (stdoutdata, stderrdata) = process.communicate()
         if process.returncode != 0:
-            raise RTSLibError("Cannot mount configfs.")
+            raise RTSLibError("Cannot mount configfs")
 
 def dict_remove(d, items):
     for item in items:
