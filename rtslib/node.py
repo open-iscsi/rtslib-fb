@@ -33,6 +33,12 @@ class CFSNode(object):
     def __init__(self):
         self._path = self.configfs_dir
 
+    def __eq__(self, other):
+        return self._path == other._path
+
+    def __ne__(self, other):
+        return self._path != other._path
+
     def _get_path(self):
         return self._path
 
