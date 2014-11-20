@@ -32,6 +32,8 @@ from utils import _get_auth_attr, _set_auth_attr
 import tcm
 from functools import partial
 
+auth_params = ('userid', 'password', 'mutual_userid', 'mutual_password')
+
 class Target(CFSNode):
     '''
     This is an interface to Targets in configFS.
@@ -431,7 +433,7 @@ class TPG(CFSNode):
         d['portals'] = [portal.dump() for portal in self.network_portals]
         d['node_acls'] =  [acl.dump() for acl in self.node_acls]
         if self.has_feature("auth"):
-            for attr in ("userid", "password", "mutual_userid", "mutual_password"):
+            for attr in auth_params:
                 val = getattr(self, "chap_" + attr, None)
                 if val:
                     d["chap_" + attr] = val
@@ -966,7 +968,7 @@ class NodeACL(CFSNode):
         if self.tag:
             d['tag'] = self.tag
         if self.has_feature("auth"):
-            for attr in ("userid", "password", "mutual_userid", "mutual_password"):
+            for attr in auth_params:
                 val = getattr(self, "chap_" + attr, None)
                 if val:
                     d["chap_" + attr] = val
