@@ -975,7 +975,9 @@ class MappedLUN(CFSNode):
     # MappedLUN private stuff
 
     def __repr__(self):
-        return "<MappedLUN %d -> %d>" % (self.mapped_lun, self.tpg_lun.lun)
+        return "<MappedLUN %s lun %d -> tpg%d lun %d>" % \
+            (self.parent_nodeacl.node_wwn, self.mapped_lun,
+             self.parent_nodeacl.parent_tpg.tag, self.tpg_lun.lun)
 
     def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None):
