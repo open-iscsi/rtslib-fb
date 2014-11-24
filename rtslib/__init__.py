@@ -26,6 +26,7 @@ from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 
 from target import LUN, MappedLUN
 from target import NodeACL, NetworkPortal, TPG, Target
+from target import NodeACLGroup, MappedLUNGroup
 from fabric import FabricModule
 
 from tcm import FileIOStorageObject, BlockStorageObject

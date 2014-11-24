@@ -290,6 +290,20 @@ class TPG(CFSNode):
             fm = self.parent_target.fabric_module
             yield NodeACL(self, fm.from_fabric_wwn(node_acl_dir), 'lookup')
 
+    def _list_node_acl_groups(self):
+        self._check_self()
+        if not self.has_feature('acls'):
+            return
+
+        names = set([])
+
+        for na in self.node_acls:
+            tag = na.tag
+            if tag:
+                names.add(tag)
+
+        return (NodeACLGroup(self, n) for n in names)
+
     def _list_luns(self):
         self._check_self()
         lun_dirs = [os.path.basename(path)
@@ -367,6 +381,9 @@ class TPG(CFSNode):
                                + "to the TPG.")
     node_acls = property(_list_node_acls,
                          doc="Get the list of NodeACL objects currently " \
+                         + "attached to the TPG.")
+    node_acl_groups = property(_list_node_acl_groups,
+                         doc="Get the list of NodeACL groups currently " \
                          + "attached to the TPG.")
     luns = property(_list_luns,
                     doc="Get the list of LUN objects currently attached " \
@@ -1163,6 +1180,326 @@ class MappedLUN(CFSNode):
         d['index'] = self.mapped_lun
         d['tpg_lun'] = self.tpg_lun.lun
         return d
+
+
+class Group(object):
+    '''
+    An abstract base class akin to CFSNode, but for classes that
+    emulate a higher-level group object across the actual NodeACL
+    configfs structure.
+    '''
+    def __init__(self, members_func):
+        '''
+        members_func is a function that takes a self argument
+        and returns an iterator of the objects that the
+        derived Group class is grouping.
+        '''
+        self._mem_func = members_func
+
+    def _get_first_member(self):
+        try:
+            return self._mem_func(self).next()
+        except StopIteration:
+            raise IndexError("Group is empty")
+
+    def _get_prop(self, prop):
+        '''
+        Helper fn to use with partial() to support getting a
+        property value from the first member of the group.
+        (All members of the group should be identical.)
+        '''
+        return getattr(self._get_first_member(), prop)
+
+    def _set_prop(self, value, prop):
+        '''
+        Helper fn to use with partial() to support setting a
+        property value in all members of the group.
+
+        Caution: Arguments reversed!
+        This is so partial() can be used on property name.
+        '''
+
+        for mem in self._mem_func(self):
+            setattr(mem, prop, value)
+
+    def list_attributes(self, writable=None):
+        return self._get_first_member().list_attributes(writable)
+
+    def list_parameters(self, writable=None):
+        return self._get_first_member().list_parameters(writable)
+
+    def set_attribute(self, attribute, value):
+        for obj in self._mem_func(self):
+            obj.set_attribute(attribute, value)
+
+    def set_parameter(self, parameter, value):
+        for obj in self._mem_func(self):
+            obj.set_parameter(parameter, value)
+
+    def get_attribute(self, attribute):
+        return self._get_first_member().get_attribute(attribute)
+
+    def get_parameter(self, parameter):
+        return self._get_first_member().get_parameter(parameter)
+
+    def delete(self):
+        '''
+        Delete all members of the group.
+        '''
+        for mem in self._mem_func(self):
+            mem.delete()
+
+    @property
+    def exists(self):
+        return any(self._mem_func(self))
+
+
+def _check_group_name(name):
+    # Since all WWNs have a '.' in them, let's avoid confusion.
+    if '.' in name:
+        raise ExecutionError("'.' not permitted in group names.")
+
+
+class NodeACLGroup(Group):
+    '''
+    Allow a group of NodeACLs that share a tag to be managed collectively.
+    '''
+    def __repr__(self):
+        return "<NodeACLGroup %s>" % self.name
+
+    def __init__(self, parent_tpg, name):
+        super(NodeACLGroup, self).__init__(NodeACLGroup._node_acls.fget)
+        _check_group_name(name)
+        self._name = name
+        self._parent_tpg = parent_tpg
+
+    def _get_name(self):
+        return self._name
+
+    def _set_name(self, name):
+        _check_group_name(name)
+        for na in self._node_acls:
+            na.tag = name
+        self._name = name
+
+    @property
+    def parent_tpg(self):
+        '''
+        Get the parent TPG object.
+        '''
+        return self._parent_tpg
+
+    def add_acl(self, node_wwn):
+        '''
+        Add a WWN to the NodeACLGroup. If a NodeACL already exists for this WWN,
+        its configuration will be changed to match the NodeACLGroup, except for its
+        auth parameters, which can vary among group members.
+        @param node_wwn: An initiator WWN
+        @type node_wwn: string
+        '''
+        nacl = NodeACL(self.parent_tpg, node_wwn)
+
+        if nacl in self._node_acls:
+            return
+
+        # if joining a group, take its config
+        try:
+            model = self._node_acls.next()
+        except StopIteration:
+            pass
+        else:
+            for mlun in nacl.mapped_luns:
+                mlun.delete()
+
+            for mlun in model.mapped_luns:
+                MappedLUN(nacl, mlun.mapped_lun, mlun.tpg_lun, mlun.write_protect)
+
+            for item in model.list_attributes(writable=True):
+                nacl.set_attribute(item, model.get_attribute(item))
+            for item in model.list_parameters(writable=True):
+                nacl.set_parameter(item, model.get_parameter(item))
+        finally:
+            nacl.tag = self.name
+
+    def remove_acl(self, node_wwn):
+        '''
+        Remove a WWN from the NodeACLGroup.
+        @param node_wwn: An initiator WWN
+        @type node_wwn: string
+        '''
+        nacl = NodeACL(self.parent_tpg, node_wwn, mode='lookup')
+
+        nacl.delete()
+
+    @property
+    def _node_acls(self):
+        '''
+        Gives access to the underlying NodeACLs within this group.
+        '''
+        for na in self.parent_tpg.node_acls:
+            if na.tag == self.name:
+                yield na
+
+    @property
+    def wwns(self):
+        '''
+        Give the Node WWNs of members of this group.
+        '''
+        return (na.node_wwn for na in self._node_acls)
+
+    def has_feature(self, feature):
+        '''
+        Whether or not this NodeACL has a certain feature.
+        '''
+        return self._parent_tpg.has_feature(feature)
+
+    @property
+    def sessions(self):
+        '''
+        Yields any current sessions.
+        '''
+        for na in self._node_acls:
+            session = na.session
+            if session:
+                yield session
+
+    def mapped_lun_group(self, mapped_lun, tpg_lun=None, write_protect=None):
+        '''
+        Add a mapped lun to all group members.
+        '''
+        return MappedLUNGroup(self, mapped_lun=mapped_lun, tpg_lun=tpg_lun,
+                      write_protect=write_protect)
+
+    @property
+    def mapped_lun_groups(self):
+        '''
+        Generates all MappedLUNGroup objects in this NodeACLGroup.
+        '''
+        try:
+            first = self._get_first_member()
+        except IndexError:
+            return
+
+        for mlun in first.mapped_luns:
+            yield MappedLUNGroup(self, mlun.mapped_lun)
+
+    name = property(_get_name, _set_name,
+                    doc="Get/set NodeACLGroup name.")
+
+    def _get_chap(self, name):
+        for na in self._node_acls:
+            yield (na.node_wwn, getattr(na, "chap_" + name))
+
+    def _set_chap(self, name, value, wwn):
+        for na in self._node_acls:
+            if not wwn:
+                setattr(na, "chap_" + name, value)
+            elif wwn == na.node_wwn:
+                setattr(na, "chap_" + name, value)
+                break
+
+    def get_userids(self):
+        '''
+        Returns a (wwn, userid) tuple for each member of the group.
+        '''
+        return self._get_chap(name="userid")
+
+    def set_userids(self, value, wwn=None):
+        '''
+        If wwn, set the userid for just that wwn, otherwise set it for
+        all group members.
+        '''
+        return self._set_chap("userid", value, wwn)
+
+    def get_passwords(self):
+        '''
+        Returns a (wwn, password) tuple for each member of the group.
+        '''
+        return self._get_chap(name="password")
+
+    def set_passwords(self, value, wwn=None):
+        '''
+        If wwn, set the password for just that wwn, otherwise set it for
+        all group members.
+        '''
+        return self._set_chap("password", value, wwn)
+
+    def get_mutual_userids(self):
+        '''
+        Returns a (wwn, mutual_userid) tuple for each member of the group.
+        '''
+        return self._get_chap(name="mutual_userid")
+
+    def set_mutual_userids(self, value, wwn=None):
+        '''
+        If wwn, set the mutual_userid for just that wwn, otherwise set it for
+        all group members.
+        '''
+        return self._set_chap("mutual_userid", value, wwn)
+
+    def get_mutual_passwords(self):
+        '''
+        Returns a (wwn, mutual_password) tuple for each member of the group.
+        '''
+        return self._get_chap(name="mutual_password")
+
+    def set_mutual_passwords(self, value, wwn=None):
+        '''
+        If wwn, set the mutual_password for just that wwn, otherwise set it for
+        all group members.
+        '''
+        return self._set_chap("mutual_password", value, wwn)
+
+    tcq_depth = property(partial(Group._get_prop, prop="tcq_depth"),
+                         partial(Group._set_prop, prop="tcq_depth"),
+                         doc="Set or get the TCQ depth for the initiator "
+                         + "sessions matching this NodeACLGroup")
+    authenticate_target = property(partial(Group._get_prop, prop="authenticate_target"),
+                                   doc="Get the boolean authenticate target flag.")
+
+
+class MappedLUNGroup(Group):
+    '''
+    Used with NodeACLGroup, this aggregates all MappedLUNs with the same LUN
+    so that it can be configured across all members of the NodeACLGroup.
+    '''
+
+    def __repr__(self):
+        return "<MappedLUNGroup %s:lun %d>" % (self._nag.name, self._mapped_lun)
+
+    def __init__(self, nodeaclgroup, mapped_lun, *args, **kwargs):
+        super(MappedLUNGroup, self).__init__(MappedLUNGroup._mapped_luns.fget)
+        self._nag = nodeaclgroup
+        self._mapped_lun = mapped_lun
+        for na in self._nag._node_acls:
+            MappedLUN(na, mapped_lun=mapped_lun, *args, **kwargs)
+
+    @property
+    def _mapped_luns(self):
+        for na in self._nag._node_acls:
+            for mlun in na.mapped_luns:
+                if mlun.mapped_lun == self.mapped_lun:
+                    yield mlun
+
+    @property
+    def mapped_lun(self):
+        '''
+        Get the integer MappedLUN mapped_lun index.
+        '''
+        return self._mapped_lun
+
+    @property
+    def parent_nodeaclgroup(self):
+        '''
+        Get the parent NodeACLGroup object.
+        '''
+        return self._nag
+
+    write_protect = property(partial(Group._get_prop, prop="write_protect"),
+                             partial(Group._set_prop, prop="write_protect"),
+                             doc="Get or set the boolean write protection.")
+    tpg_lun = property(partial(Group._get_prop, prop="tpg_lun"),
+                       doc="Get the TPG LUN object the MappedLUN is pointing at.")
 
 
 def _test():
