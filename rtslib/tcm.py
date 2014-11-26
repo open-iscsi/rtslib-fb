@@ -676,7 +676,7 @@ class BlockStorageObject(StorageObject):
     def _configure(self, dev, wwn, readonly):
         self._check_self()
         if get_blockdev_type(dev) != 0:
-            raise RTSLibError("Device is not a TYPE_DISK block device")
+            raise RTSLibError("Device %s is not a TYPE_DISK block device" % dev)
         if is_dev_in_use(dev):
             raise RTSLibError("Cannot configure StorageObject because "
                               + "device %s is already in use" % dev)

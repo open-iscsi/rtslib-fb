@@ -214,8 +214,8 @@ class _BaseFabricModule(CFSNode):
 
     def _assert_feature(self, feature):
         if not self.has_feature(feature):
-            raise RTSLibError("This fabric module does not implement "
-                              + "the %s feature" % feature)
+            raise RTSLibError("Fabric module %s does not implement "
+                              + "the %s feature" % (self.name, feature))
 
     def clear_discovery_auth_settings(self):
         self._check_self()
