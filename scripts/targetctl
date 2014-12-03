@@ -24,7 +24,7 @@ under the License.
 
 from __future__ import print_function
 
-from rtslib import RTSRoot
+from rtslib_fb import RTSRoot
 import os
 import sys
 

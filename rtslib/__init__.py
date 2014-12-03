@@ -16,6 +16,11 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
+if __name__ == "rtslib":
+    from warnings import warn
+    warn("'rtslib' package name for rtslib-fb is deprecated, please"
+         + " instead import 'rtslib_fb'", UserWarning, stacklevel=2)
+
 from root import RTSRoot
 from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 
