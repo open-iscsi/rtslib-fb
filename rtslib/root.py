@@ -229,6 +229,7 @@ class RTSRoot(CFSNode):
     def save_to_file(self, save_file=None):
         '''
         Write the configuration in json format to a file.
+        Save file defaults to '/etc/targets/saveconfig.json'.
         '''
         if not save_file:
             save_file = default_save_file
@@ -244,6 +245,7 @@ class RTSRoot(CFSNode):
     def restore_from_file(self, restore_file=None, clear_existing=True, abort_on_error=False):
         '''
         Restore the configuration from a file in json format.
+        Restore file defaults to '/etc/targets/saveconfig.json'.
         Returns a list of non-fatal errors. If abort_on_error is set,
           it will raise the exception instead of continuing.
         '''
