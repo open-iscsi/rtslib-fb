@@ -446,7 +446,7 @@ class LUN(CFSNode):
     A LUN is identified by its parent TPG and LUN index.
     '''
 
-    MAX_LUN = 16383
+    MAX_LUN = 255
 
     # LUN private stuff
 
