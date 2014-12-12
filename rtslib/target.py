@@ -535,27 +535,15 @@ class LUN(CFSNode):
 
     def _get_alias(self):
         self._check_self()
-        alias = None
         for path in os.listdir(self.path):
             if os.path.islink("%s/%s" % (self.path, path)):
-                alias = os.path.basename(path)
-                break
-        if alias is None:
-            raise RTSLibBrokenLink("Broken LUN in configFS, no " \
-                                         + "storage object attached.")
-        else:
-            return alias
+                return os.path.basename(path)
+
+        raise RTSLibBrokenLink("Broken LUN in configFS, no storage object")
 
     def _get_storage_object(self):
         self._check_self()
-        alias_path = None
-        for path in os.listdir(self.path):
-            if os.path.islink("%s/%s" % (self.path, path)):
-                alias_path = os.path.realpath("%s/%s" % (self.path, path))
-                break
-        if alias_path is None:
-            raise RTSLibBrokenLink("Broken LUN in configFS, no "
-                                   + "storage object attached.")
+        alias_path = os.path.realpath("%s/%s" % (self.path, self.alias))
         return tcm.StorageObject.so_from_path(alias_path)
 
     def _get_parent_tpg(self):
@@ -573,7 +561,7 @@ class LUN(CFSNode):
 
         for na in tpg.node_acls:
             for mlun in na.mapped_luns:
-                if os.path.realpath("%s/%s" % (mlun.path, mlun._get_alias())) == self.path:
+                if os.path.realpath("%s/%s" % (mlun.path, mlun.alias)) == self.path:
                     yield mlun
 
     # LUN public stuff
@@ -1073,16 +1061,11 @@ class MappedLUN(CFSNode):
 
     def _get_alias(self):
         self._check_self()
-        alias = None
         for path in os.listdir(self.path):
             if os.path.islink("%s/%s" % (self.path, path)):
-                alias = os.path.basename(path)
-                break
-        if alias is None:
-            raise RTSLibBrokenLink("Broken LUN in configFS, no " \
-                                         + "storage object attached.")
-        else:
-            return alias
+                return os.path.basename(path)
+
+        raise RTSLibBrokenLink("Broken LUN in configFS, no storage object")
 
     def _get_mapped_lun(self):
         return self._mapped_lun
@@ -1105,12 +1088,12 @@ class MappedLUN(CFSNode):
 
     def _get_tpg_lun(self):
         self._check_self()
-        path = os.path.realpath("%s/%s" % (self.path, self._get_alias()))
+        path = os.path.realpath("%s/%s" % (self.path, self.alias))
         for lun in self.parent_nodeacl.parent_tpg.luns:
             if lun.path == path:
                 return lun
 
-        raise RTSLibBrokenLink("Broken MappedLUN, no TPG LUN found !")
+        raise RTSLibBrokenLink("Broken MappedLUN, no TPG LUN found")
 
     def _get_node_wwn(self):
         self._check_self()
@@ -1124,7 +1107,7 @@ class MappedLUN(CFSNode):
         '''
         self._check_self()
         try:
-            lun_link = "%s/%s" % (self.path, self._get_alias())
+            lun_link = "%s/%s" % (self.path, self.alias)
         except RTSLibBrokenLink:
             pass
         else:
@@ -1142,6 +1125,8 @@ class MappedLUN(CFSNode):
             doc="Get the TPG LUN object the MappedLUN is pointing at.")
     node_wwn = property(_get_node_wwn,
             doc="Get the wwn of the node for which the TPG LUN is mapped.")
+    alias = property(_get_alias,
+            doc="Get the MappedLUN alias.")
 
     @classmethod
     def setup(cls, tpg_obj, acl_obj, mlun, err_func):
