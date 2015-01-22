@@ -91,11 +91,23 @@ class RTSRoot(CFSNode):
             for node_acl in t.node_acls:
                 yield node_acl
 
+    def _list_node_acl_groups(self):
+        self._check_self()
+        for t in self.tpgs:
+            for nag in t.node_acl_groups:
+                yield nag
+
     def _list_mapped_luns(self):
         self._check_self()
         for na in self.node_acls:
             for mlun in na.mapped_luns:
                 yield mlun
+
+    def _list_mapped_lun_groups(self):
+        self._check_self()
+        for nag in self.node_acl_groups:
+            for mlg in na.mapped_lun_groups:
+                yield mlg
 
     def _list_network_portals(self):
         self._check_self()
@@ -263,8 +275,12 @@ class RTSRoot(CFSNode):
             doc="Get the list of all the existing TPG objects.")
     node_acls = property(_list_node_acls,
             doc="Get the list of all the existing NodeACL objects.")
+    node_acl_groups = property(_list_node_acl_groups,
+            doc="Get the list of all the existing NodeACLGroup objects.")
     mapped_luns = property(_list_mapped_luns,
             doc="Get the list of all the existing MappedLUN objects.")
+    mapped_lun_groups = property(_list_mapped_lun_groups,
+            doc="Get the list of all the existing MappedLUNGroup objects.")
     sessions = property(_list_sessions,
             doc="Get the list of all the existing sessions.")
     network_portals = property(_list_network_portals,
