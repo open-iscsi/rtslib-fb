@@ -111,7 +111,7 @@ class StorageObject(CFSNode):
         so_name = os.path.basename(path)
         so_type = path.split("/")[-2].rsplit("_", 1)[0]
         return so_mapping[so_type](so_name)
-        
+
     def _get_wwn(self):
         self._check_self()
         if self.is_configured():
