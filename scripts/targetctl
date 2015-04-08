@@ -50,13 +50,8 @@ def restore(from_file):
         print("No saved config file at %s, ok, exiting" % from_file)
         sys.exit(0)
 
-    if errors:
-        print("Restore failed, %d errors:" % len(errors), file=err)
-
-        for error in errors:
-            print(error, file=err)
-
-        sys.exit(-1)
+    for error in errors:
+        print(error, file=err)
 
 def clear(unused):
     RTSRoot().clear_existing(confirm=True)
