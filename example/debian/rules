@@ -1,0 +1,51 @@
+#!/usr/bin/make -f
+
+build_dir   = build
+install_dir = $(CURDIR)/debian/tmp
+pkgname     = rtslib-fb
+name        = rtslib
+
+#export DH_VERBOSE=1
+
+PYTHON2=$(shell pyversions -vr)
+PYTHON3=$(shell py3versions -vr)
+
+#prevent internet access to use PyPi
+export http_proxy = http://127.0.0.1:9
+
+
+%:
+	dh $@ --with python2,python3
+
+
+build-python%:
+	python$* setup.py build
+
+override_dh_auto_build: $(PYTHON3:%=build-python%)
+	dh_auto_build
+
+
+install-python%:
+	python$* setup.py install --root=$(install_dir) --install-layout=deb
+
+
+override_dh_auto_install: $(PYTHON3:%=install-python%)
+	dh_auto_install
+	# for using python 3 for targetctl
+	# even though it is overwritten by python2 setup
+	sed -i '1s|/usr/bin/python$$|/usr/bin/python3|' $(install_dir)/usr/bin/targetctl
+
+
+override_dh_installdocs:
+	cd $(build_dir); epydoc --no-sourcecode --html -n $(pkgname) \
+		--exclude configobj ../$(name)/*.py
+	dh_installdocs $(build_dir)/html
+
+override_dh_installinit:
+	dh_installinit --name target
+
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build
+	rm -rf *.egg-info

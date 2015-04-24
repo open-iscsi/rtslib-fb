@@ -1,0 +1,41 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:		target
+# Default-Start: 	3 4 5
+# Default-Stop: 	0 1 2 6
+# Required-Start:	$local_fs $network
+# Required-Stop:	$local_fs $network
+# Short-Description: 	Start LIO targets
+# Description:		Loads configfs and restores LIO config with targetctl
+### END INIT INFO
+
+
+case "$1" in
+	start)
+		echo "Loading lio configuration"
+		/usr/bin/targetctl restore
+		if [[ $? -gt 0 ]]; then
+			exit 1
+		fi
+		;;
+
+	stop)
+		echo "Unloading lio configuration"
+		/usr/bin/targetctl clear
+		if [[ $? -gt 0 ]]; then
+			exit 1
+		fi
+		;;
+
+	restart|force-reload)
+		$0 stop
+		sleep 3
+		$0 start
+		;;
+
+	*)
+		echo "usage: $0 {start|stop|restart|force-reload}"
+esac
+
+exit 0
