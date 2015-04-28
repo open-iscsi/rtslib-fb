@@ -564,9 +564,10 @@ class FileIOStorageObject(StorageObject):
     def _configure(self, dev, size, wwn, write_back):
         self._check_self()
 
+        dev = os.path.realpath(dev)
         block_type = get_blockdev_type(dev)
         if block_type is None: # a file
-            if os.path.exists(os.path.realpath(dev)) and not os.path.isfile(dev):
+            if os.path.exists(dev) and not os.path.isfile(dev):
                 raise RTSLibError("Path not to a file or block device")
 
             if size is None:
