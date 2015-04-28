@@ -110,11 +110,30 @@ def is_dev_in_use(path):
         os.close(file_fd)
         return False
 
-def get_blockdev_size(path):
+def get_size_for_blk_dev(path):
     '''
-    Returns the size in logical blocks of a disk-type block device.
+    @param path: The path to a block device
+    @type path: string
+    @return: The size in logical blocks of the device
     '''
-    name = os.path.basename(os.path.realpath(path))
+    rdev = os.lstat(path).st_rdev
+    maj, min = os.major(rdev), os.minor(rdev)
+
+    for line in list(open("/proc/partitions"))[2:]:
+        xmaj, xmin, size, name = line.split()
+        if (maj, min) == (int(xmaj), int(xmin)):
+            return get_size_for_disk_name(name)
+    else:
+        return 0
+
+get_block_size = get_size_for_blk_dev
+
+def get_size_for_disk_name(name):
+    '''
+    @param name: a kernel disk name, as found in /proc/partitions
+    @type name: string
+    @return: The size in logical blocks of a disk-type block device.
+    '''
 
     # size is in 512-byte sectors, we want to return number of logical blocks
     def get_size(path, is_partition=False):
@@ -123,6 +142,10 @@ def get_blockdev_size(path):
             path = os.path.split(path)[0]
         logical_block_size = int(fread("%s/queue/logical_block_size" % path))
         return sect_size / (logical_block_size / 512)
+
+    # Disk names can include '/' (e.g. 'cciss/c0d0') but these are changed to
+    # '!' when listed in /sys/block.
+    name = name.replace("/", "!")
 
     try:
         return get_size("/sys/block/%s" % name)
@@ -138,8 +161,6 @@ def get_blockdev_size(path):
             return get_size("/sys/block/%s/%s" % (disk, m.group()), True)
         else:
             raise
-
-get_block_size = get_blockdev_size
 
 def get_blockdev_type(path):
     '''
@@ -212,7 +233,7 @@ def convert_scsi_path_to_hctl(path):
                           % devname)[0].split(':')
     except:
         return None
-    
+
     return [int(data) for data in hctl]
 
 def convert_scsi_hctl_to_path(host, controller, target, lun):
