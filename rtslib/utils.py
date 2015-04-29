@@ -336,8 +336,7 @@ def _cleanse_wwn(wwn_type, wwn):
 def normalize_wwn(wwn_types, wwn):
     '''
     Take a WWN as given by the user and convert it to a standard text
-    representation. If possible_wwns is not None, verify that
-    the given WWN is on that list.
+    representation.
 
     Returns (normalized_wwn, wwn_type), or exception if invalid wwn.
     '''
