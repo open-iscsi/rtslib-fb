@@ -23,12 +23,12 @@ import os
 import stat
 import json
 
-from node import CFSNode
-from target import Target
-from fabric import FabricModule
-from tcm import so_mapping, StorageObject
-from utils import RTSLibError, RTSLibBrokenLink, modprobe, mount_configfs
-from utils import dict_remove, set_attributes
+from .node import CFSNode
+from .target import Target
+from .fabric import FabricModule
+from .tcm import so_mapping, StorageObject
+from .utils import RTSLibError, RTSLibBrokenLink, modprobe, mount_configfs
+from .utils import dict_remove, set_attributes
 
 default_save_file = "/etc/target/saveconfig.json"
 

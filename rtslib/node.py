@@ -20,7 +20,7 @@ under the License.
 
 import os
 import stat
-from utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
+from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
 
 
 class CFSNode(object):

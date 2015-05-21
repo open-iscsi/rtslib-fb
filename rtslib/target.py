@@ -21,16 +21,19 @@ under the License.
 import re
 import os
 from glob import iglob as glob
+from functools import partial
+from os.path import isdir
+from six.moves import range
 import uuid
 
-from node import CFSNode
-from os.path import isdir
-from utils import RTSLibError, RTSLibBrokenLink
-from utils import fread, fwrite, normalize_wwn, generate_wwn
-from utils import dict_remove, set_attributes, set_parameters, ignored
-from utils import _get_auth_attr, _set_auth_attr
-import tcm
-from functools import partial
+from .node import CFSNode
+from .utils import RTSLibError, RTSLibBrokenLink
+from .utils import fread, fwrite, normalize_wwn, generate_wwn
+from .utils import dict_remove, set_attributes, set_parameters, ignored
+from .utils import _get_auth_attr, _set_auth_attr
+from . import tcm
+
+import six
 
 auth_params = ('userid', 'password', 'mutual_userid', 'mutual_password')
 
@@ -172,7 +175,7 @@ class TPG(CFSNode):
 
         if tag is None:
             tags = [tpg.tag for tpg in parent_target.tpgs]
-            for index in xrange(1048576):
+            for index in range(1048576):
                 if index not in tags and index > 0:
                     tag = index
                     break
@@ -434,7 +437,7 @@ class TPG(CFSNode):
         tpg_obj.enable = tpg.get('enable', True)
         dict_remove(tpg, ('luns', 'portals', 'node_acls', 'tag',
                           'attributes', 'parameters', 'enable'))
-        for name, value in tpg.iteritems():
+        for name, value in six.iteritems(tpg):
             if value:
                 try:
                     setattr(tpg_obj, name, value)
@@ -503,7 +506,7 @@ class LUN(CFSNode):
 
         if lun is None:
             luns = [l.lun for l in self.parent_tpg.luns]
-            for index in xrange(self.MAX_LUN+1):
+            for index in range(self.MAX_LUN+1):
                 if index not in luns:
                     lun = index
                     break
@@ -958,7 +961,7 @@ class NodeACL(CFSNode):
             MappedLUN.setup(tpg_obj, acl_obj, mlun, err_func)
 
         dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
-        for name, value in acl.iteritems():
+        for name, value in six.iteritems(acl):
             if value:
                 try:
                     setattr(acl_obj, name, value)
@@ -1198,7 +1201,7 @@ class Group(object):
 
     def _get_first_member(self):
         try:
-            return self._mem_func(self).next()
+            return next(self._mem_func(self))
         except StopIteration:
             raise IndexError("Group is empty")
 
@@ -1304,7 +1307,7 @@ class NodeACLGroup(Group):
 
         # if joining a group, take its config
         try:
-            model = self._node_acls.next()
+            model = next(self._node_acls)
         except StopIteration:
             pass
         else:

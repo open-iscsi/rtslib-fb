@@ -18,12 +18,13 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import re
 import os
-import stat
-import uuid
+import re
+import six
 import socket
+import stat
 import subprocess
+import uuid
 from contextlib import contextmanager
 
 class RTSLibError(Exception):
@@ -455,14 +456,14 @@ def _set_auth_attr(self, value, attribute, ignore=False):
             raise
 
 def set_attributes(obj, attr_dict, err_func):
-    for name, value in attr_dict.iteritems():
+    for name, value in six.iteritems(attr_dict):
         try:
             obj.set_attribute(name, value)
         except RTSLibError as e:
             err_func(str(e))
 
 def set_parameters(obj, param_dict, err_func):
-    for name, value in param_dict.iteritems():
+    for name, value in six.iteritems(param_dict):
         try:
             obj.set_parameter(name, value)
         except RTSLibError as e:
