@@ -107,15 +107,16 @@ Example: self._path = "%s/%s" % (self.configfs_dir, "my_cfs_dir")
 
 '''
 
-import os
-from glob import iglob as glob
-
-from node import CFSNode
-from utils import fread, fwrite, generate_wwn, normalize_wwn, colonize
-from utils import RTSLibError, modprobe, ignored
-from target import Target
-from utils import _get_auth_attr, _set_auth_attr
 from functools import partial
+from glob import iglob as glob
+import os
+import six
+
+from .node import CFSNode
+from .utils import fread, fwrite, generate_wwn, normalize_wwn, colonize
+from .utils import RTSLibError, modprobe, ignored
+from .target import Target
+from .utils import _get_auth_attr, _set_auth_attr
 
 version_attributes = {"lio_version", "version"}
 discovery_auth_attributes = {"discovery_auth"}
@@ -297,7 +298,7 @@ class _BaseFabricModule(CFSNode):
         '''
         Setup fabricmodule with settings from fm dict.
         '''
-        for name, value in fm.iteritems():
+        for name, value in six.iteritems(fm):
             if name != 'name':
                 try:
                     setattr(self, name, value)
@@ -458,5 +459,5 @@ class FabricModule(object):
 
     @classmethod
     def all(cls):
-        for mod in fabric_modules.itervalues():
+        for mod in six.itervalues(fabric_modules):
             yield mod()

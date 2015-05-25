@@ -23,12 +23,13 @@ import stat
 import re
 import glob
 import resource
+from six.moves import range
 
-from node import CFSNode
-from utils import fread, fwrite, RTSLibError, generate_wwn
-from utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
-from utils import is_dev_in_use, get_blockdev_type
-from utils import get_size_for_blk_dev, get_size_for_disk_name
+from .node import CFSNode
+from .utils import fread, fwrite, RTSLibError, generate_wwn
+from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
+from .utils import is_dev_in_use, get_blockdev_type
+from .utils import get_size_for_blk_dev, get_size_for_disk_name
 
 
 class StorageObject(CFSNode):
@@ -185,9 +186,9 @@ class StorageObject(CFSNode):
         listdir = os.listdir
         realpath = os.path.realpath
         path = self.path
-        from root import RTSRoot
-        from target import LUN, TPG, Target
-        from fabric import target_names_excludes
+        from .root import RTSRoot
+        from .target import LUN, TPG, Target
+        from .fabric import target_names_excludes
 
         for base, fm in ((fm.path, fm) for fm in RTSRoot().fabric_modules if fm.exists):
             for tgt_dir in listdir(base):
@@ -899,8 +900,9 @@ class _Backstore(CFSNode):
                                   (self._plugin, name))
             else:
                 # Allocate new index value
-                for index in xrange(1048576):
-                    if index not in bs_cache.values():
+                indexes = set(bs_cache.values())
+                for index in range(1048576):
+                    if index not in indexes:
                         self._index = index
                         bs_cache[self._lookup_key] = self._index
                         break

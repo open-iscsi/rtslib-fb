@@ -21,17 +21,17 @@ if __name__ == "rtslib":
     warn("'rtslib' package name for rtslib-fb is deprecated, please"
          + " instead import 'rtslib_fb'", UserWarning, stacklevel=2)
 
-from root import RTSRoot
-from utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
+from .root import RTSRoot
+from .utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 
-from target import LUN, MappedLUN
-from target import NodeACL, NetworkPortal, TPG, Target
-from target import NodeACLGroup, MappedLUNGroup
-from fabric import FabricModule
+from .target import LUN, MappedLUN
+from .target import NodeACL, NetworkPortal, TPG, Target
+from .target import NodeACLGroup, MappedLUNGroup
+from .fabric import FabricModule
 
-from tcm import FileIOStorageObject, BlockStorageObject
-from tcm import PSCSIStorageObject, RDMCPStorageObject, UserBackedStorageObject
-from tcm import StorageObjectFactory
+from .tcm import FileIOStorageObject, BlockStorageObject
+from .tcm import PSCSIStorageObject, RDMCPStorageObject, UserBackedStorageObject
+from .tcm import StorageObjectFactory
 
 __version__ = 'GIT_VERSION'
 __author__ = "Jerome Martin <jxm@risingtidesystems.com>"
