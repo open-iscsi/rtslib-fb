@@ -28,7 +28,7 @@ setup (
     url = 'http://github.com/agrover/rtslib-fb',
     packages = ['rtslib_fb', 'rtslib'],
     scripts = ['scripts/targetctl'],
-    "classifiers": [
+    classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
