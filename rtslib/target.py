@@ -1260,7 +1260,7 @@ class Group(object):
 def _check_group_name(name):
     # Since all WWNs have a '.' in them, let's avoid confusion.
     if '.' in name:
-        raise ExecutionError("'.' not permitted in group names.")
+        raise RTSLibError("'.' not permitted in group names.")
 
 
 class NodeACLGroup(Group):
