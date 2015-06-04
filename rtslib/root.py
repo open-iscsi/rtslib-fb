@@ -106,7 +106,7 @@ class RTSRoot(CFSNode):
     def _list_mapped_lun_groups(self):
         self._check_self()
         for nag in self.node_acl_groups:
-            for mlg in na.mapped_lun_groups:
+            for mlg in nag.mapped_lun_groups:
                 yield mlg
 
     def _list_network_portals(self):
