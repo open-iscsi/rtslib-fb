@@ -113,7 +113,7 @@ import os
 import six
 
 from .node import CFSNode
-from .utils import fread, fwrite, generate_wwn, normalize_wwn, colonize
+from .utils import fread, fwrite, normalize_wwn, colonize
 from .utils import RTSLibError, modprobe, ignored
 from .target import Target
 from .utils import _get_auth_attr, _set_auth_attr
