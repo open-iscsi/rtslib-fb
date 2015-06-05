@@ -18,7 +18,6 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import re
 import os
 import stat
 import json
@@ -27,7 +26,7 @@ from .node import CFSNode
 from .target import Target
 from .fabric import FabricModule
 from .tcm import so_mapping, StorageObject
-from .utils import RTSLibError, RTSLibBrokenLink, modprobe, mount_configfs
+from .utils import RTSLibError, modprobe, mount_configfs
 from .utils import dict_remove, set_attributes
 
 default_save_file = "/etc/target/saveconfig.json"
@@ -106,7 +105,7 @@ class RTSRoot(CFSNode):
     def _list_mapped_lun_groups(self):
         self._check_self()
         for nag in self.node_acl_groups:
-            for mlg in na.mapped_lun_groups:
+            for mlg in nag.mapped_lun_groups:
                 yield mlg
 
     def _list_network_portals(self):

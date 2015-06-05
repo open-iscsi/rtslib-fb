@@ -18,16 +18,14 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import re
 import os
 from glob import iglob as glob
 from functools import partial
-from os.path import isdir
 from six.moves import range
 import uuid
 
 from .node import CFSNode
-from .utils import RTSLibError, RTSLibBrokenLink
+from .utils import RTSLibError
 from .utils import fread, fwrite, normalize_wwn, generate_wwn
 from .utils import dict_remove, set_attributes, set_parameters, ignored
 from .utils import _get_auth_attr, _set_auth_attr
@@ -1260,7 +1258,7 @@ class Group(object):
 def _check_group_name(name):
     # Since all WWNs have a '.' in them, let's avoid confusion.
     if '.' in name:
-        raise ExecutionError("'.' not permitted in group names.")
+        raise RTSLibError("'.' not permitted in group names.")
 
 
 class NodeACLGroup(Group):
