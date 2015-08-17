@@ -741,7 +741,7 @@ class UserBackedStorageObject(StorageObject):
     An interface to configFS storage objects for userspace-backed backstore.
     '''
 
-    def __init__(self, name, config=None, level=None, size=None, wwn=None):
+    def __init__(self, name, config=None, size=None, wwn=None):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -755,37 +755,31 @@ class UserBackedStorageObject(StorageObject):
         @param config: user-handler-specific config string.
             - e.g. "rbd/machine1@snap4"
         @type config: string
-        @param level: TCMU emulation level, 0 or 1. Level 0 will pass all SCSI
-              commands, 1 will just pass I/O commands, READ, WRITE, etc.
-        @type level: int
         @return: A UserBackedStorageObject object.
         '''
 
         if size is not None:
-            if level is None or config is None:
-                raise RTSLibError("'size', 'level', and 'config' must be set when "
+            if config is None:
+                raise RTSLibError("'size' and 'config' must be set when "
                                   "creating a new UserBackedStorageObject")
             if '/' not in config:
                 raise RTSLibError("'config' must contain a '/' separating subtype "
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(config, level, size, wwn)
+                self._configure(config, size, wwn)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, config, level, size, wwn):
+    def _configure(self, config, size, wwn):
         self._check_self()
 
         if ':' in config:
             raise RTSLibError("':' not allowed in config string")
-        if level not in (0, 1):
-            raise RTSLibError("Current allowable levels are 0 or 1")
         self._control("dev_config=%s" % config)
-        self._control("pass_level=%d" % level)
         self._control("dev_size=%d" % size)
         self._enable()
 
@@ -794,10 +788,6 @@ class UserBackedStorageObject(StorageObject):
     def _get_size(self):
         self._check_self()
         return int(self._parse_info('Size'))
-
-    def _get_level(self):
-        self._check_self()
-        return int(self._parse_info('PassLevel'))
 
     def _get_config(self):
         self._check_self()
@@ -808,8 +798,6 @@ class UserBackedStorageObject(StorageObject):
 
     size = property(_get_size,
             doc="Get the size in bytes.")
-    level = property(_get_level,
-            doc="Get the command emulation level.")
     config = property(_get_config,
             doc="Get the TCMU config.")
 
@@ -817,7 +805,6 @@ class UserBackedStorageObject(StorageObject):
         d = super(UserBackedStorageObject, self).dump()
         d['wwn'] = self.wwn
         d['size'] = self.size
-        d['level'] = self.level
         d['config'] = self.config
         return d
 
