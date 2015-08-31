@@ -61,11 +61,11 @@ build/release-stamp:
 		build/${PKGNAME}-${VERSION}/${NAME}/__init__.py
 	@echo "Generating rpm specfile from template..."
 	@cd build/${PKGNAME}-${VERSION}; \
-		for spectmpl in rpm/*.spec.tmpl; do \
+		for spectmpl in example-rpm/*.spec.tmpl; do \
 			sed -i "s/Version:\( *\).*/Version:\1${VERSION}/g" $${spectmpl}; \
 			mv $${spectmpl} $$(basename $${spectmpl} .tmpl); \
 		done; \
-		rm -r rpm
+		rm -r example-rpm
 	@echo "Generating rpm changelog..."
 	@( \
 		version=$$(basename $$(git describe HEAD --tags | tr - .)); \
@@ -93,7 +93,7 @@ build/release-stamp:
 		echo; \
 		echo " -- $${author}  $${date}"; \
 		echo; \
-	) > build/${PKGNAME}-${VERSION}/debian/changelog
+	) > build/${PKGNAME}-${VERSION}/example-debian/changelog
 	@find build/${PKGNAME}-${VERSION}/ -exec \
 		touch -t $$(date -d @$$(git show -s --format="format:%at") \
 			+"%Y%m%d%H%M.%S") {} \;
