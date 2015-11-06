@@ -152,7 +152,7 @@ def get_size_for_disk_name(name):
         return get_size("/sys/block/%s" % name)
     except IOError:
         # Maybe it's a partition?
-        m = re.search(r'^([a-z0-9_\-!]+)(\d+)$', name)
+        m = re.search(r'^([a-z0-9_\-!]+?)(\d+)$', name)
         if m:
             # If disk name ends with a digit, Linux sticks a 'p' between it and
             # the partition number in the blockdev name.
