@@ -435,6 +435,14 @@ class VhostFabricModule(_BaseFabricModule):
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_vhost"
 
+class XenPvScsiFabricModule(_BaseFabricModule):
+    def __init__(self):
+        super(XenPvScsiFabricModule, self).__init__('xen_pvscsi')
+        self._path = "%s/%s" % (self.configfs_dir, 'xen-pvscsi')
+        self.features = ("nexus", "tpgts")
+        self.wwn_types = ('naa',)
+        self.kernel_module = "xen-scsiback"
+
 
 fabric_modules = {
     "srpt": SRPTFabricModule,
@@ -445,6 +453,7 @@ fabric_modules = {
     "tcm_fc": FCoEFabricModule,
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
     "vhost": VhostFabricModule,
+    "xen_pvscsi": XenPvScsiFabricModule,
     }
 
 #
