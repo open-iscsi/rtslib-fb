@@ -382,7 +382,6 @@ def modprobe(module):
 
     try:
         import kmod
-        kmod.Kmod().modprobe(module)
     except ImportError:
         process = subprocess.Popen(("modprobe", module),
                                    stdout=subprocess.PIPE,
@@ -390,6 +389,12 @@ def modprobe(module):
         (stdoutdata, stderrdata) = process.communicate()
         if process.returncode != 0:
             raise RTSLibError(stderrdata)
+        return
+
+    try:
+        kmod.Kmod().modprobe(module)
+    except kmod.error.KmodError:
+        raise RTSLibError("Could not load module: %s" % module)
 
 def mount_configfs():
     if not os.path.ismount("/sys/kernel/config"):
