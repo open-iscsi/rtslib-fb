@@ -137,12 +137,11 @@ class _BaseFabricModule(CFSNode):
     def __init__(self, name):
         '''
         Instantiate a FabricModule object, according to the provided name.
-        @param name: the name of the FabricModule object. It must match an
-        existing target fabric module specfile (name.spec).
+        @param name: the name of the FabricModule object.
         @type name: str
         '''
         super(_BaseFabricModule, self).__init__()
-        self.name = str(name)
+        self.name = name
         self.spec_file = "N/A"
         self._path = "%s/%s" % (self.configfs_dir, self.name)
         self.features = ('discovery_auth', 'acls', 'auth', 'nps', 'tpgts')
