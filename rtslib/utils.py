@@ -451,7 +451,9 @@ def _set_auth_attr(self, value, attribute, ignore=False):
     path = "%s/%s" % (self.path, attribute)
     value = value.strip()
     if value == "NULL":
-        raise ValueError("'NULL' is not a permitted value")
+        raise RTSLibError("'NULL' is not a permitted value")
+    if len(value) > 255:
+        raise RTSLibError("Value longer than maximum length of 255")
     if value == '':
         value = "NULL"
     try:
