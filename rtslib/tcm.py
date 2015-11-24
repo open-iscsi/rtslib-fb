@@ -565,8 +565,6 @@ class FileIOStorageObject(StorageObject):
 
     def _configure(self, dev, size, wwn, write_back):
         self._check_self()
-
-        dev = os.path.realpath(dev)
         block_type = get_blockdev_type(dev)
         if block_type is None: # a file
             if os.path.exists(dev) and not os.path.isfile(dev):
@@ -816,7 +814,6 @@ class StorageObjectFactory(object):
     """
 
     def __new__(cls, path):
-        path = os.path.realpath(path)
         name = path.strip("/").replace("/", "-")
         if os.path.exists(path):
             s = os.stat(path)
