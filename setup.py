@@ -20,7 +20,7 @@ from setuptools import setup
 
 setup (
     name = 'rtslib-fb',
-    version = '2.1.57',
+    version = '2.1.58',
     description = 'API for Linux kernel SCSI target (aka LIO)',
     license = 'Apache 2.0',
     maintainer = 'Andy Grover',
