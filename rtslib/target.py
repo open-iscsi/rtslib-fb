@@ -637,7 +637,7 @@ class LUN(CFSNode):
             return
 
         try:
-            cls(tpg_obj, lun['index'], storage_object=match_so)
+            cls(tpg_obj, lun['index'], storage_object=match_so, alias=lun.get('alias'))
         except (RTSLibError, KeyError):
             err_func("Creating TPG %d LUN index %d failed" %
                      (tpg_obj.tag, lun['index']))
@@ -647,6 +647,7 @@ class LUN(CFSNode):
         d['storage_object'] = "/backstores/%s/%s" % \
             (self.storage_object.plugin,  self.storage_object.name)
         d['index'] = self.lun
+        d['alias'] = self.alias
         return d
 
 
@@ -998,7 +999,7 @@ class MappedLUN(CFSNode):
              self.parent_nodeacl.parent_tpg.tag, self.tpg_lun.lun)
 
     def __init__(self, parent_nodeacl, mapped_lun,
-                 tpg_lun=None, write_protect=None):
+                 tpg_lun=None, write_protect=None, alias=None):
         '''
         A MappedLUN object can be instanciated in two ways:
             - B{Creation mode}: If I{tpg_lun} is specified, the underlying
@@ -1046,14 +1047,14 @@ class MappedLUN(CFSNode):
         if tpg_lun is not None:
             self._create_in_cfs_ine('create')
             try:
-                self._configure(tpg_lun, write_protect)
+                self._configure(tpg_lun, write_protect, alias)
             except:
                 self.delete()
                 raise
         else:
             self._create_in_cfs_ine('lookup')
 
-    def _configure(self, tpg_lun, write_protect):
+    def _configure(self, tpg_lun, write_protect, alias):
         self._check_self()
         if isinstance(tpg_lun, LUN):
             tpg_lun = tpg_lun.lun
@@ -1071,8 +1072,10 @@ class MappedLUN(CFSNode):
         if not (isinstance(tpg_lun, LUN) and tpg_lun):
             raise RTSLibError("LUN %s does not exist in this TPG"
                               % str(tpg_lun))
-        os.symlink(tpg_lun.path, "%s/%s"
-                   % (self.path, str(uuid.uuid4())[-10:]))
+
+        if not alias:
+            alias = str(uuid.uuid4())[-10:]
+        os.symlink(tpg_lun.path, "%s/%s" % (self.path, alias))
 
         try:
             self.write_protect = int(write_protect) > 0
@@ -1170,7 +1173,8 @@ class MappedLUN(CFSNode):
 
         try:
             mlun_obj = cls(acl_obj, mlun['index'],
-                           tpg_lun_obj, mlun.get('write_protect'))
+                           tpg_lun_obj, mlun.get('write_protect'),
+                           mlun.get('alias'))
             mlun_obj.tag = mlun.get("tag", None)
         except (RTSLibError, KeyError):
             err_func("Creating MappedLUN object %d failed" % mlun['index'])
@@ -1180,6 +1184,7 @@ class MappedLUN(CFSNode):
         d['write_protect'] = self.write_protect
         d['index'] = self.mapped_lun
         d['tpg_lun'] = self.tpg_lun.lun
+        d['alias'] = self.alias
         return d
 
 
