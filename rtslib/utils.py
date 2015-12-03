@@ -117,6 +117,7 @@ def get_size_for_blk_dev(path):
     @type path: string
     @return: The size in logical blocks of the device
     '''
+    path = os.path.realpath(str(path))
     rdev = os.lstat(path).st_rdev
     maj, min = os.major(rdev), os.minor(rdev)
 
