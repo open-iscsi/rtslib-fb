@@ -117,22 +117,35 @@ def is_dev_in_use(path):
         os.close(file_fd)
         return False
 
+def _get_size_for_dev(device):
+    '''
+    @param device: the device
+    @type device: pyudev.Device
+    @return: the size in logical blocks
+    @rtype: int
+    '''
+    attributes = device.attributes
+    try:
+        sect_size = attributes.asint('size')
+    except (ValueError, UnicodeDecodeError):
+        return 0
+    try:
+        logical_block_size = attributes.asint('queue/logical_block_size')
+    except (ValueError, UnicodeDecodeError):
+        return 0
+
+    return Size(sect_size, 512) // Size(logical_block_size)
+
 def get_size_for_blk_dev(path):
     '''
     @param path: The path to a block device
     @type path: string
     @return: The size in logical blocks of the device
+    @raises: DeviceNotFoundError if corresponding device not found
     '''
     path = os.path.realpath(str(path))
-    rdev = os.lstat(path).st_rdev
-    maj, min = os.major(rdev), os.minor(rdev)
-
-    for line in list(open("/proc/partitions"))[2:]:
-        xmaj, xmin, size, name = line.split()
-        if (maj, min) == (int(xmaj), int(xmin)):
-            return get_size_for_disk_name(name)
-    else:
-        return 0
+    device = Device.from_device_file(_CONTEXT, path)
+    return _get_size_for_dev(device)
 
 get_block_size = get_size_for_blk_dev
 
@@ -151,17 +164,7 @@ def get_size_for_disk_name(name):
         :raises DeviceNotFoundError: if device not found
         """
         device = pyudev.Device.from_name(_CONTEXT, 'block', name)
-        attributes = device.attributes
-        try:
-            sect_size = attributes.asint('size')
-        except (ValueError, UnicodeDecodeError):
-            pass # do something better
-        try:
-            logical_block_size = attributes.asint('queue/logical_block_size')
-        except (ValueError, UnicodeDecodeError):
-            pass # do something better
-
-        return Size(sect_size, 512) // Size(logical_block_size)
+        return _get_size_for_dev(device)
 
     # Disk names can include '/' (e.g. 'cciss/c0d0') but these are changed to
     # '!' when listed in /sys/block.
