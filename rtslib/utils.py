@@ -225,6 +225,16 @@ def get_blockdev_type(path):
 
 get_block_type = get_blockdev_type
 
+def _hctl_from_dev(device):
+    parent = device.parent
+    if parent.subsystem != 'scsi':
+        return None
+
+    try:
+        return [int(data) for data in parent.sys_name.split(':')]
+    except (ValueError, TypeError):
+        return None
+
 def convert_scsi_path_to_hctl(path):
     '''
     This function returns the SCSI ID in H:C:T:L form for the block
@@ -250,14 +260,8 @@ def convert_scsi_path_to_hctl(path):
     values representing the SCSI ID of the device, or None if no
     match is found.
     '''
-    devname = os.path.basename(os.path.realpath(path))
-    try:
-        hctl = os.listdir("/sys/block/%s/device/scsi_device"
-                          % devname)[0].split(':')
-    except:
-        return None
-
-    return [int(data) for data in hctl]
+    device = pyudev.Device.from_device_file(context, os.path.realpath(path))
+    return _hctl_from_dev(device)
 
 def convert_scsi_hctl_to_path(host, controller, target, lun):
     '''
@@ -291,10 +295,12 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
         raise RTSLibError(
             "The host, controller, target and lun parameter must be integers")
 
+    hctl = [host, controller, target, lun]
+
     for devname in os.listdir("/sys/block"):
         path = "/dev/%s" % devname
-        hctl = [host, controller, target, lun]
-        if convert_scsi_path_to_hctl(path) == hctl:
+        device = pyudev.Device.from_device_file(_CONTEXT, path)
+        if _hctl_from_dev(device) == hctl:
             return os.path.realpath(path)
     return ''
 
