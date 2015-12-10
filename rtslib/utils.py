@@ -27,6 +27,8 @@ import subprocess
 import uuid
 from contextlib import contextmanager
 
+from justbytes import Size
+
 import pyudev
 
 _CONTEXT = pyudev.Context()
@@ -159,7 +161,7 @@ def get_size_for_disk_name(name):
         except (ValueError, UnicodeDecodeError):
             pass # do something better
 
-        return sect_size / (logical_block_size / 512)
+        return Size(sect_size, 512) // Size(logical_block_size)
 
     # Disk names can include '/' (e.g. 'cciss/c0d0') but these are changed to
     # '!' when listed in /sys/block.
