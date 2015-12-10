@@ -27,6 +27,10 @@ import subprocess
 import uuid
 from contextlib import contextmanager
 
+import pyudev
+
+_CONTEXT = pyudev.Context()
+
 class RTSLibError(Exception):
     '''
     Generic rtslib error.
@@ -135,23 +139,36 @@ def get_size_for_disk_name(name):
     @param name: a kernel disk name, as found in /proc/partitions
     @type name: string
     @return: The size in logical blocks of a disk-type block device.
+    @raises: DeviceNotFoundError if no device corresponding to name
     '''
 
     # size is in 512-byte sectors, we want to return number of logical blocks
-    def get_size(path, is_partition=False):
-        sect_size = int(fread("%s/size" % path))
-        if is_partition:
-            path = os.path.split(path)[0]
-        logical_block_size = int(fread("%s/queue/logical_block_size" % path))
+    def get_size(name):
+        """
+        :param str name: name of block device
+        :raises DeviceNotFoundError: if device not found
+        """
+        device = pyudev.Device.from_name(_CONTEXT, 'block', name)
+        attributes = device.attributes
+        try:
+            sect_size = attributes.asint('size')
+        except (ValueError, UnicodeDecodeError):
+            pass # do something better
+        try:
+            logical_block_size = attributes.asint('queue/logical_block_size')
+        except (ValueError, UnicodeDecodeError):
+            pass # do something better
+
         return sect_size / (logical_block_size / 512)
 
     # Disk names can include '/' (e.g. 'cciss/c0d0') but these are changed to
     # '!' when listed in /sys/block.
+    # in pyudev 0.19 it should no longer be necessary to swap '/'s in name
     name = name.replace("/", "!")
 
     try:
-        return get_size("/sys/block/%s" % name)
-    except IOError:
+        return get_size(name)
+    except pyudev.DeviceNotFoundError:
         # Maybe it's a partition?
         m = re.search(r'^([a-z0-9_\-!]+?)(\d+)$', name)
         if m:
@@ -160,7 +177,7 @@ def get_size_for_disk_name(name):
             disk = m.groups()[0]
             if disk[-1] == 'p' and disk[-2].isdigit():
                 disk = disk[:-1]
-            return get_size("/sys/block/%s/%s" % (disk, m.group()), True)
+            return get_size(m.group())
         else:
             raise
 
@@ -184,22 +201,21 @@ def get_blockdev_type(path):
     @type path: string
     @return: An int for the block device type, or None if not a block device.
     '''
-    dev = os.path.realpath(path)
-
-    # is dev a block device?
     try:
-        mode = os.stat(dev)
-    except OSError:
+        device = pyudev.Device.from_device_file(_CONTEXT, path)
+    except (pyudev.DeviceNotFoundError, OSError, ValueError):
         return None
 
-    if not stat.S_ISBLK(mode[stat.ST_MODE]):
+    if device.subsystem != u'block':
         return None
 
-    # assume disk if device/type is missing
+    attributes = device.attributes
+
     disk_type = 0
-    with ignored(IOError):
-        disk_type = int(fread("/sys/block/%s/device/type" % os.path.basename(dev)))
-
+    try:
+        disk_type = attributes.asint('device/type')
+    except (ValueError, UnicodeDecodeError):
+        pass
     return disk_type
 
 get_block_type = get_blockdev_type
