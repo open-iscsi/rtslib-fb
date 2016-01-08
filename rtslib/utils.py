@@ -231,8 +231,8 @@ def _hctl_from_dev(device):
     @returns: H:C:T:L specifier or None if not found
     @rtype: list of int * 4 or NoneType
     '''
-    parent = device.parent
-    if parent is None or parent.subsystem != 'scsi':
+    parent = device.find_parent(subsystem='scsi')
+    if parent is None:
         return None
 
     try:
