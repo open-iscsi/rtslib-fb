@@ -224,22 +224,6 @@ def get_blockdev_type(path):
 
 get_block_type = get_blockdev_type
 
-def _hctl_from_dev(device):
-    '''
-    @param device: the device
-    @type device: pyudev.Device
-    @returns: H:C:T:L specifier or None if not found
-    @rtype: list of int * 4 or NoneType
-    '''
-    parent = device.find_parent(subsystem='scsi')
-    if parent is None:
-        return None
-
-    try:
-        return [int(data) for data in parent.sys_name.split(':')]
-    except (ValueError, TypeError):
-        return None
-
 def convert_scsi_path_to_hctl(path):
     '''
     This function returns the SCSI ID in H:C:T:L form for the block
@@ -266,10 +250,22 @@ def convert_scsi_path_to_hctl(path):
     match is found.
     '''
     try:
-        device = pyudev.Device.from_device_file(context, os.path.realpath(path))
+        path = os.path.realpath(path)
+        device = pyudev.Device.from_device_file(_CONTEXT, path)
     except (pyudev.DeviceNotFoundError, EnvironmentError, ValueError):
         return None
-    return _hctl_from_dev(device)
+
+    if device.device_type != u'disk':
+        return None
+
+    parent = device.find_parent(subsystem='scsi')
+    if parent is None:
+        return None
+
+    try:
+        return [int(data) for data in parent.sys_name.split(':')]
+    except (ValueError, TypeError):
+        return None
 
 def convert_scsi_hctl_to_path(host, controller, target, lun):
     '''
@@ -309,10 +305,13 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
     except DeviceNotFoundError:
         return ''
 
-    for device in context.list_devices(subsystem='block'):
-        if device.parent == scsi_device:
-            return device.device_node
-    return ''
+    devices = _CONTEXT.list_devices(
+       subsystem='block',
+       DEVTYPE='disk',
+       parent=scsi_device
+    )
+
+    return next((dev.device_node for dev in devices), '')
 
 def generate_wwn(wwn_type):
     '''
