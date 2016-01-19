@@ -249,7 +249,9 @@ class RTSRoot(CFSNode):
             os.fchmod(f.fileno(), stat.S_IRUSR | stat.S_IWUSR)
             f.write(json.dumps(self.dump(), sort_keys=True, indent=2))
             f.write("\n")
+            f.flush()
             os.fsync(f.fileno())
+            f.close()
 
         os.rename(save_file+".temp", save_file)
 
