@@ -743,16 +743,13 @@ class UserBackedStorageObject(StorageObject):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
-        @param dev: The path to the backend block device to be used.
-            - Example: I{dev="/dev/sda"}.
-            - The only device type that is accepted I{TYPE_DISK}.
-              For other device types, use pscsi.
-        @type dev: string
-        @param size: The size of the device to create, in bytes.
-        @type size: int
         @param config: user-handler-specific config string.
             - e.g. "rbd/machine1@snap4"
         @type config: string
+        @param size: The size of the device to create, in bytes.
+        @type size: int
+        @param wwn: T10 WWN Unit Serial, will generate if None
+        @type wwn: string
         @return: A UserBackedStorageObject object.
         '''
 
