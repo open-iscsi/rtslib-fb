@@ -1,4 +1,4 @@
-%define oname rtslib
+%define oname rtslib-fb
 
 Name:           python-rtslib
 License:        Apache License 2.0
@@ -22,7 +22,7 @@ API for RisingTide Systems generic SCSI target.
 %build
 %{__python} setup.py build
 mkdir -p doc
-epydoc --no-sourcecode --html -n %{oname} --exclude configobj %{oname}/*.py
+epydoc --no-sourcecode --html -n %{oname} --exclude configobj rtslib_fb/*.py
 mv html doc/
 
 %install
@@ -37,6 +37,7 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{python_sitelib}
+%{_bindir}/targetctl
 /usr/share/doc/python-rtslib-doc-%{version}
 %doc COPYING README.md
 

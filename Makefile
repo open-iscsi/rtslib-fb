@@ -101,7 +101,8 @@ build/release-stamp:
 	@cd build; tar -c --owner=0 --group=0 --numeric-owner \
 		--format=gnu -b20 --quoting-style=escape \
 		-f ../dist/${PKGNAME}-${VERSION}.tar \
-		$$(find ${PKGNAME}-${VERSION} -type f | sort)
+		$$(find ${PKGNAME}-${VERSION} -type f | sort) \
+		$$(find ${PKGNAME}-${VERSION} -type l | sort)
 	@gzip -6 -n dist/${PKGNAME}-${VERSION}.tar
 	@echo "Generated release tarball:"
 	@echo "    $$(ls dist/${PKGNAME}-${VERSION}.tar.gz)"
