@@ -1,0 +1,312 @@
+#!/usr/bin/python3
+'''
+convert-to-json
+
+This file is part of RTSLib-fb.
+Copyright (c) 2013-2016 by Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+'''
+
+#
+# A script to convert .lio format save files to json format.
+#
+
+import json
+import re
+
+def human_to_bytes(hsize, kilo=1024):
+    '''
+    This function converts human-readable amounts of bytes to bytes.
+    It understands the following units :
+        - I{B} or no unit present for Bytes
+        - I{k}, I{K}, I{kB}, I{KB} for kB (kilobytes)
+        - I{m}, I{M}, I{mB}, I{MB} for MB (megabytes)
+        - I{g}, I{G}, I{gB}, I{GB} for GB (gigabytes)
+        - I{t}, I{T}, I{tB}, I{TB} for TB (terabytes)
+
+    Note: The definition of I{kilo} defaults to 1kB = 1024Bytes.
+    Strictly speaking, those should not be called I{kB} but I{kiB}.
+    You can override that with the optional kilo parameter.
+
+    @param hsize: The human-readable version of the Bytes amount to convert
+    @type hsize: string or int
+    @param kilo: Optional base for the kilo prefix
+    @type kilo: int
+    @return: An int representing the human-readable string converted to bytes
+    '''
+    size = hsize.replace('i', '')
+    size = size.lower()
+    if not re.match("^[0-9\.]+[k|m|g|t]?[b]?$", size):
+        raise Exception("Cannot interpret size, wrong format: %s" % hsize)
+
+    size = size.rstrip('ib')
+
+    units = ['k', 'm', 'g', 't']
+    try:
+        power = units.index(size[-1]) + 1
+    except ValueError:
+        power = 0
+        size = int(size)
+    else:
+        try:
+            size = int(size[:-1])
+        except ValueError:
+            size = int(float(size[:-1]))
+
+    return size * (int(kilo) ** power)
+
+def parse_yesno(val):
+    if val == "yes":
+        return 1
+    elif val == "no":
+        return 0
+    else:
+        try:
+            return int(val)
+        except:
+            return val
+
+def parse_attributes(txt, cur):
+    attribs = {}
+    while txt[cur] != "}":
+        name = txt[cur]
+        val = txt[cur+1]
+        attribs[name] = parse_yesno(val)
+        cur += 2
+    return (cur+1, attribs)
+
+def parse_fileio(txt, cur):
+    so = dict(plugin="fileio")
+    while txt[cur] != "}":
+        if txt[cur] == "path":
+            so["dev"] = txt[cur+1]
+            cur += 2
+            continue
+        if txt[cur] == "attribute":
+            cur, so["attributes"] = parse_attributes(txt, cur+2)
+            continue
+    return (cur+1, so)
+
+def parse_block(txt, cur):
+    so = dict(plugin="block")
+    while txt[cur] != "}":
+        if txt[cur] == "path":
+            so["dev"] = txt[cur+1]
+            cur += 2
+            continue
+        if txt[cur] == "attribute":
+            cur, so["attributes"] = parse_attributes(txt, cur+2)
+            continue
+    return (cur+1, so)
+
+def parse_ramdisk(txt, cur):
+    so = dict(plugin="ramdisk")
+    while txt[cur] != "}":
+        if txt[cur] == "nullio":
+            so["nullio"] = parse_yesno(txt[cur+1])
+            cur += 2
+            continue
+        if txt[cur] == "size":
+            so["size"] = human_to_bytes(txt[cur+1])
+            cur += 2
+            continue
+        if txt[cur] == "attribute":
+            cur, so["attributes"] = parse_attributes(txt, cur+2)
+            continue
+    return (cur+1, so)
+
+so_types = {
+    "fileio": parse_fileio,
+    "rd_mcp": parse_ramdisk,
+    "iblock": parse_block,
+}
+
+def parse_storage(txt, cur):
+    name = txt[cur+3]
+    ty = txt[cur+1]
+    cur += 5
+    (cur, d) = so_types[ty](txt, cur)
+    d["name"] = name
+    return (cur, d)
+
+def parse_lun(txt, cur):
+    index = int(txt[cur+1])
+    plugin, name = txt[cur+3].split(":")
+    return cur+4, dict(index=index, plugin=plugin, name=name)
+
+def parse_mapped_lun(txt, cur):
+    mlun = dict(index=txt[cur+1])
+    cur += 3
+    while txt[cur] != "}":
+        if txt[cur] == "target_lun":
+            mlun["tpg_lun"] = parse_yesno(txt[cur+1])
+            cur += 2
+            continue
+        if txt[cur] == "write_protect":
+            mlun["write_protect"] = bool(parse_yesno(txt[cur+1]))
+            cur += 2
+            continue
+    return cur, mlun
+
+def parse_acl(txt, cur):
+    acl = dict(node_wwn=txt[cur+1])
+    mapped_luns = []
+    cur += 3
+    while txt[cur] != "}":
+        if txt[cur] == "attribute":
+            cur, acl["attributes"] = parse_attributes(txt, cur+2)
+            continue
+        if txt[cur] == "auth":
+            cur, auth = parse_attributes(txt, cur+2)
+            if len(auth):
+                acl["auth"] = auth
+            continue
+        if txt[cur] == "mapped_lun":
+            cur, mlun = parse_mapped_lun(txt, cur)
+            mapped_luns.append(mlun)
+    acl["mapped_luns"] = mapped_luns
+    return cur+1, acl
+
+def parse_tpgt(txt, cur):
+    tpgt = dict(tag = int(txt[cur+1]))
+    luns = []
+    acls = []
+    portals = []
+    cur += 3
+    while txt[cur] != "}":
+        if txt[cur] == "enable":
+            tpgt["enable"] = parse_yesno(txt[cur+1])
+            cur += 2
+            continue
+        if txt[cur] == "attribute":
+            cur, tpgt["attributes"] = parse_attributes(txt, cur+2)
+            continue
+        if txt[cur] == "parameter":
+            cur, tpgt["parameters"] = parse_attributes(txt, cur+2)
+            continue
+        if txt[cur] == "auth":
+            cur, auth = parse_attributes(txt, cur+2)
+            if len(auth):
+                tpgt["auth"] = auth
+            continue
+        if txt[cur] == "lun":
+            cur, l = parse_lun(txt, cur)
+            luns.append(l)
+            continue
+        if txt[cur] == "acl":
+            cur, acl = parse_acl(txt, cur)
+            acls.append(acl)
+            continue
+        if txt[cur] == "portal":
+            ip, port = txt[cur+1].split(":")
+            portal = dict(ip_address=ip, port=port)
+            portals.append(portal)
+            cur += 2
+    if len(luns):
+        tpgt["luns"] = luns
+    if len(acls):
+        tpgt["node_acls"] = acls
+    if len(portals):
+        tpgt["portals"] = portals
+    return cur+1, tpgt
+
+
+def parse_target(fabric, txt, cur):
+    target = dict(wwn=txt[cur+1], fabric=fabric)
+    tpgts = []
+    extra = 0
+    # handle multiple tpgts
+    if txt[cur+2] == "{":
+        extra = 1
+    cur += 2 + extra
+    while txt[cur] != "}":
+        cur, tpgt = parse_tpgt(txt, cur)
+        tpgts.append(tpgt)
+    target["tpgs"] = tpgts
+    return cur+extra, target
+
+def parse_fabric(txt, cur):
+    fabric = txt[cur+1]
+    cur += 3
+    while txt[cur] != "}":
+        if txt[cur] == "discovery_auth":
+            cur, disco = parse_attributes(txt, cur+2)
+            new_disco = {}
+            if disco.get("enable"):
+                new_disco["discovery_enable_auth"] = disco.get("enable")
+            if disco.get("userid"):
+                new_disco["discovery_userid"] = disco.get("userid")
+            if disco.get("password"):
+                new_disco["discovery_password"] = disco.get("password")
+            if disco.get("mutual_userid"):
+                new_disco["discovery_mutual_userid"] = disco.get("mutual_userid")
+            if disco.get("mutual_password"):
+                new_disco["discovery_mutual_password"] = disco.get("mutual_password")
+            new_disco["name"] = "iscsi"
+            fabs.append(new_disco)
+            continue
+        if txt[cur] == "target":
+            cur, t = parse_target(fabric, txt, cur)
+            targs.append(t)
+            continue
+    return cur
+
+sos = []
+fabs = []
+targs = []
+
+# a basic tokenizer that splits on whitespace and handles double quotes
+def split(s):
+    new_lst = []
+    in_quotes = False
+    new_str = []
+    for c in s:
+        if c not in " \n\t\"":
+            new_str.append(c)
+        elif c == '\"' and in_quotes == False:
+            in_quotes = True
+        elif c == '\"' and in_quotes == True:
+            in_quotes = False
+            if len(new_str) == 0:
+                # don't include things that are set to '""'
+                del new_lst[-1]
+        elif in_quotes == True: # append ws if in quotes
+            new_str.append(c)
+        elif len(new_str): # not in quotes, break on ws if anything in new_str
+            new_lst.append("".join(new_str))
+            new_str = []
+        else:
+            pass # drop ws
+
+    return new_lst
+
+def parse(txt, cur):
+    cur = 0
+    end = len(txt) - 1
+    while cur != end:
+        if txt[cur] == "storage":
+            cur, d = parse_storage(txt, cur)
+            sos.append(d)
+        elif txt[cur] == "fabric":
+            cur = parse_fabric(txt, cur)
+
+with open("/etc/target/scsi_target.lio") as f:
+    txt = f.read()
+    txt = split(txt)
+    cur = parse(txt, 0)
+
+output = dict(storage_objects=sos, fabric_modules=fabs, targets=targs)
+
+print(json.dumps(output, indent=2, sort_keys=True))
+
