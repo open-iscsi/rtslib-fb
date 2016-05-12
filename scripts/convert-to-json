@@ -93,6 +93,14 @@ def parse_fileio(txt, cur):
             so["dev"] = txt[cur+1]
             cur += 2
             continue
+        if txt[cur] == "size":
+            so["size"] = human_to_bytes(txt[cur+1])
+            cur += 2
+            continue
+        if txt[cur] == "buffered":
+            # skip, recent LIO doesn't use for fileio
+            cur += 2
+            continue
         if txt[cur] == "attribute":
             cur, so["attributes"] = parse_attributes(txt, cur+2)
             continue
@@ -157,7 +165,7 @@ def parse_mapped_lun(txt, cur):
             mlun["write_protect"] = bool(parse_yesno(txt[cur+1]))
             cur += 2
             continue
-    return cur, mlun
+    return cur+1, mlun
 
 def parse_acl(txt, cur):
     acl = dict(node_wwn=txt[cur+1])
@@ -178,27 +186,30 @@ def parse_acl(txt, cur):
     acl["mapped_luns"] = mapped_luns
     return cur+1, acl
 
-def parse_tpgt(txt, cur):
-    tpgt = dict(tag = int(txt[cur+1]))
+def parse_tpg(tag, txt, cur):
+    if tag is None:
+        tag = int(txt[cur+1])
+        cur += 2
+    tpg = dict(tag=tag)
     luns = []
     acls = []
     portals = []
     cur += 3
     while txt[cur] != "}":
         if txt[cur] == "enable":
-            tpgt["enable"] = parse_yesno(txt[cur+1])
+            tpg["enable"] = parse_yesno(txt[cur+1])
             cur += 2
             continue
         if txt[cur] == "attribute":
-            cur, tpgt["attributes"] = parse_attributes(txt, cur+2)
+            cur, tpg["attributes"] = parse_attributes(txt, cur+2)
             continue
         if txt[cur] == "parameter":
-            cur, tpgt["parameters"] = parse_attributes(txt, cur+2)
+            cur, tpg["parameters"] = parse_attributes(txt, cur+2)
             continue
         if txt[cur] == "auth":
             cur, auth = parse_attributes(txt, cur+2)
             if len(auth):
-                tpgt["auth"] = auth
+                tpg["auth"] = auth
             continue
         if txt[cur] == "lun":
             cur, l = parse_lun(txt, cur)
@@ -213,27 +224,31 @@ def parse_tpgt(txt, cur):
             portal = dict(ip_address=ip, port=port)
             portals.append(portal)
             cur += 2
+            continue
     if len(luns):
-        tpgt["luns"] = luns
+        tpg["luns"] = luns
     if len(acls):
-        tpgt["node_acls"] = acls
+        tpg["node_acls"] = acls
     if len(portals):
-        tpgt["portals"] = portals
-    return cur+1, tpgt
+        tpg["portals"] = portals
+    return cur+1, tpg
 
 
 def parse_target(fabric, txt, cur):
     target = dict(wwn=txt[cur+1], fabric=fabric)
-    tpgts = []
-    extra = 0
+    tpgs = []
+    tpgt = None
     # handle multiple tpgts
     if txt[cur+2] == "{":
         extra = 1
+    else:
+        extra = 0
+        tpgt = int(txt[cur+3])
     cur += 2 + extra
     while txt[cur] != "}":
-        cur, tpgt = parse_tpgt(txt, cur)
-        tpgts.append(tpgt)
-    target["tpgs"] = tpgts
+        cur, tpg = parse_tpg(tpgt, txt, cur)
+        tpgs.append(tpg)
+    target["tpgs"] = tpgs
     return cur+extra, target
 
 def parse_fabric(txt, cur):
