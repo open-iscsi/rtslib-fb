@@ -440,7 +440,8 @@ def mount_configfs():
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         (stdoutdata, stderrdata) = process.communicate()
-        if process.returncode != 0:
+        if process.returncode != 0 and not os.path.ismount(
+            "/sys/kernel/config"):
             raise RTSLibError("Cannot mount configfs")
 
 def dict_remove(d, items):
