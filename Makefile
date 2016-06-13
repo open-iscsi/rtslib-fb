@@ -66,6 +66,7 @@ build/release-stamp:
 			mv $${spectmpl} $$(basename $${spectmpl} .tmpl); \
 		done; \
 		rm -r example-rpm
+	@mv build/${PKGNAME}-${VERSION}/example-debian build/${PKGNAME}-${VERSION}/debian
 	@echo "Generating rpm changelog..."
 	@( \
 		version=$$(basename $$(git describe HEAD --tags | tr - .)); \
@@ -93,7 +94,7 @@ build/release-stamp:
 		echo; \
 		echo " -- $${author}  $${date}"; \
 		echo; \
-	) > build/${PKGNAME}-${VERSION}/example-debian/changelog
+	) > build/${PKGNAME}-${VERSION}/debian/changelog
 	@find build/${PKGNAME}-${VERSION}/ -exec \
 		touch -t $$(date -d @$$(git show -s --format="format:%at") \
 			+"%Y%m%d%H%M.%S") {} \;
