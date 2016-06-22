@@ -21,7 +21,7 @@ export http_proxy = http://127.0.0.1:9
 build-python%:
 	python$* setup.py build
 
-override_dh_auto_build: $(PYTHON3:%=build-python%)
+override_dh_auto_build: $(PYTHON3:%=build-python%) $(PYTHON2:%=build-python%)
 	dh_auto_build
 
 
@@ -29,7 +29,7 @@ install-python%:
 	python$* setup.py install --root=$(install_dir) --install-layout=deb
 
 
-override_dh_auto_install: $(PYTHON3:%=install-python%)
+override_dh_auto_install: $(PYTHON3:%=install-python%) $(PYTHON2:%=install-python%)
 	dh_auto_install
 	# for using python 3 for targetctl
 	# even though it is overwritten by python2 setup
