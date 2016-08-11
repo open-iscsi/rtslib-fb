@@ -62,10 +62,17 @@ class RTSRoot(CFSNode):
         base kernel modules (tcm)
         '''
         super(RTSRoot, self).__init__()
-        modprobe('configfs')
-        mount_configfs()
-        modprobe('target_core_mod')
-        self._create_in_cfs_ine('any')
+        try:
+            mount_configfs()
+        except RTSLibError:
+            modprobe('configfs')
+            mount_configfs()
+
+        try:
+            self._create_in_cfs_ine('any')
+        except RTSLibError:
+            modprobe('target_core_mod')
+            self._create_in_cfs_ine('any')
 
     def _list_targets(self):
         self._check_self()

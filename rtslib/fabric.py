@@ -152,8 +152,11 @@ class _BaseFabricModule(CFSNode):
 
     def _check_self(self):
         if not self.exists:
-            modprobe(self.kernel_module)
-            self._create_in_cfs_ine('any')
+            try:
+                self._create_in_cfs_ine('any')
+            except RTSLibError:
+                modprobe(self.kernel_module)
+                self._create_in_cfs_ine('any')
         super(_BaseFabricModule, self)._check_self()
 
     def has_feature(self, feature):
