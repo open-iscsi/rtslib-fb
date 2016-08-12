@@ -246,26 +246,15 @@ def convert_scsi_path_to_hctl(path):
     @param path: The udev path to the SCSI block device.
     @type path: string
     @return: An (host, controller, target, lun) tuple of integer
-    values representing the SCSI ID of the device, or None if no
-    match is found.
+    values representing the SCSI ID of the device, or raise RTSLibError.
     '''
     try:
         path = os.path.realpath(path)
         device = pyudev.Device.from_device_file(_CONTEXT, path)
-    except (pyudev.DeviceNotFoundError, EnvironmentError, ValueError):
-        return None
-
-    if device.device_type != u'disk':
-        return None
-
-    parent = device.find_parent(subsystem='scsi')
-    if parent is None:
-        return None
-
-    try:
+        parent = device.find_parent(subsystem='scsi')
         return [int(data) for data in parent.sys_name.split(':')]
-    except (ValueError, TypeError):
-        return None
+    except:
+        raise RTSLibError("Could not convert scsi path to hctl")
 
 def convert_scsi_hctl_to_path(host, controller, target, lun):
     '''
@@ -288,7 +277,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
     @type target: int
     @param lun: The SCSI Logical Unit Number.
     @type lun: int
-    @return: A string for the canonical path to the device, or empty string.
+    @return: A string for the canonical path to the device, or raise RTSLibError.
     '''
     try:
         host = int(host)
@@ -302,16 +291,18 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
     hctl = [host, controller, target, lun]
     try:
         scsi_device = pyudev.Device.from_name(_CONTEXT, 'scsi', ':'.join(hctl))
-    except DeviceNotFoundError:
-        return ''
+    except pyudev.DeviceNotFoundError:
+        raise RTSLibError("Could not find path for SCSI hctl")
 
     devices = _CONTEXT.list_devices(
        subsystem='block',
-       DEVTYPE='disk',
        parent=scsi_device
     )
 
-    return next((dev.device_node for dev in devices), '')
+    path = next((dev.device_node for dev in devices), '')
+    if path == None:
+        raise RTSLibError("Could not find path for SCSI hctl")
+    return path
 
 def generate_wwn(wwn_type):
     '''

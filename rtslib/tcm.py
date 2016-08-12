@@ -313,11 +313,14 @@ class PSCSIStorageObject(StorageObject):
     def _configure(self, dev):
         self._check_self()
 
-        # Use H:C:T:L format or preserve the path given by the user.
+        # Use H:C:T:L format or use the path given by the user.
         try:
+            # assume 'dev' is the path, try to get h:c:t:l values
             (hostid, channelid, targetid, lunid) = \
                     convert_scsi_path_to_hctl(dev)
-        except TypeError:
+            udev_path = dev.strip()
+        except:
+            # Oops, maybe 'dev' is in h:c:t:l format, try to get udev_path
             try:
                 (hostid, channelid, targetid, lunid) = dev.split(':')
                 hostid = int(hostid)
@@ -329,15 +332,13 @@ class PSCSIStorageObject(StorageObject):
                                   + "path, and dev "
                                   + "parameter not in H:C:T:L "
                                   + "format: %s" % dev)
-            else:
-                udev_path = convert_scsi_hctl_to_path(hostid,
-                                                            channelid,
-                                                            targetid,
-                                                            lunid)
-            if not udev_path:
-                raise RTSLibError("SCSI device does not exist")
-        else:
-            udev_path = dev.strip()
+
+            udev_path = convert_scsi_hctl_to_path(hostid,
+                                                  channelid,
+                                                  targetid,
+                                                  lunid)
+
+        # -- now have all 5 values or have errored out --
 
         if is_dev_in_use(udev_path):
             raise RTSLibError("Cannot configure StorageObject because "
