@@ -25,7 +25,7 @@ setup (
     license = 'Apache 2.0',
     maintainer = 'Andy Grover',
     maintainer_email = 'agrover@redhat.com',
-    url = 'http://github.com/agrover/rtslib-fb',
+    url = 'http://github.com/open-iscsi/rtslib-fb',
     packages = ['rtslib_fb', 'rtslib'],
     scripts = ['scripts/targetctl'],
     classifiers = [
