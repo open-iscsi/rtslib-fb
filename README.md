@@ -16,8 +16,8 @@ Since rtslib-fb is used most often with targetcli-fb, the targetcli-fb
 mailing should be used for rtslib-fb discussion.
 
  * Mailing list: [targetcli-fb-devel](https://lists.fedorahosted.org/mailman/listinfo/targetcli-fb-devel)
- * Source repo: [GitHub](https://github.com/agrover/rtslib-fb)
- * Bugs: [GitHub](https://github.com/agrover/rtslib-fb/issues) or [Trac](https://fedorahosted.org/targetcli-fb/)
+ * Source repo: [GitHub](https://github.com/open-iscsi/rtslib-fb)
+ * Bugs: [GitHub](https://github.com/open-iscsi/rtslib-fb/issues) or [Trac](https://fedorahosted.org/targetcli-fb/)
  * Tarballs: [fedorahosted](https://fedorahosted.org/releases/t/a/targetcli-fb/)
 
 In-repo packaging
