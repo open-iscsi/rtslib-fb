@@ -728,10 +728,27 @@ class NetworkPortal(CFSNode):
             if os.path.isfile(path):
                 raise RTSLibError("Cannot change iser")
 
+    def _get_offload(self):
+        try:
+            # only offload at the moment is cxgbit
+            return bool(int(fread("%s/cxgbit" % self.path)))
+        except IOError:
+            return False
+
+    def _set_offload(self, boolean):
+        path = "%s/cxgbit" % self.path
+        try:
+            fwrite(path, str(int(boolean)))
+        except IOError:
+            # b/w compat: don't complain if cxgbit entry is missing
+            if os.path.isfile(path):
+                raise RTSLibError("Cannot change offload")
+
     # NetworkPortal public stuff
 
     def delete(self):
         self.iser = False
+        self.offload = False
         super(NetworkPortal, self).delete()
 
     parent_tpg = property(_get_parent_tpg,
@@ -743,6 +760,9 @@ class NetworkPortal(CFSNode):
     iser = property(_get_iser, _set_iser,
                     doc="Get or set a boolean value representing if this " \
                         + "NetworkPortal supports iSER.")
+    offload = property(_get_offload, _set_offload,
+                    doc="Get or set a boolean value representing if this " \
+                        + "NetworkPortal supports offload.")
 
     @classmethod
     def setup(cls, tpg_obj, p, err_func):
@@ -756,6 +776,7 @@ class NetworkPortal(CFSNode):
         try:
             np = cls(tpg_obj, p['ip_address'], p['port'])
             np.iser = p.get('iser', False)
+            np.offload = p.get('offload', False)
         except (RTSLibError, KeyError) as e:
             err_func("Creating NetworkPortal object %s:%s failed: %s" %
                      (p['ip_address'], p['port'], e))
@@ -765,6 +786,7 @@ class NetworkPortal(CFSNode):
         d['port'] = self.port
         d['ip_address'] = self.ip_address
         d['iser'] = self.iser
+        d['offload'] = self.offload
         return d
 
 
