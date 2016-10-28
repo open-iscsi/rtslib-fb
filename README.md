@@ -25,7 +25,8 @@ Packages
 rtslib-fb is packaged for a number of Linux distributions including
 RHEL,
 [Fedora](https://apps.fedoraproject.org/packages/python-rtslib),
-openSUSE, Arch Linux, and
+openSUSE, Arch Linux,
+[Gentoo](https://packages.gentoo.org/packages/dev-python/rtslib-fb), and
 [Debian](https://tracker.debian.org/pkg/python-rtslib-fb).
 
 "fb" -- "free branch"
