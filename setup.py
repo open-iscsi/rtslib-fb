@@ -28,6 +28,7 @@ setup (
     url = 'http://github.com/open-iscsi/rtslib-fb',
     packages = ['rtslib_fb', 'rtslib'],
     scripts = ['scripts/targetctl'],
+    install_requires = ['pyudev >= 0.16.1'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
