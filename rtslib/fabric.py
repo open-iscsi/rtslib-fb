@@ -447,6 +447,19 @@ class XenPvScsiFabricModule(_BaseFabricModule):
         self.kernel_module = "xen-scsiback"
 
 
+class IbmvscsisFabricModule(_BaseFabricModule):
+    def __init__(self):
+        super(IbmvscsisFabricModule, self).__init__('ibmvscsis')
+        self.features = ()
+        self.kernel_module = "ibmvscsis"
+
+    @property
+    def wwns(self):
+        for wwn_file in glob("/sys/module/ibmvscsis/drivers/vio:ibmvscsis/*/devspec"):
+            name = fread(wwn_file)
+            yield name[name.find("@") + 1:]
+
+
 fabric_modules = {
     "srpt": SRPTFabricModule,
     "iscsi": ISCSIFabricModule,
@@ -457,6 +470,7 @@ fabric_modules = {
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
     "vhost": VhostFabricModule,
     "xen_pvscsi": XenPvScsiFabricModule,
+    "ibmvscsis": IbmvscsisFabricModule,
     }
 
 #
