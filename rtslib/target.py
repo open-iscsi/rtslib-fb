@@ -655,10 +655,16 @@ class LUN(CFSNode):
             return
 
         try:
-            cls(tpg_obj, lun['index'], storage_object=match_so, alias=lun.get('alias'))
+           lun_obj =  cls(tpg_obj, lun['index'], storage_object=match_so, alias=lun.get('alias'))
         except (RTSLibError, KeyError):
             err_func("Creating TPG %d LUN index %d failed" %
                      (tpg_obj.tag, lun['index']))
+
+        try:
+            lun_obj.alua_tg_pt_gp_name = lun['alua_tg_pt_gp_name']
+        except KeyError:
+            # alua_tg_pt_gp support not present in older versions
+            pass
 
     def dump(self):
         d = super(LUN, self).dump()
@@ -666,6 +672,7 @@ class LUN(CFSNode):
             (self.storage_object.plugin,  self.storage_object.name)
         d['index'] = self.lun
         d['alias'] = self.alias
+        d['alua_tg_pt_gp_name'] = self.alua_tg_pt_gp_name
         return d
 
 
