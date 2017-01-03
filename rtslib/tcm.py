@@ -235,6 +235,10 @@ class StorageObject(CFSNode):
         '''
         self._check_self()
 
+        for alua_tpg in self._list_alua_tpgs():
+            if alua_tpg.name != 'default_tg_pt_gp':
+                alua_tpg.delete()
+
         # If we are called after a configure error, we can skip this
         if self.is_configured():
             for lun in self._gen_attached_luns():
