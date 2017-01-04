@@ -582,6 +582,22 @@ class LUN(CFSNode):
                 if os.path.realpath("%s/%s" % (mlun.path, mlun.alias)) == self.path:
                     yield mlun
 
+    def _get_alua_tg_pt_gp_name(self):
+        self._check_self()
+
+        path = "%s/alua_tg_pt_gp" % self.path
+        group_name = fread(path).splitlines()[0]
+        return group_name.split(':')[1].strip()
+
+    def _set_alua_tg_pt_gp_name(self, group_name):
+        self._check_self()
+
+        path = "%s/alua_tg_pt_gp" % self.path
+        try:
+            fwrite(path, group_name)
+        except IOError as e:
+            raise RTSLibError("Cannot set ALUA Target Port Group: %s" % e)
+
     # LUN public stuff
 
     def delete(self):
@@ -615,6 +631,8 @@ class LUN(CFSNode):
             doc="Get the LUN alias.")
     mapped_luns = property(_list_mapped_luns,
             doc="List all MappedLUN objects referencing this LUN.")
+    alua_tg_pt_gp_name = property(_get_alua_tg_pt_gp_name, _set_alua_tg_pt_gp_name,
+            doc="Get and Set the LUN's ALUA Target Port Group")
 
     @classmethod
     def setup(cls, tpg_obj, lun, err_func):
@@ -637,10 +655,16 @@ class LUN(CFSNode):
             return
 
         try:
-            cls(tpg_obj, lun['index'], storage_object=match_so, alias=lun.get('alias'))
+           lun_obj =  cls(tpg_obj, lun['index'], storage_object=match_so, alias=lun.get('alias'))
         except (RTSLibError, KeyError):
             err_func("Creating TPG %d LUN index %d failed" %
                      (tpg_obj.tag, lun['index']))
+
+        try:
+            lun_obj.alua_tg_pt_gp_name = lun['alua_tg_pt_gp_name']
+        except KeyError:
+            # alua_tg_pt_gp support not present in older versions
+            pass
 
     def dump(self):
         d = super(LUN, self).dump()
@@ -648,6 +672,7 @@ class LUN(CFSNode):
             (self.storage_object.plugin,  self.storage_object.name)
         d['index'] = self.lun
         d['alias'] = self.alias
+        d['alua_tg_pt_gp_name'] = self.alua_tg_pt_gp_name
         return d
 
 

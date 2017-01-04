@@ -25,6 +25,7 @@ import glob
 import resource
 from six.moves import range
 
+from .alua import ALUATargetPortGroup
 from .node import CFSNode
 from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFS
 from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
@@ -215,6 +216,14 @@ class StorageObject(CFSNode):
         for lun in self._gen_attached_luns():
             yield lun
 
+    def _list_alua_tpgs(self):
+        '''
+        Generate all ALUA groups attach to a storage object.
+        '''
+        self._check_self()
+        for tpg in os.listdir("%s/alua" % self.path):
+            yield ALUATargetPortGroup(self, tpg)
+
     # StorageObject public stuff
 
     def delete(self):
@@ -225,6 +234,10 @@ class StorageObject(CFSNode):
         block storages will not be touched, but all ramdisk data will be lost.
         '''
         self._check_self()
+
+        for alua_tpg in self._list_alua_tpgs():
+            if alua_tpg.name != 'default_tg_pt_gp':
+                alua_tpg.delete()
 
         # If we are called after a configure error, we can skip this
         if self.is_configured():
@@ -264,11 +277,14 @@ class StorageObject(CFSNode):
                 + "is used by any LUN")
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
+    alua_tpgs = property(_list_alua_tpgs,
+            doc="Get list of ALUA Target Port Groups attached.")
 
     def dump(self):
         d = super(StorageObject, self).dump()
         d['name'] = self.name
         d['plugin'] = self.plugin
+        d['alua_tpgs'] = [tpg.dump() for tpg in self.alua_tpgs]
         return d
 
 

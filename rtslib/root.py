@@ -28,6 +28,7 @@ from .fabric import FabricModule
 from .tcm import so_mapping, StorageObject
 from .utils import RTSLibError, modprobe, mount_configfs
 from .utils import dict_remove, set_attributes
+from .alua import ALUATargetPortGroup
 
 default_save_file = "/etc/target/saveconfig.json"
 
@@ -84,6 +85,12 @@ class RTSRoot(CFSNode):
         self._check_self()
         for so in StorageObject.all():
             yield so
+
+    def _list_alua_tpgs(self):
+        self._check_self()
+        for so in self.storage_objects:
+            for a in so.alua_tpgs:
+                yield a
 
     def _list_tpgs(self):
         self._check_self()
@@ -203,7 +210,7 @@ class RTSRoot(CFSNode):
                 err_func("'plugin' not defined or invalid in storageobject %s" % so['name'])
                 continue
             kwargs = so.copy()
-            dict_remove(kwargs, ('exists', 'attributes', 'plugin', 'buffered_mode'))
+            dict_remove(kwargs, ('exists', 'attributes', 'plugin', 'buffered_mode', 'alua_tpgs'))
             try:
                 so_obj = so_cls(**kwargs)
             except Exception as e:
@@ -215,6 +222,9 @@ class RTSRoot(CFSNode):
                 return err_func("Storage Object %s/%s: %s" % (so['plugin'], so['name'], x))
 
             set_attributes(so_obj, so.get('attributes', {}), so_err_func)
+
+            for alua_tpg in so.get('alua_tpgs', {}):
+                ALUATargetPortGroup.setup(so_obj, alua_tpg, err_func)
 
         # Don't need to create fabric modules
         for index, fm in enumerate(config.get('fabric_modules', [])):
@@ -299,6 +309,8 @@ class RTSRoot(CFSNode):
             doc="Get the list of all existing LUN objects.")
     fabric_modules = property(_list_fabric_modules,
             doc="Get the list of all FabricModule objects.")
+    alua_tpgs = property(_list_alua_tpgs,
+            doc="Get the list of all ALUA TPG objects.")
 
 def _test():
     '''Run the doctests.'''
