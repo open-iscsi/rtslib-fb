@@ -586,13 +586,23 @@ class LUN(CFSNode):
         self._check_self()
 
         path = "%s/alua_tg_pt_gp" % self.path
-        group_name = fread(path).splitlines()[0]
-        return group_name.split(':')[1].strip()
+        info = fread(path)
+        if info:
+            group_line = info.splitlines()[0]
+            return group_line.split(':')[1].strip()
+        return None
 
     def _set_alua_tg_pt_gp_name(self, group_name):
         self._check_self()
 
         path = "%s/alua_tg_pt_gp" % self.path
+
+        info = fread(path)
+        if not info:
+            # pass through backends will not have setup the default
+            # ALUA structs in the kernel.
+            raise RTSLibError("This LUN does not support setting the ALUA Target Port Group")
+
         try:
             fwrite(path, group_name)
         except IOError as e:
