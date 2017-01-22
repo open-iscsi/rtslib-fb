@@ -25,7 +25,7 @@ import json
 from .node import CFSNode
 from .target import Target
 from .fabric import FabricModule
-from .tcm import so_mapping, StorageObject
+from .tcm import so_mapping, bs_cache, StorageObject
 from .utils import RTSLibError, modprobe, mount_configfs
 from .utils import dict_remove, set_attributes
 from .alua import ALUATargetPortGroup
@@ -286,6 +286,12 @@ class RTSRoot(CFSNode):
             config = json.loads(f.read())
             return self.restore(config, clear_existing=clear_existing,
                                 abort_on_error=abort_on_error)
+
+    def invalidate_caches(self):
+        '''
+        Invalidate any caches used throughout the hierarchy
+        '''
+        bs_cache.clear()
 
     targets = property(_list_targets,
             doc="Get the list of Target objects.")
