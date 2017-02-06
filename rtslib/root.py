@@ -26,7 +26,7 @@ from .node import CFSNode
 from .target import Target
 from .fabric import FabricModule
 from .tcm import so_mapping, StorageObject
-from .utils import RTSLibError, modprobe, mount_configfs
+from .utils import RTSLibError, RTSLibALUANotSupported, modprobe, mount_configfs
 from .utils import dict_remove, set_attributes
 from .alua import ALUATargetPortGroup
 
@@ -224,7 +224,10 @@ class RTSRoot(CFSNode):
             set_attributes(so_obj, so.get('attributes', {}), so_err_func)
 
             for alua_tpg in so.get('alua_tpgs', {}):
-                ALUATargetPortGroup.setup(so_obj, alua_tpg, err_func)
+               try:
+                   ALUATargetPortGroup.setup(so_obj, alua_tpg, err_func)
+               except RTSLibALUANotSupported:
+                   pass
 
         # Don't need to create fabric modules
         for index, fm in enumerate(config.get('fabric_modules', [])):
