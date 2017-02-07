@@ -37,6 +37,12 @@ class RTSLibError(Exception):
     '''
     pass
 
+class RTSLibALUANotSupported(RTSLibError):
+    '''
+    Backend does not support ALUA.
+    '''
+    pass
+
 class RTSLibBrokenLink(RTSLibError):
     '''
     Broken link in configfs, i.e. missing LUN storage object.

@@ -582,31 +582,43 @@ class LUN(CFSNode):
                 if os.path.realpath("%s/%s" % (mlun.path, mlun.alias)) == self.path:
                     yield mlun
 
+
+    # pass through backends will not have setup all the default
+    # ALUA structs in the kernel. If the kernel has been setup,
+    # a user created group or default_tg_pt_gp will be returned.
+    # If the kernel was not properly setup an empty string is
+    # return in alua_tg_pt_gp. Writing to alua_tg_pt_gp will crash
+    # older kernels and will return a -Exyz code in newer ones.
     def _get_alua_tg_pt_gp_name(self):
         self._check_self()
 
+        storage_object = self._get_storage_object()
+        if storage_object.alua_supported is False:
+            return None
+
         path = "%s/alua_tg_pt_gp" % self.path
-        info = fread(path)
-        if info:
+        try:
+            info = fread(path)
+            if not info:
+                return None
             group_line = info.splitlines()[0]
             return group_line.split(':')[1].strip()
-        return None
+        except IOError as e:
+            return None
 
     def _set_alua_tg_pt_gp_name(self, group_name):
         self._check_self()
 
+        if not self._get_alua_tg_pt_gp_name():
+            return -1
+
         path = "%s/alua_tg_pt_gp" % self.path
-
-        info = fread(path)
-        if not info:
-            # pass through backends will not have setup the default
-            # ALUA structs in the kernel.
-            raise RTSLibError("This LUN does not support setting the ALUA Target Port Group")
-
         try:
             fwrite(path, group_name)
         except IOError as e:
-            raise RTSLibError("Cannot set ALUA Target Port Group: %s" % e)
+            return -1
+
+        return 0
 
     # LUN public stuff
 

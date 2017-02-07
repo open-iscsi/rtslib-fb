@@ -222,7 +222,15 @@ class StorageObject(CFSNode):
         '''
         self._check_self()
         for tpg in os.listdir("%s/alua" % self.path):
-            yield ALUATargetPortGroup(self, tpg)
+            if self.alua_supported:
+                yield ALUATargetPortGroup(self, tpg)
+
+    def _get_alua_supported(self):
+        '''
+        Children should override and return false if ALUA setup is not supported.
+        '''
+        self._check_self()
+        return True
 
     # StorageObject public stuff
 
@@ -279,6 +287,8 @@ class StorageObject(CFSNode):
             doc="Get the list of all LUN objects attached.")
     alua_tpgs = property(_list_alua_tpgs,
             doc="Get list of ALUA Target Port Groups attached.")
+    alua_supported = property(_get_alua_supported,
+            doc="Returns true if ALUA can be setup. False if not supported.")
 
     def dump(self):
         d = super(StorageObject, self).dump()
@@ -408,6 +418,10 @@ class PSCSIStorageObject(StorageObject):
         self._check_self()
         return int(self._parse_info('Host ID'))
 
+    def _get_alua_supported(self):
+        self._check_self()
+        return False
+
     # PSCSIStorageObject public stuff
 
     wwn = property(StorageObject._get_wwn, _set_wwn,
@@ -427,6 +441,8 @@ class PSCSIStorageObject(StorageObject):
             doc="Get the SCSI device target id")
     lun = property(_get_lun,
             doc="Get the SCSI device LUN")
+    alua_supported = property(_get_alua_supported,
+            doc="ALUA cannot be setup with rtslib, so False is returned.");
 
     def dump(self):
         d = super(PSCSIStorageObject, self).dump()
@@ -808,10 +824,16 @@ class UserBackedStorageObject(StorageObject):
             return None
         return val
 
+    def _get_alua_supported(self):
+        self._check_self()
+        return False
+
     size = property(_get_size,
             doc="Get the size in bytes.")
     config = property(_get_config,
             doc="Get the TCMU config.")
+    alua_supported = property(_get_alua_supported,
+            doc="ALUA cannot be setup with rtslib, so False is returned.");
 
     def dump(self):
         d = super(UserBackedStorageObject, self).dump()
