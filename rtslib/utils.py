@@ -25,6 +25,10 @@ import socket
 import stat
 import subprocess
 import uuid
+import time
+import fcntl
+import errno
+import functools
 from contextlib import contextmanager
 
 import pyudev
@@ -510,6 +514,103 @@ def set_parameters(obj, param_dict, err_func):
             obj.set_parameter(name, value)
         except RTSLibError as e:
             err_func(str(e))
+
+import inspect
+
+class _Transaction:
+    '''
+    It is designed to manage the synchronized access to ConfigFS cross processes, if a process acquire the lock,
+    all subsequent accesses to ConfigFS will be granted, before the lock released, all other process's ConfigFS
+    access will be blocked. The lock mechanism is implemented with flock which is supported by Mac OS and Unix/Linux Systems.
+    '''
+
+    def __init__(self, timeout=5, delay=0.05):
+        self._lockfile = '/var/run/target.lock' if os.geteuid() == 0 else None
+        self._fd =  None
+        self._lock_count = 0
+        self._timeout = timeout
+        self._delay = delay
+
+    def is_locked(self):
+        return self._lock_count > 0
+
+    def set_timeout(self, timeout):
+        self._timeout = timeout
+
+    def get_timeout(self):
+        return self._timeout
+
+    def acquire_lock(self, timeout=0):
+        '''
+        Acquire the lock if it is not locked. If it is locked,
+         - waiting for number of seconds based on defined timeout if called by different process
+         - increase lock count by 1 if called by same process
+        @param timeout: timeout in second for waiting the lock. The default value is 0 seconds,
+                        that means use timeout from Transaction
+        @type timeout: int
+        '''
+
+        timeout = self._timeout if timeout == 0 else timeout
+        self._lock_count += 1
+        if self._lockfile is not None and self._lock_count == 1:
+            self._fd = open(self._lockfile, 'w')
+            for x in range(int(timeout/self._delay)):
+                try:
+                    fcntl.lockf(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except (OSError, IOError) as ex:
+                    if ex.errno not in (errno.EAGAIN, errno.EACCES):
+                        raise
+                    time.sleep(self._delay)
+                else:
+                    break
+            else:
+                self._fd.close()
+                self._fd = None
+                self._lock_count -= 1
+                raise RTSLibError("Acquiring lock timed out after %d seconds" % timeout)
+
+    def release_lock(self):
+        '''
+        Release the lock if lock count is 1, otherwise decrease lock count by 1
+        '''
+        if self._fd is not None and self._lock_count == 1:
+            fcntl.lockf(self._fd, fcntl.LOCK_UN)
+            self._fd.close()
+            self._fd = None
+        self._lock_count -= 1
+
+_transaction = _Transaction()
+
+@contextmanager
+def lock(timeout=0):
+    '''
+    Define the lock method to work with statement.
+    @param timeout: timeout for waiting the lock. The default value is 0 seconds,
+                    that means use timeout from Transaction
+    @type timeout: int
+    '''
+    try:
+        _transaction.acquire_lock(timeout)
+        yield
+    finally:
+        _transaction.release_lock()
+
+
+def locked(timeout=0):
+    '''
+    A decorator that enforces mutual exclusion between methods using it.
+    @param timeout: timeout for waiting the lock. The default value is 0 seconds,
+                    that means use timeout from Transaction
+    @type timeout: int
+    '''
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapped_f(*args, **kwargs):
+            with lock(timeout=timeout):
+                func(*args, **kwargs)
+        return wrapped_f
+    return decorator
+
 
 def _test():
     '''Run the doctests'''

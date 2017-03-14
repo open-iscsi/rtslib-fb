@@ -24,6 +24,7 @@ if __name__ == "rtslib":
 from .root import RTSRoot
 from .utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
 from .utils import RTSLibALUANotSupported
+from .utils import lock, locked
 
 from .target import LUN, MappedLUN
 from .target import NodeACL, NetworkPortal, TPG, Target
