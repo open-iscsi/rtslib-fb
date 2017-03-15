@@ -31,6 +31,7 @@ from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFS
 from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from .utils import is_dev_in_use, get_blockdev_type
 from .utils import get_size_for_blk_dev, get_size_for_disk_name
+from .utils import locked
 
 
 class StorageObject(CFSNode):
@@ -234,6 +235,7 @@ class StorageObject(CFSNode):
 
     # StorageObject public stuff
 
+    @locked()
     def delete(self):
         '''
         Recursively deletes a StorageObject object.
@@ -305,6 +307,7 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject private stuff
 
+    @locked()
     def __init__(self, name, dev=None):
         '''
         A PSCSIStorageObject can be instantiated in two ways:
@@ -457,6 +460,7 @@ class RDMCPStorageObject(StorageObject):
 
     # RDMCPStorageObject private stuff
 
+    @locked()
     def __init__(self, name, size=None, wwn=None, nullio=False):
         '''
         A RDMCPStorageObject can be instantiated in two ways:
@@ -554,6 +558,7 @@ class FileIOStorageObject(StorageObject):
 
     # FileIOStorageObject private stuff
 
+    @locked()
     def __init__(self, name, dev=None, size=None,
                  wwn=None, write_back=False):
         '''
@@ -671,6 +676,7 @@ class BlockStorageObject(StorageObject):
 
     # BlockStorageObject private stuff
 
+    @locked()
     def __init__(self, name, dev=None, wwn=None, readonly=False,
                  write_back=False):
         '''
@@ -772,6 +778,7 @@ class UserBackedStorageObject(StorageObject):
     An interface to configFS storage objects for userspace-backed backstore.
     '''
 
+    @locked()
     def __init__(self, name, config=None, size=None, wwn=None):
         '''
         @param name: The name of the UserBackedStorageObject.

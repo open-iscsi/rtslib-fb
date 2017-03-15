@@ -29,6 +29,7 @@ from .utils import RTSLibBrokenLink, RTSLibError
 from .utils import fread, fwrite, normalize_wwn, generate_wwn
 from .utils import dict_remove, set_attributes, set_parameters, ignored
 from .utils import _get_auth_attr, _set_auth_attr
+from .utils import locked
 from . import tcm
 
 import six
@@ -47,6 +48,7 @@ class Target(CFSNode):
     def __repr__(self):
         return "<Target %s/%s>" % (self.fabric_module.name, self.wwn)
 
+    @locked()
     def __init__(self, fabric_module, wwn=None, mode='any'):
         '''
         @param fabric_module: The target's fabric module.
@@ -99,6 +101,7 @@ class Target(CFSNode):
         '''
         return self.fabric_module.has_feature(feature)
 
+    @locked()
     def delete(self):
         '''
         Recursively deletes a Target object.
@@ -154,6 +157,7 @@ class TPG(CFSNode):
     def __repr__(self):
         return "<TPG %d>" % self.tag
 
+    @locked()
     def __init__(self, parent_target, tag=None, mode='any'):
         '''
         @param parent_target: The parent Target object of the TPG.
@@ -327,6 +331,7 @@ class TPG(CFSNode):
         '''
         return self.parent_target.has_feature(feature)
 
+    @locked()
     def delete(self):
         '''
         Recursively deletes a TPG object.
@@ -472,6 +477,7 @@ class LUN(CFSNode):
         return "<LUN %d (%s/%s)>" % (self.lun, self.storage_object.plugin,
                                     self.storage_object.name)
 
+    @locked()
     def __init__(self, parent_tpg, lun=None, storage_object=None, alias=None):
         '''
         A LUN object can be instanciated in two ways:
@@ -622,6 +628,7 @@ class LUN(CFSNode):
 
     # LUN public stuff
 
+    @locked()
     def delete(self):
         '''
         If the underlying configFS object does not exist, this method does
@@ -712,6 +719,7 @@ class NetworkPortal(CFSNode):
     def __repr__(self):
         return "<NetworkPortal %s port %s>" % (self.ip_address, self.port)
 
+    @locked()
     def __init__(self, parent_tpg, ip_address, port=3260, mode='any'):
         '''
         @param parent_tpg: The parent TPG object.
@@ -793,6 +801,7 @@ class NetworkPortal(CFSNode):
 
     # NetworkPortal public stuff
 
+    @locked()
     def delete(self):
         self.iser = False
         self.offload = False
@@ -848,6 +857,7 @@ class NodeACL(CFSNode):
     def __repr__(self):
         return "<NodeACL %s>" % self.node_wwn
 
+    @locked()
     def __init__(self, parent_tpg, node_wwn, mode='any'):
         '''
         @param parent_tpg: The parent TPG object.
@@ -958,6 +968,7 @@ class NodeACL(CFSNode):
         '''
         return self.parent_tpg.has_feature(feature)
 
+    @locked()
     def delete(self):
         '''
         Delete the NodeACL, including all MappedLUN objects.
@@ -1067,6 +1078,7 @@ class MappedLUN(CFSNode):
             (self.parent_nodeacl.node_wwn, self.mapped_lun,
              self.parent_nodeacl.parent_tpg.tag, self.tpg_lun.lun)
 
+    @locked()
     def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None, alias=None):
         '''
@@ -1193,6 +1205,7 @@ class MappedLUN(CFSNode):
 
     # MappedLUN public stuff
 
+    @locked()
     def delete(self):
         '''
         Delete the MappedLUN.
@@ -1303,10 +1316,12 @@ class Group(object):
     def list_parameters(self, writable=None):
         return self._get_first_member().list_parameters(writable)
 
+    @locked()
     def set_attribute(self, attribute, value):
         for obj in self._mem_func(self):
             obj.set_attribute(attribute, value)
 
+    @locked()
     def set_parameter(self, parameter, value):
         for obj in self._mem_func(self):
             obj.set_parameter(parameter, value)
@@ -1317,6 +1332,7 @@ class Group(object):
     def get_parameter(self, parameter):
         return self._get_first_member().get_parameter(parameter)
 
+    @locked()
     def delete(self):
         '''
         Delete all members of the group.
@@ -1364,6 +1380,7 @@ class NodeACLGroup(Group):
         '''
         return self._parent_tpg
 
+    @locked()
     def add_acl(self, node_wwn):
         '''
         Add a WWN to the NodeACLGroup. If a NodeACL already exists for this WWN,
@@ -1542,6 +1559,7 @@ class MappedLUNGroup(Group):
     def __repr__(self):
         return "<MappedLUNGroup %s:lun %d>" % (self._nag.name, self._mapped_lun)
 
+    @locked()
     def __init__(self, nodeaclgroup, mapped_lun, *args, **kwargs):
         super(MappedLUNGroup, self).__init__(MappedLUNGroup._mapped_luns.fget)
         self._nag = nodeaclgroup

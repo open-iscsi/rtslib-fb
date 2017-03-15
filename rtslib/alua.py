@@ -18,7 +18,7 @@ a copy of the License at
 '''
 
 from .node import CFSNode
-from .utils import RTSLibError, RTSLibALUANotSupported, fread, fwrite
+from .utils import RTSLibError, RTSLibALUANotSupported, fread, fwrite, locked
 
 alua_rw_params = ['alua_access_state', 'alua_access_status',
                   'alua_write_metadata', 'alua_access_type', 'preferred',
@@ -39,6 +39,7 @@ class ALUATargetPortGroup(CFSNode):
     def __repr__(self):
         return "<ALUA TPG %s>" % self.name
 
+    @locked()
     def __init__(self, storage_object, name, tag=None):
         """
         @param storage_object: backstore storage object to create ALUA group for
@@ -82,6 +83,7 @@ class ALUATargetPortGroup(CFSNode):
 
     # Public
 
+    @locked()
     def delete(self):
         """
         Delete ALUA TPG and unmap from LUNs
