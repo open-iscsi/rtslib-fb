@@ -772,7 +772,8 @@ class UserBackedStorageObject(StorageObject):
     An interface to configFS storage objects for userspace-backed backstore.
     '''
 
-    def __init__(self, name, config=None, size=None, wwn=None):
+    def __init__(self, name, config=None, size=None, wwn=None,
+                 hw_max_sectors=None):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -783,6 +784,8 @@ class UserBackedStorageObject(StorageObject):
         @type size: int
         @param wwn: T10 WWN Unit Serial, will generate if None
         @type wwn: string
+        @hw_max_sectors: Max sectors per command limit to export to initiators.
+        @type hw_max_sectors: int
         @return: A UserBackedStorageObject object.
         '''
 
@@ -795,20 +798,22 @@ class UserBackedStorageObject(StorageObject):
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(config, size, wwn)
+                self._configure(config, size, wwn, hw_max_sectors)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, config, size, wwn):
+    def _configure(self, config, size, wwn, hw_max_sectors):
         self._check_self()
 
         if ':' in config:
             raise RTSLibError("':' not allowed in config string")
         self._control("dev_config=%s" % config)
         self._control("dev_size=%d" % size)
+        if hw_max_sectors is not None:
+            self._control("hw_max_sectors=%s" % hw_max_sectors)
         self._enable()
 
         super(UserBackedStorageObject, self)._configure(wwn)
@@ -816,6 +821,10 @@ class UserBackedStorageObject(StorageObject):
     def _get_size(self):
         self._check_self()
         return int(self._parse_info('Size'))
+
+    def _get_hw_max_sectors(self):
+        self._check_self()
+        return int(self._parse_info('HwMaxSectors'))
 
     def _get_config(self):
         self._check_self()
@@ -828,6 +837,8 @@ class UserBackedStorageObject(StorageObject):
         self._check_self()
         return False
 
+    hw_max_sectors = property(_get_hw_max_sectors,
+            doc="Get the max sectors per command.")
     size = property(_get_size,
             doc="Get the size in bytes.")
     config = property(_get_config,
@@ -840,6 +851,8 @@ class UserBackedStorageObject(StorageObject):
         d['wwn'] = self.wwn
         d['size'] = self.size
         d['config'] = self.config
+        d['hw_max_sectors'] = self.hw_max_sectors
+
         return d
 
 
