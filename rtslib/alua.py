@@ -248,7 +248,17 @@ class ALUATargetPortGroup(CFSNode):
     def _get_members(self):
         self._check_self()
         path = "%s/members" % self.path
-        return fread(path)
+
+        member_list = []
+
+        for member in fread(path).splitlines():
+            lun_path = member.split("/")
+            if len(lun_path) != 4:
+                continue
+            member_list.append({ 'driver': lun_path[0], 'target': lun_path[1],
+                                 'tpgt': int(lun_path[2].split("_", 1)[1]),
+                                 'lun': int(lun_path[3].split("_", 1)[1]) })
+        return member_list
 
     def _get_tg_pt_gp_id(self):
         self._check_self()
