@@ -294,7 +294,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
         raise RTSLibError(
             "The host, controller, target and lun parameter must be integers")
 
-    hctl = [host, controller, target, lun]
+    hctl = [str(host), str(controller), str(target), str(lun)]
     try:
         scsi_device = pyudev.Device.from_name(_CONTEXT, 'scsi', ':'.join(hctl))
     except pyudev.DeviceNotFoundError:
