@@ -57,6 +57,10 @@ class RTSRoot(CFSNode):
     '''
 
     # RTSRoot private stuff
+
+    _preferred_dbroot = "/etc/target"
+    _default_dbroot = "/var/target"
+
     def __init__(self):
         '''
         Instantiate an RTSRoot object. Basically checks for configfs setup and
@@ -74,6 +78,8 @@ class RTSRoot(CFSNode):
         except RTSLibError:
             modprobe('target_core_mod')
             self._create_in_cfs_ine('any')
+
+        self._set_dbroot_if_needed()
 
     def _list_targets(self):
         self._check_self()
@@ -147,6 +153,26 @@ class RTSRoot(CFSNode):
 
     def __str__(self):
         return "rtslib"
+
+    def _set_dbroot_if_needed(self):
+	try:
+	    with open(self.path+"/dbroot", "r") as f:
+		self._dbroot = f.read().strip()
+		f.close()
+	except IOError:
+	    self._dbroot = self._default_dbroot
+	    return
+	if self._dbroot != self._preferred_dbroot:
+	    try:
+		with open(self.path+"/dbroot", "w") as f:
+		    f.write(self._preferred_dbroot+"\n")
+		    f.close()
+	    except IOError:
+		raise RTSLibError("cannot write to dbroot file: must be superuser")
+	    self._dbroot = self._preferred_dbroot
+
+    def _get_dbroot(self):
+        return self._dbroot
 
     # RTSRoot public stuff
 
@@ -320,6 +346,8 @@ class RTSRoot(CFSNode):
             doc="Get the list of all FabricModule objects.")
     alua_tpgs = property(_list_alua_tpgs,
             doc="Get the list of all ALUA TPG objects.")
+    dbroot = property(_get_dbroot,
+            doc="Get the target database root")
 
 def _test():
     '''Run the doctests.'''
