@@ -78,7 +78,8 @@ class StorageObject(CFSNode):
         need to read it in and squirt it back into configfs when we configure
         the storage object. BLEH.
         """
-        aptpl_dir = "/var/target/pr"
+        from .root import RTSRoot
+        aptpl_dir = "%s/pr" % RTSRoot().dbroot
 
         try:
             lines = fread("%s/aptpl_%s" % (aptpl_dir, self.wwn)).split()

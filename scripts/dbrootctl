@@ -1,0 +1,88 @@
+#!/usr/bin/python
+'''
+dbrootctl -- Set or get the target driver database root directory
+
+This file is part of RTSLib.
+Copyright (c) 2013 by Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+'''
+
+#
+# A script to set or get the dbroot directory
+#
+
+from __future__ import print_function
+
+from rtslib_fb import RTSRoot
+import os
+import sys
+from ConfigParser import ConfigParser
+
+config_file = "/etc/target/rtslib.cfg"
+err = sys.stderr
+
+def usage():
+    print("syntax: %s set_from_config" % sys.argv[0], file=err)
+    print("        %s get" % sys.argv[0], file=err)
+    print("  config file is: %s" % config_file, file=err)
+
+def set_dbroot_from_config():
+    # get config file value
+    config = ConfigParser()
+    config.read(config_file)
+    try:
+        new_dbroot = config.get("root", "dbroot")
+    except Exception:
+        print("No 'dbroot' configuration found", file=err)
+        return False
+    # use rtslib root object to set dbroot
+    root = RTSRoot()
+    if root.dbroot != new_dbroot:
+        try:
+            print("Setting target driver database root to %s" % new_dbroot)
+            root.set_dbroot(new_dbroot)
+        except Exception as e:
+            print("Cannot set dbroot: %s" % e.message, file=err)
+            return False
+    return True
+
+def get_dbroot():
+    # use rtslib root object to get dbroot
+    print("%s\n" % RTSRoot().dbroot)
+    return True
+
+funcs = dict(set_from_config=set_dbroot_from_config, get=get_dbroot)
+
+def main():
+    if os.geteuid() != 0:
+        print("Must run as root", file=err)
+        sys.exit(-1)
+
+    if len(sys.argv) != 2:
+        usage()
+        sys.exit(-1)
+
+    if sys.argv[1] == "--help":
+        usage()
+        sys.exit(0)
+
+    if sys.argv[1] not in funcs.keys():
+        usage()
+        sys.exit(-1)
+
+    if not funcs[sys.argv[1]]():
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
