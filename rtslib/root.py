@@ -28,6 +28,7 @@ from .fabric import FabricModule
 from .tcm import so_mapping, bs_cache, StorageObject
 from .utils import RTSLibError, RTSLibALUANotSupported, modprobe, mount_configfs
 from .utils import dict_remove, set_attributes
+from .utils import fread, fwrite
 from .alua import ALUATargetPortGroup
 
 default_save_file = "/etc/target/saveconfig.json"
@@ -57,6 +58,12 @@ class RTSRoot(CFSNode):
     '''
 
     # RTSRoot private stuff
+
+    # this should match the kernel target driver default db dir
+    _default_dbroot = "/var/target"
+    # this is where the target DB is to be located (instead of the default)
+    _preferred_dbroot = "/etc/target"
+
     def __init__(self):
         '''
         Instantiate an RTSRoot object. Basically checks for configfs setup and
@@ -74,6 +81,8 @@ class RTSRoot(CFSNode):
         except RTSLibError:
             modprobe('target_core_mod')
             self._create_in_cfs_ine('any')
+
+        self._set_dbroot_if_needed()
 
     def _list_targets(self):
         self._check_self()
@@ -147,6 +156,19 @@ class RTSRoot(CFSNode):
 
     def __str__(self):
         return "rtslib"
+
+    def _set_dbroot_if_needed(self):
+        dbroot_path = self.path + "/dbroot"
+        if not os.path.exists(dbroot_path):
+            self._dbroot = self._default_dbroot
+            return
+        self._dbroot = fread(dbroot_path)
+        if self._dbroot != self._preferred_dbroot:
+            fwrite(dbroot_path, self._preferred_dbroot+"\n")
+            self._dbroot = fread(dbroot_path)
+
+    def _get_dbroot(self):
+        return self._dbroot
 
     # RTSRoot public stuff
 
@@ -320,6 +342,8 @@ class RTSRoot(CFSNode):
             doc="Get the list of all FabricModule objects.")
     alua_tpgs = property(_list_alua_tpgs,
             doc="Get the list of all ALUA TPG objects.")
+    dbroot = property(_get_dbroot,
+            doc="Get the target database root")
 
 def _test():
     '''Run the doctests.'''
