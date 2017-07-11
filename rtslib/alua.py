@@ -46,10 +46,6 @@ class ALUATargetPortGroup(CFSNode):
         @param tag: target port group id. If not passed in, try to look
                     up existing ALUA TPG with the same name
         """
-        # kernel partially sets up default_tg_pt_gp and will let you partially
-        # setup ALUA groups for pscsi and user, but writing to some of the
-        # files will crash the kernel. Just fail to even create groups until
-        # the kernel is fixed.
         if storage_object.alua_supported is False:
             raise RTSLibALUANotSupported("Backend does not support ALUA setup")
 
