@@ -32,6 +32,19 @@ from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from .utils import is_dev_in_use, get_blockdev_type
 from .utils import get_size_for_blk_dev, get_size_for_disk_name
 
+def storage_object_get_alua_support_attr(so):
+    '''
+    Helper function that can be called by passthrough type of backends.
+    '''
+    try:
+        if int(so.get_attribute("alua_support")) == 1:
+            return True
+    except RTSLibError:
+            pass
+    # Default to false because older kernels will crash when
+    # reading/writing to some ALUA files when ALUA was not
+    # fully supported by pscsi and tcmu.
+    return False
 
 class StorageObject(CFSNode):
     '''
@@ -228,7 +241,7 @@ class StorageObject(CFSNode):
 
     def _get_alua_supported(self):
         '''
-        Children should override and return false if ALUA setup is not supported.
+        Children should override if the backend did not always support ALUA
         '''
         self._check_self()
         return True
@@ -421,7 +434,7 @@ class PSCSIStorageObject(StorageObject):
 
     def _get_alua_supported(self):
         self._check_self()
-        return False
+        return storage_object_get_alua_support_attr(self)
 
     # PSCSIStorageObject public stuff
 
@@ -443,7 +456,7 @@ class PSCSIStorageObject(StorageObject):
     lun = property(_get_lun,
             doc="Get the SCSI device LUN")
     alua_supported = property(_get_alua_supported,
-            doc="ALUA cannot be setup with rtslib, so False is returned.");
+            doc="Returns true if ALUA can be setup. False if not supported.")
 
     def dump(self):
         d = super(PSCSIStorageObject, self).dump()
@@ -836,7 +849,7 @@ class UserBackedStorageObject(StorageObject):
 
     def _get_alua_supported(self):
         self._check_self()
-        return False
+        return storage_object_get_alua_support_attr(self)
 
     hw_max_sectors = property(_get_hw_max_sectors,
             doc="Get the max sectors per command.")
@@ -845,7 +858,7 @@ class UserBackedStorageObject(StorageObject):
     config = property(_get_config,
             doc="Get the TCMU config.")
     alua_supported = property(_get_alua_supported,
-            doc="ALUA cannot be setup with rtslib, so False is returned.");
+            doc="Returns true if ALUA can be setup. False if not supported.")
 
     def dump(self):
         d = super(UserBackedStorageObject, self).dump()
