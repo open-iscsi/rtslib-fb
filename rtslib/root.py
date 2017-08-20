@@ -164,7 +164,11 @@ class RTSRoot(CFSNode):
             return
         self._dbroot = fread(dbroot_path)
         if self._dbroot != self._preferred_dbroot:
-            fwrite(dbroot_path, self._preferred_dbroot+"\n")
+            try:
+                fwrite(dbroot_path, self._preferred_dbroot+"\n")
+            except:
+                raise RTSLibError("Cannot set dbroot to {}. Please check if this directory exists."
+                                  .format(self._preferred_dbroot))
             self._dbroot = fread(dbroot_path)
 
     def _get_dbroot(self):
