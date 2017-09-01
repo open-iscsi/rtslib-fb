@@ -822,8 +822,6 @@ class UserBackedStorageObject(StorageObject):
     def _configure(self, config, size, wwn, hw_max_sectors):
         self._check_self()
 
-        if ':' in config:
-            raise RTSLibError("':' not allowed in config string")
         self._control("dev_config=%s" % config)
         self._control("dev_size=%d" % size)
         if hw_max_sectors is not None:
