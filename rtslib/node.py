@@ -215,7 +215,7 @@ class CFSNode(object):
         params = {}
         for item in self.list_attributes(writable=True):
             try:
-                attrs[item] = int(self.get_attribute(item))
+                attrs[item] = self.get_attribute(item)
             except ValueError:
                 attrs[item] = self.get_attribute(item)
         if attrs:
