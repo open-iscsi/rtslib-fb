@@ -21,6 +21,7 @@ under the License.
 import os
 import stat
 import json
+import glob
 
 from .node import CFSNode
 from .target import Target
@@ -205,6 +206,11 @@ class RTSRoot(CFSNode):
             fm.clear_discovery_auth_settings()
         for so in self.storage_objects:
             so.delete()
+
+        # If somehow some hbas still exist (no storage object within?) clean
+        # them up too.
+        for hba_dir in glob.glob("%s/core/*_*" % self.configfs_dir):
+            os.rmdir(hba_dir)
 
     def restore(self, config, clear_existing=False, abort_on_error=False):
         '''
