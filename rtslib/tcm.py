@@ -787,7 +787,7 @@ class UserBackedStorageObject(StorageObject):
     '''
 
     def __init__(self, name, config=None, size=None, wwn=None,
-                 hw_max_sectors=None):
+                 hw_max_sectors=None, max_data_area_mb=None):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -800,6 +800,8 @@ class UserBackedStorageObject(StorageObject):
         @type wwn: string
         @hw_max_sectors: Max sectors per command limit to export to initiators.
         @type hw_max_sectors: int
+        @max_data_area_mb: Max size of ring buffer's data area in MBs.
+        @type max_data_area_mb: int
         @return: A UserBackedStorageObject object.
         '''
 
@@ -812,14 +814,14 @@ class UserBackedStorageObject(StorageObject):
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(config, size, wwn, hw_max_sectors)
+                self._configure(config, size, wwn, hw_max_sectors, max_data_area_mb)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, config, size, wwn, hw_max_sectors):
+    def _configure(self, config, size, wwn, hw_max_sectors, max_data_area_mb):
         self._check_self()
 
         if ':' in config:
@@ -828,6 +830,8 @@ class UserBackedStorageObject(StorageObject):
         self._control("dev_size=%d" % size)
         if hw_max_sectors is not None:
             self._control("hw_max_sectors=%s" % hw_max_sectors)
+        if max_data_area_mb is not None:
+            self._control("max_data_area_mb=%s" % max_data_area_mb)
         self._enable()
 
         super(UserBackedStorageObject, self)._configure(wwn)
@@ -839,6 +843,14 @@ class UserBackedStorageObject(StorageObject):
     def _get_hw_max_sectors(self):
         self._check_self()
         return int(self._parse_info('HwMaxSectors'))
+
+    def _get_max_data_area_mb(self):
+        self._check_self()
+
+        try:
+            return int(self._parse_info('MaxDataAreaMB'))
+        except AttributeError:
+            return None
 
     def _get_config(self):
         self._check_self()
@@ -859,6 +871,8 @@ class UserBackedStorageObject(StorageObject):
             doc="Get the TCMU config.")
     alua_supported = property(_get_alua_supported,
             doc="Returns true if ALUA can be setup. False if not supported.")
+    max_data_area_mb = property(_get_max_data_area_mb,
+            doc="Returns the max size of ring buffer's data area in MB. This will return None on older kernels that do to not export this value.")
 
     def dump(self):
         d = super(UserBackedStorageObject, self).dump()
@@ -866,6 +880,10 @@ class UserBackedStorageObject(StorageObject):
         d['size'] = self.size
         d['config'] = self.config
         d['hw_max_sectors'] = self.hw_max_sectors
+
+        max_data_area = self.max_data_area_mb
+        if max_data_area is not None:
+            d['max_data_area_mb'] = max_data_area
 
         return d
 
