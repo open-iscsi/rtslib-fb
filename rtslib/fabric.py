@@ -440,7 +440,7 @@ class VhostFabricModule(_BaseFabricModule):
 
 class XenPvScsiFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(XenPvScsiFabricModule, self).__init__('xen_pvscsi')
+        super(XenPvScsiFabricModule, self).__init__('xen-pvscsi')
         self._path = "%s/%s" % (self.configfs_dir, 'xen-pvscsi')
         self.features = ("nexus", "tpgts")
         self.wwn_types = ('naa',)
@@ -469,7 +469,7 @@ fabric_modules = {
     "tcm_fc": FCoEFabricModule,
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
     "vhost": VhostFabricModule,
-    "xen_pvscsi": XenPvScsiFabricModule,
+    "xen-pvscsi": XenPvScsiFabricModule,
     "ibmvscsis": IbmvscsisFabricModule,
     }
 
