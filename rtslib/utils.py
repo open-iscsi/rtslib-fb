@@ -149,7 +149,7 @@ def get_size_for_blk_dev(path):
     @raises: DeviceNotFoundError if corresponding device not found
     @raises: EnvironmentError, ValueError in some situations
     '''
-    device = Device.from_device_file(_CONTEXT, os.path.realpath(str(path)))
+    device = pyudev.Device.from_device_file(_CONTEXT, os.path.realpath(str(path)))
     return _get_size_for_dev(device)
 
 get_block_size = get_size_for_blk_dev
