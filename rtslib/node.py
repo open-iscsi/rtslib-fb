@@ -52,9 +52,16 @@ class CFSNode(object):
         '''
         if mode not in ['any', 'lookup', 'create']:
             raise RTSLibError("Invalid mode: %s" % mode)
+
         if self.exists and mode == 'create':
-            raise RTSLibError("This %s already exists in configFS"
-                              % self.__class__.__name__)
+            # ensure that self.path is not stale hba-only dir
+            if os.path.samefile(os.path.dirname(self.path), self.configfs_dir+'/core') \
+               and not next(os.walk(self.path))[1]:
+                os.rmdir(self.path)
+            else:
+               raise RTSLibError("This %s already exists in configFS"
+                                 % self.__class__.__name__)
+
         elif not self.exists and mode == 'lookup':
             raise RTSLibNotInCFS("No such %s in configfs: %s"
                                  % (self.__class__.__name__, self.path))
