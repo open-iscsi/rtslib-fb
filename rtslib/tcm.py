@@ -31,6 +31,7 @@ from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFS
 from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from .utils import is_dev_in_use, get_blockdev_type
 from .utils import get_size_for_blk_dev, get_size_for_disk_name
+from .utils import set_enable, get_enable
 
 def storage_object_get_alua_support_attr(so):
     '''
@@ -131,7 +132,7 @@ class StorageObject(CFSNode):
 
     def _get_wwn(self):
         self._check_self()
-        if self.is_configured():
+        if self.enable:
             path = "%s/wwn/vpd_unit_serial" % self.path
             return fread(path).partition(":")[2].strip()
         else:
@@ -140,7 +141,7 @@ class StorageObject(CFSNode):
 
     def _set_wwn(self, wwn):
         self._check_self()
-        if self.is_configured():
+        if self.enable:
             path = "%s/wwn/vpd_unit_serial" % self.path
             fwrite(path, "%s\n" % wwn)
         else:
@@ -165,11 +166,6 @@ class StorageObject(CFSNode):
 
     def _get_name(self):
         return self._name
-
-    def _enable(self):
-        self._check_self()
-        path = "%s/enable" % self.path
-        fwrite(path, "1\n")
 
     def _control(self, command):
         self._check_self()
@@ -262,7 +258,7 @@ class StorageObject(CFSNode):
                 alua_tpg.delete()
 
         # If we are called after a configure error, we can skip this
-        if self.is_configured():
+        if self.enable:
             for lun in self._gen_attached_luns():
                 if self.status != 'activated':
                     break
@@ -278,13 +274,10 @@ class StorageObject(CFSNode):
         '''
 
         self._check_self()
-        path = "%s/enable" % self.path
         try:
-            configured = fread(path)
+            return self.enable
         except IOError:
             return True
-
-        return bool(int(configured))
 
     version = property(_get_version,
             doc="Get the version of the StorageObject's backstore")
@@ -303,6 +296,11 @@ class StorageObject(CFSNode):
             doc="Get list of ALUA Target Port Groups attached.")
     alua_supported = property(_get_alua_supported,
             doc="Returns true if ALUA can be setup. False if not supported.")
+    enable = property(get_enable, set_enable,
+            doc="Get or set a boolean value representing the " \
+                + "enable status of the storage object. " \
+                + "True means the SO is enabled, False means it is " \
+                + "disabled.")
 
     def dump(self):
         d = super(StorageObject, self).dump()
@@ -392,7 +390,7 @@ class PSCSIStorageObject(StorageObject):
                       + "scsi_target_id=%d," % targetid \
                       + "scsi_lun_id=%d" % lunid)
         self._set_udev_path(udev_path)
-        self._enable()
+        self.enable = True
 
         super(PSCSIStorageObject, self)._configure()
 
@@ -515,7 +513,7 @@ class RDMCPStorageObject(StorageObject):
         self._control("rd_pages=%d" % size)
         if nullio:
             self._control("rd_nullio=1")
-        self._enable()
+        self.enable = True
 
         super(RDMCPStorageObject, self)._configure(wwn)
 
@@ -640,7 +638,7 @@ class FileIOStorageObject(StorageObject):
 
         self._set_udev_path(dev)
 
-        self._enable()
+        self.enable = True
 
         super(FileIOStorageObject, self)._configure(wwn)
 
@@ -731,7 +729,7 @@ class BlockStorageObject(StorageObject):
         self._set_udev_path(dev)
         self._control("udev_path=%s" % dev)
         self._control("readonly=%d" % readonly)
-        self._enable()
+        self.enable = True
 
         super(BlockStorageObject, self)._configure(wwn)
 
@@ -828,7 +826,7 @@ class UserBackedStorageObject(StorageObject):
         self._control("dev_size=%d" % size)
         if hw_max_sectors is not None:
             self._control("hw_max_sectors=%s" % hw_max_sectors)
-        self._enable()
+        self.enable = True
 
         super(UserBackedStorageObject, self)._configure(wwn)
 

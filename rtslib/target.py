@@ -29,6 +29,7 @@ from .utils import RTSLibBrokenLink, RTSLibError
 from .utils import fread, fwrite, normalize_wwn, generate_wwn
 from .utils import dict_remove, set_attributes, set_parameters, ignored
 from .utils import _get_auth_attr, _set_auth_attr
+from .utils import set_enable, get_enable
 from . import tcm
 
 import six
@@ -221,29 +222,6 @@ class TPG(CFSNode):
             port = int(port)
             yield NetworkPortal(self, ip_address, port, 'lookup')
 
-    def _get_enable(self):
-        self._check_self()
-        path = "%s/enable" % self.path
-        # If the TPG does not have the enable attribute, then it is always
-        # enabled.
-        if os.path.isfile(path):
-            return bool(int(fread(path)))
-        else:
-            return True
-
-    def _set_enable(self, boolean):
-        '''
-        Enables or disables the TPG. If the TPG doesn't support the enable
-        attribute, do nothing.
-        '''
-        self._check_self()
-        path = "%s/enable" % self.path
-        if os.path.isfile(path) and (boolean != self._get_enable()):
-            try:
-                fwrite(path, str(int(boolean)))
-            except IOError as e:
-                raise RTSLibError("Cannot change enable state: %s" % e)
-
     def _get_nexus(self):
         '''
         Gets the nexus initiator WWN, or None if the TPG does not have one.
@@ -372,7 +350,7 @@ class TPG(CFSNode):
     parent_target = property(_get_parent_target,
                              doc="Get the parent Target object to which the " \
                              + "TPG is attached.")
-    enable = property(_get_enable, _set_enable,
+    enable = property(get_enable, set_enable,
                       doc="Get or set a boolean value representing the " \
                       + "enable status of the TPG. " \
                       + "True means the TPG is enabled, False means it is " \
