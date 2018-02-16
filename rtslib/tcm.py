@@ -782,7 +782,7 @@ class UserBackedStorageObject(StorageObject):
     '''
 
     def __init__(self, name, config=None, size=None, wwn=None,
-                 hw_max_sectors=None):
+                 hw_max_sectors=None, enable=True):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -795,6 +795,9 @@ class UserBackedStorageObject(StorageObject):
         @type wwn: string
         @hw_max_sectors: Max sectors per command limit to export to initiators.
         @type hw_max_sectors: int
+        @enable: True if the device should be enabled at creation. False if
+            caller will manually enable.
+        @type: bool
         @return: A UserBackedStorageObject object.
         '''
 
@@ -807,14 +810,14 @@ class UserBackedStorageObject(StorageObject):
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(config, size, wwn, hw_max_sectors)
+                self._configure(config, size, wwn, hw_max_sectors, enable)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, config, size, wwn, hw_max_sectors):
+    def _configure(self, config, size, wwn, hw_max_sectors, enable):
         self._check_self()
 
         if ':' in config:
@@ -823,8 +826,8 @@ class UserBackedStorageObject(StorageObject):
         self._control("dev_size=%d" % size)
         if hw_max_sectors is not None:
             self._control("hw_max_sectors=%s" % hw_max_sectors)
-        self.enable = True
-
+        if enable is True:
+            self.enable = True
         super(UserBackedStorageObject, self)._configure(wwn)
 
     def _get_size(self):
@@ -857,10 +860,18 @@ class UserBackedStorageObject(StorageObject):
 
     def dump(self):
         d = super(UserBackedStorageObject, self).dump()
-        d['wwn'] = self.wwn
-        d['size'] = self.size
         d['config'] = self.config
-        d['hw_max_sectors'] = self.hw_max_sectors
+        d['size'] = self.size
+        d['enable'] = self.enable
+
+        # The following are optional at creation time and cannot be zero/empty
+        # at enable time. If they are not yet setup we will not dump them to
+        # avoid invalid settings being stored and used later instead of the
+        # kernel defaults.
+        if self.hw_max_sectors:
+            d['hw_max_sectors'] = self.hw_max_sectors
+        if self.wwn:
+            d['wwn'] = self.wwn
 
         return d
 
