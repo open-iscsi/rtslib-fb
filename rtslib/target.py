@@ -464,7 +464,7 @@ class LUN(CFSNode):
     A LUN is identified by its parent TPG and LUN index.
     '''
 
-    MAX_LUN = 255
+    MAX_TARGET_LUN = 65535
 
     # LUN private stuff
 
@@ -487,7 +487,7 @@ class LUN(CFSNode):
         @param parent_tpg: The parent TPG object.
         @type parent_tpg: TPG
         @param lun: The LUN index.
-        @type lun: 0-255
+        @type lun: 0-65535
         @param storage_object: The storage object to be exported as a LUN.
         @type storage_object: StorageObject subclass
         @param alias: An optional parameter to manually specify the LUN alias.
@@ -504,16 +504,16 @@ class LUN(CFSNode):
 
         if lun is None:
             luns = [l.lun for l in self.parent_tpg.luns]
-            for index in range(self.MAX_LUN+1):
+            for index in range(self.MAX_TARGET_LUN+1):
                 if index not in luns:
                     lun = index
                     break
             if lun is None:
-                raise RTSLibError("All LUNs 0-%d in use" % self.MAX_LUN)
+                raise RTSLibError("All LUNs 0-%d in use" % self.MAX_TARGET_LUN)
         else:
             lun = int(lun)
-            if lun < 0 or lun > self.MAX_LUN:
-                raise RTSLibError("LUN must be 0 to %d" % self.MAX_LUN)
+            if lun < 0 or lun > self.MAX_TARGET_LUN:
+                raise RTSLibError("LUN must be 0 to %d" % self.MAX_TARGET_LUN)
 
         self._lun = lun
 
@@ -1060,6 +1060,8 @@ class MappedLUN(CFSNode):
     the initiator node as the MappedLUN.
     '''
 
+    MAX_LUN = 255
+
     # MappedLUN private stuff
 
     def __repr__(self):
@@ -1106,6 +1108,9 @@ class MappedLUN(CFSNode):
         except ValueError:
             raise RTSLibError("The mapped_lun parameter must be an " \
                               + "integer value")
+
+        if self._mapped_lun < 0 or self._mapped_lun > self.MAX_LUN:
+            raise RTSLibError("Mapped LUN must be 0 to %d" % self.MAX_LUN)
 
         self._path = "%s/lun_%d" % (self.parent_nodeacl.path, self.mapped_lun)
 
