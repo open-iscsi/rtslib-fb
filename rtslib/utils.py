@@ -511,6 +511,32 @@ def set_parameters(obj, param_dict, err_func):
         except RTSLibError as e:
             err_func(str(e))
 
+def get_enable(so):
+    '''
+    @return: True if the StorageObject is configured, else returns False
+    '''
+    so._check_self()
+    path = "%s/enable" % so.path
+    # Some TPGs do not have the enable attribute, so they are always
+    # enabled.
+    if os.path.isfile(path):
+        return bool(int(fread(path)))
+    else:
+        return True
+
+def set_enable(so, boolean):
+    '''
+    Enables or disables the object. If id doesn't support the enable
+    attribute, do nothing.
+    '''
+    so._check_self()
+    path = "%s/enable" % so.path
+    if os.path.isfile(path) and (boolean != so.enable):
+        try:
+            fwrite(path, str(int(boolean)))
+        except IOError as e:
+            raise RTSLibError("Cannot change enable state: %s" % e)
+
 def _test():
     '''Run the doctests'''
     import doctest

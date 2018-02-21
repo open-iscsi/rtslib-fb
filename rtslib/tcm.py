@@ -31,6 +31,7 @@ from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFS
 from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from .utils import is_dev_in_use, get_blockdev_type
 from .utils import get_size_for_blk_dev, get_size_for_disk_name
+from .utils import set_enable, get_enable
 
 def storage_object_get_alua_support_attr(so):
     '''
@@ -131,21 +132,18 @@ class StorageObject(CFSNode):
 
     def _get_wwn(self):
         self._check_self()
-        if self.is_configured():
-            path = "%s/wwn/vpd_unit_serial" % self.path
-            return fread(path).partition(":")[2].strip()
-        else:
+        path = "%s/wwn/vpd_unit_serial" % self.path
+        serial = fread(path).partition(":")[2].strip()
+        if not serial:
             raise RTSLibError("Cannot read a T10 WWN Unit Serial from "
                               + "an unconfigured StorageObject")
+        else:
+            return serial
 
     def _set_wwn(self, wwn):
         self._check_self()
-        if self.is_configured():
-            path = "%s/wwn/vpd_unit_serial" % self.path
-            fwrite(path, "%s\n" % wwn)
-        else:
-            raise RTSLibError("Cannot write a T10 WWN Unit Serial to "
-                              + "an unconfigured StorageObject")
+        path = "%s/wwn/vpd_unit_serial" % self.path
+        fwrite(path, "%s\n" % wwn)
 
     def _set_udev_path(self, udev_path):
         self._check_self()
@@ -165,11 +163,6 @@ class StorageObject(CFSNode):
 
     def _get_name(self):
         return self._name
-
-    def _enable(self):
-        self._check_self()
-        path = "%s/enable" % self.path
-        fwrite(path, "1\n")
 
     def _control(self, command):
         self._check_self()
@@ -262,7 +255,7 @@ class StorageObject(CFSNode):
                 alua_tpg.delete()
 
         # If we are called after a configure error, we can skip this
-        if self.is_configured():
+        if self.enable:
             for lun in self._gen_attached_luns():
                 if self.status != 'activated':
                     break
@@ -278,13 +271,10 @@ class StorageObject(CFSNode):
         '''
 
         self._check_self()
-        path = "%s/enable" % self.path
         try:
-            configured = fread(path)
+            return self.enable
         except IOError:
             return True
-
-        return bool(int(configured))
 
     version = property(_get_version,
             doc="Get the version of the StorageObject's backstore")
@@ -303,6 +293,11 @@ class StorageObject(CFSNode):
             doc="Get list of ALUA Target Port Groups attached.")
     alua_supported = property(_get_alua_supported,
             doc="Returns true if ALUA can be setup. False if not supported.")
+    enable = property(get_enable, set_enable,
+            doc="Get or set a boolean value representing the " \
+                + "enable status of the storage object. " \
+                + "True means the SO is enabled, False means it is " \
+                + "disabled.")
 
     def dump(self):
         d = super(StorageObject, self).dump()
@@ -392,7 +387,7 @@ class PSCSIStorageObject(StorageObject):
                       + "scsi_target_id=%d," % targetid \
                       + "scsi_lun_id=%d" % lunid)
         self._set_udev_path(udev_path)
-        self._enable()
+        self.enable = True
 
         super(PSCSIStorageObject, self)._configure()
 
@@ -515,7 +510,7 @@ class RDMCPStorageObject(StorageObject):
         self._control("rd_pages=%d" % size)
         if nullio:
             self._control("rd_nullio=1")
-        self._enable()
+        self.enable = True
 
         super(RDMCPStorageObject, self)._configure(wwn)
 
@@ -640,7 +635,7 @@ class FileIOStorageObject(StorageObject):
 
         self._set_udev_path(dev)
 
-        self._enable()
+        self.enable = True
 
         super(FileIOStorageObject, self)._configure(wwn)
 
@@ -731,7 +726,7 @@ class BlockStorageObject(StorageObject):
         self._set_udev_path(dev)
         self._control("udev_path=%s" % dev)
         self._control("readonly=%d" % readonly)
-        self._enable()
+        self.enable = True
 
         super(BlockStorageObject, self)._configure(wwn)
 
@@ -787,7 +782,7 @@ class UserBackedStorageObject(StorageObject):
     '''
 
     def __init__(self, name, config=None, size=None, wwn=None,
-                 hw_max_sectors=None):
+                 hw_max_sectors=None, enable=True):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -800,6 +795,9 @@ class UserBackedStorageObject(StorageObject):
         @type wwn: string
         @hw_max_sectors: Max sectors per command limit to export to initiators.
         @type hw_max_sectors: int
+        @enable: True if the device should be enabled at creation. False if
+            caller will manually enable.
+        @type: bool
         @return: A UserBackedStorageObject object.
         '''
 
@@ -812,14 +810,14 @@ class UserBackedStorageObject(StorageObject):
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(config, size, wwn, hw_max_sectors)
+                self._configure(config, size, wwn, hw_max_sectors, enable)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, config, size, wwn, hw_max_sectors):
+    def _configure(self, config, size, wwn, hw_max_sectors, enable):
         self._check_self()
 
         if ':' in config:
@@ -828,8 +826,8 @@ class UserBackedStorageObject(StorageObject):
         self._control("dev_size=%d" % size)
         if hw_max_sectors is not None:
             self._control("hw_max_sectors=%s" % hw_max_sectors)
-        self._enable()
-
+        if enable is True:
+            self.enable = True
         super(UserBackedStorageObject, self)._configure(wwn)
 
     def _get_size(self):
@@ -862,10 +860,18 @@ class UserBackedStorageObject(StorageObject):
 
     def dump(self):
         d = super(UserBackedStorageObject, self).dump()
-        d['wwn'] = self.wwn
-        d['size'] = self.size
         d['config'] = self.config
-        d['hw_max_sectors'] = self.hw_max_sectors
+        d['size'] = self.size
+        d['enable'] = self.enable
+
+        # The following are optional at creation time and cannot be zero/empty
+        # at enable time. If they are not yet setup we will not dump them to
+        # avoid invalid settings being stored and used later instead of the
+        # kernel defaults.
+        if self.hw_max_sectors:
+            d['hw_max_sectors'] = self.hw_max_sectors
+        if self.wwn:
+            d['wwn'] = self.wwn
 
         return d
 
