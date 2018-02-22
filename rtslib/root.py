@@ -176,6 +176,83 @@ class RTSRoot(CFSNode):
     def _get_dbroot(self):
         return self._dbroot
 
+    def _get_saveconf(self, so_path, save_file):
+        '''
+        Fetch the configuration of all the blocks and return conf with
+        updated storageObject info and its related target configuraion of
+        given storage object path
+        '''
+        current = self.dump()
+
+        with open(save_file, "r") as f:
+            saveconf = json.loads(f.read())
+            f.close()
+
+        fetch_cur_so = False
+        fetch_cur_tg = False
+        # Get the given block current storageObj configuration
+        for sidx, sobj in enumerate(current.get('storage_objects', [])):
+            if '/backstores/' + sobj['plugin'] + '/' + sobj['name'] == so_path:
+                current_so = current['storage_objects'][sidx]
+                fetch_cur_so = True
+                break
+
+        # Get the given block current target configuration
+        if fetch_cur_so:
+            for tidx, tobj in enumerate(current.get('targets', [])):
+                if fetch_cur_tg:
+                    break
+                for luns in tobj.get('tpgs', []):
+                    if fetch_cur_tg:
+                        break
+                    for lun in luns.get('luns', []):
+                        if lun['storage_object'] == so_path:
+                            current_tg = current['targets'][tidx]
+                            fetch_cur_tg = True
+                            break
+
+        fetch_sav_so = False
+        fetch_sav_tg = False
+        # Get the given block storageObj from saved configuration
+        for sidx, sobj in enumerate(saveconf.get('storage_objects', [])):
+            if '/backstores/' + sobj['plugin'] + '/' + sobj['name'] == so_path:
+                # Merge StorageObj
+                if fetch_cur_so:
+                    saveconf['storage_objects'][sidx] = current_so;
+                # Remove StorageObj
+                else:
+                    saveconf['storage_objects'].remove(saveconf['storage_objects'][sidx])
+                fetch_sav_so = True
+                break
+
+        # Get the given block target from saved configuration
+        if fetch_sav_so:
+            for tidx, tobj in enumerate(saveconf.get('targets', [])):
+                if fetch_sav_tg:
+                    break
+                for luns in tobj.get('tpgs', []):
+                    if fetch_sav_tg:
+                        break
+                    for lun in luns.get('luns', []):
+                        if lun['storage_object'] == so_path:
+                            # Merge target
+                            if fetch_cur_tg:
+                                saveconf['targets'][tidx] = current_tg;
+                            # Remove target
+                            else:
+                                saveconf['targets'].remove(saveconf['targets'][tidx])
+                            fetch_sav_tg = True
+                            break
+
+        # Insert storageObj
+        if fetch_cur_so and not fetch_sav_so:
+            saveconf['storage_objects'].append(current_so)
+        # Insert target
+        if fetch_cur_tg and not fetch_sav_tg:
+            saveconf['targets'].append(current_tg)
+
+        return saveconf
+
     # RTSRoot public stuff
 
     def dump(self):
@@ -290,7 +367,7 @@ class RTSRoot(CFSNode):
 
         return errors
 
-    def save_to_file(self, save_file=None):
+    def save_to_file(self, save_file=None, so_path=None):
         '''
         Write the configuration in json format to a file.
         Save file defaults to '/etc/targets/saveconfig.json'.
@@ -298,9 +375,14 @@ class RTSRoot(CFSNode):
         if not save_file:
             save_file = default_save_file
 
+        if so_path:
+            saveconf = self._get_saveconf(so_path, save_file)
+        else:
+            saveconf = self.dump()
+
         with open(save_file+".temp", "w+") as f:
             os.fchmod(f.fileno(), stat.S_IRUSR | stat.S_IWUSR)
-            f.write(json.dumps(self.dump(), sort_keys=True, indent=2))
+            f.write(json.dumps(saveconf, sort_keys=True, indent=2))
             f.write("\n")
             f.flush()
             os.fsync(f.fileno())
