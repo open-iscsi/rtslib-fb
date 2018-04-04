@@ -19,6 +19,7 @@ a copy of the License at
 
 from .node import CFSNode
 from .utils import RTSLibError, RTSLibALUANotSupported, fread, fwrite
+import six
 
 alua_rw_params = ['alua_access_state', 'alua_access_status',
                   'alua_write_metadata', 'alua_access_type', 'preferred',
@@ -393,5 +394,10 @@ class ALUATargetPortGroup(CFSNode):
             return
 
         alua_tpg_obj = cls(storage_obj, name, alua_tpg['tg_pt_gp_id'])
-        for param in alua_rw_params:
-            setattr(alua_tpg_obj, param, alua_tpg[param])
+        for param, value in six.iteritems(alua_tpg):
+            if param != 'name' and param != 'tg_pt_gp_id':
+                try:
+                    setattr(alua_tpg_obj, param, value)
+                except:
+                    raise RTSLibError("Could not set attribute '%s' for alua tpg '%s'"
+                                      % (param, alua_tpg['name']))
