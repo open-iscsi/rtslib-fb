@@ -787,7 +787,7 @@ class UserBackedStorageObject(StorageObject):
     '''
 
     def __init__(self, name, config=None, size=None, wwn=None,
-                 hw_max_sectors=None):
+                 hw_max_sectors=None, control=None):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -800,6 +800,9 @@ class UserBackedStorageObject(StorageObject):
         @type wwn: string
         @hw_max_sectors: Max sectors per command limit to export to initiators.
         @type hw_max_sectors: int
+        @control: String of control=value tuples separate by a ',' that will
+            passed to the kernel control file.
+        @type: string
         @return: A UserBackedStorageObject object.
         '''
 
@@ -812,14 +815,14 @@ class UserBackedStorageObject(StorageObject):
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(config, size, wwn, hw_max_sectors)
+                self._configure(config, size, wwn, hw_max_sectors, control)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, config, size, wwn, hw_max_sectors):
+    def _configure(self, config, size, wwn, hw_max_sectors, control):
         self._check_self()
 
         if ':' in config:
@@ -828,6 +831,8 @@ class UserBackedStorageObject(StorageObject):
         self._control("dev_size=%d" % size)
         if hw_max_sectors is not None:
             self._control("hw_max_sectors=%s" % hw_max_sectors)
+        if control is not None:
+            self._control(control)
         self._enable()
 
         super(UserBackedStorageObject, self)._configure(wwn)
