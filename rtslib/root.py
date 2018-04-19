@@ -299,7 +299,20 @@ class RTSRoot(CFSNode):
         if clear_existing:
             self.clear_existing(confirm=True)
         elif any(self.storage_objects) or any(self.targets):
-            raise RTSLibError("storageobjects or targets present, not restoring")
+            if any(self.storage_objects):
+                for config_so in config.get('storage_objects', []):
+                    for loaded_so in self.storage_objects:
+                        if config_so['name'] == loaded_so.name and \
+                           config_so['plugin'] == loaded_so.plugin:
+                            raise RTSLibError("storageobject '%s:%s' exist not restoring"
+                                              %(loaded_so.plugin, loaded_so.name))
+
+            if any(self.targets):
+                for config_tg in config.get('targets', []):
+                    for loaded_tg in self.targets:
+                        if config_tg['wwn'] == loaded_tg.wwn:
+                            raise RTSLibError("target with wwn %s exist, not restoring"
+                                              %(loaded_tg.wwn))
 
         errors = []
 
