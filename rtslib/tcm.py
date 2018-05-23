@@ -845,6 +845,17 @@ class UserBackedStorageObject(StorageObject):
         self._check_self()
         return int(self._parse_info('HwMaxSectors'))
 
+    def _get_control_tuples(self):
+        self._check_self()
+        tuples = []
+        # 1. max_data_area_mb
+        val = self._parse_info('MaxDataAreaMB')
+        if val != "NULL":
+            tuples.append("max_data_area_mb=%s" % val)
+        # 2. add next ...
+
+        return ",".join(tuples)
+
     def _get_config(self):
         self._check_self()
         val = self._parse_info('Config')
@@ -858,6 +869,8 @@ class UserBackedStorageObject(StorageObject):
 
     hw_max_sectors = property(_get_hw_max_sectors,
             doc="Get the max sectors per command.")
+    control_tuples = property(_get_control_tuples,
+            doc="Get the comma separated string containing control=value tuples.")
     size = property(_get_size,
             doc="Get the size in bytes.")
     config = property(_get_config,
@@ -871,6 +884,7 @@ class UserBackedStorageObject(StorageObject):
         d['size'] = self.size
         d['config'] = self.config
         d['hw_max_sectors'] = self.hw_max_sectors
+        d['control'] = self.control_tuples
 
         return d
 
