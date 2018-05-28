@@ -184,9 +184,14 @@ class RTSRoot(CFSNode):
         '''
         current = self.dump()
 
-        with open(save_file, "r") as f:
-            saveconf = json.loads(f.read())
-            f.close()
+        try:
+            with open(save_file, "r") as f:
+                saveconf = json.loads(f.read())
+        except IOError, e:
+            if e.errno == errno.ENOENT:
+                saveconf = {'storage_objects': [], 'targets': []}
+            else:
+                raise ExecutionError("Could not open %s" % save_file)
 
         fetch_cur_so = False
         fetch_cur_tg = False
