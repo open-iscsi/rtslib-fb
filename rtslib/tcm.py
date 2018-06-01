@@ -184,8 +184,11 @@ class StorageObject(CFSNode):
     def _parse_info(self, key):
         self._check_self()
         info = fread("%s/info" % self.path)
-        return re.search(".*%s: ([^: ]+).*" \
-                         % key, ' '.join(info.split())).group(1)
+        try:
+            return re.search(".*%s: ([^: ]+).*" \
+                             % key, ' '.join(info.split())).group(1)
+        except AttributeError:
+            return None
 
     def _get_status(self):
         self._check_self()
@@ -994,8 +997,11 @@ class _Backstore(CFSNode):
     def _parse_info(self, key):
         self._check_self()
         info = fread("%s/hba_info" % self.path)
-        return re.search(".*%s: ([^: ]+).*" \
-                         % key, ' '.join(info.split())).group(1)
+        try:
+            return re.search(".*%s: ([^: ]+).*" \
+                             % key, ' '.join(info.split())).group(1)
+        except AttributeError:
+            return None
 
     def _get_version(self):
         self._check_self()
