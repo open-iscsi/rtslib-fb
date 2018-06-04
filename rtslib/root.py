@@ -22,6 +22,7 @@ import os
 import stat
 import json
 import glob
+import errno
 
 from .node import CFSNode
 from .target import Target

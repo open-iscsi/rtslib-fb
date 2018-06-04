@@ -184,8 +184,11 @@ class StorageObject(CFSNode):
     def _parse_info(self, key):
         self._check_self()
         info = fread("%s/info" % self.path)
-        return re.search(".*%s: ([^: ]+).*" \
-                         % key, ' '.join(info.split())).group(1)
+        try:
+            return re.search(".*%s: ([^: ]+).*" \
+                             % key, ' '.join(info.split())).group(1)
+        except AttributeError:
+            return None
 
     def _get_status(self):
         self._check_self()
@@ -248,7 +251,7 @@ class StorageObject(CFSNode):
 
     # StorageObject public stuff
 
-    def delete(self):
+    def delete(self, save=False):
         '''
         Recursively deletes a StorageObject object.
         This will delete all attached LUNs currently using the StorageObject
@@ -271,6 +274,9 @@ class StorageObject(CFSNode):
 
         super(StorageObject, self).delete()
         self._backstore.delete()
+        if save:
+            from .root import RTSRoot, default_save_file
+            RTSRoot().save_to_file(default_save_file, '/backstores/' + self.plugin  + '/' + self._name)
 
     def is_configured(self):
         '''
@@ -994,8 +1000,11 @@ class _Backstore(CFSNode):
     def _parse_info(self, key):
         self._check_self()
         info = fread("%s/hba_info" % self.path)
-        return re.search(".*%s: ([^: ]+).*" \
-                         % key, ' '.join(info.split())).group(1)
+        try:
+            return re.search(".*%s: ([^: ]+).*" \
+                             % key, ' '.join(info.split())).group(1)
+        except AttributeError:
+            return None
 
     def _get_version(self):
         self._check_self()
