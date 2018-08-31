@@ -575,7 +575,7 @@ class FileIOStorageObject(StorageObject):
     # FileIOStorageObject private stuff
 
     def __init__(self, name, dev=None, size=None,
-                 wwn=None, write_back=False):
+                 wwn=None, write_back=False, aio=False):
         '''
         A FileIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} and I{size} are specified, the
@@ -609,14 +609,14 @@ class FileIOStorageObject(StorageObject):
         if dev is not None:
             super(FileIOStorageObject, self).__init__(name, 'create')
             try:
-                self._configure(dev, size, wwn, write_back)
+                self._configure(dev, size, wwn, write_back, aio)
             except:
                 self.delete()
                 raise
         else:
             super(FileIOStorageObject, self).__init__(name, 'lookup')
 
-    def _configure(self, dev, size, wwn, write_back):
+    def _configure(self, dev, size, wwn, write_back, aio):
         self._check_self()
         block_type = get_blockdev_type(dev)
         if block_type is None: # a file
@@ -644,6 +644,9 @@ class FileIOStorageObject(StorageObject):
             self.set_attribute("emulate_write_cache", 1)
             self._control("fd_buffered_io=%d" % write_back)
 
+        if aio:
+            self._control("fd_async_io=%d" % aio)
+
         self._set_udev_path(dev)
 
         self._enable()
@@ -666,6 +669,15 @@ class FileIOStorageObject(StorageObject):
     def _is_block(self):
         return get_blockdev_type(self.udev_path) is not None
 
+    def _aio(self):
+        self._check_self()
+        info = fread("%s/info" % self.path)
+        r = re.search(".*Async: ([^: ]+).*", ' '.join(info.split()))
+        if not r:  # for backward compatibility with old kernels
+            return False
+
+        return bool(int(r.group(1)))
+
     # FileIOStorageObject public stuff
 
     write_back = property(_get_wb_enabled,
@@ -674,6 +686,8 @@ class FileIOStorageObject(StorageObject):
             doc="Get the current FileIOStorage size in bytes")
     is_block = property(_is_block,
             doc="True if FileIoStorage is backed by a block device instead of a file")
+    aio = property(_aio,
+            doc="True is asynchronous I/O is enabled")
 
     def dump(self):
         d = super(FileIOStorageObject, self).dump()
@@ -681,6 +695,7 @@ class FileIOStorageObject(StorageObject):
         d['wwn'] = self.wwn
         d['dev'] = self.udev_path
         d['size'] = self.size
+        d['aio'] = self.aio
         return d
 
 
