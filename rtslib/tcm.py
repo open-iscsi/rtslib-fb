@@ -687,7 +687,7 @@ class FileIOStorageObject(StorageObject):
     is_block = property(_is_block,
             doc="True if FileIoStorage is backed by a block device instead of a file")
     aio = property(_aio,
-            doc="True is asynchronous I/O is enabled")
+            doc="True if asynchronous I/O is enabled")
 
     def dump(self):
         d = super(FileIOStorageObject, self).dump()
