@@ -326,7 +326,7 @@ def generate_wwn(wwn_type):
     if wwn_type == 'unit_serial':
         return str(uuid.uuid4())
     elif wwn_type == 'iqn':
-        localname = socket.gethostname().split(".")[0]
+        localname = socket.gethostname().split(".")[0].replace("_", "")
         localarch = os.uname()[4].replace("_", "")
         prefix = "iqn.2003-01.org.linux-iscsi.%s.%s" % (localname, localarch)
         prefix = prefix.strip().lower()
