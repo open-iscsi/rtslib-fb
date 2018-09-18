@@ -188,7 +188,7 @@ class RTSRoot(CFSNode):
         try:
             with open(save_file, "r") as f:
                 saveconf = json.loads(f.read())
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 saveconf = {'storage_objects': [], 'targets': []}
             else:
