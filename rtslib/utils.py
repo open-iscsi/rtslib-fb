@@ -134,6 +134,9 @@ def _get_size_for_dev(device):
     except (KeyError, UnicodeDecodeError, ValueError):
         return 0
 
+    if device['DEVTYPE'] == 'partition':
+        attributes = device.parent.attributes
+
     try:
         logical_block_size = attributes.asint('queue/logical_block_size')
     except (KeyError, UnicodeDecodeError, ValueError):
