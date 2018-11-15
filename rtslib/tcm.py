@@ -56,14 +56,14 @@ class StorageObject(CFSNode):
     def __repr__(self):
         return "<%s %s/%s>" % (self.__class__.__name__, self.plugin, self.name)
 
-    def __init__(self, name, mode):
+    def __init__(self, name, mode, index=None):
         super(StorageObject, self).__init__()
         if "/" in name or " " in name or "\t" in name or "\n" in name:
             raise RTSLibError("A storage object's name cannot contain "
                               " /, newline or spaces/tabs")
         else:
             self._name = name
-        self._backstore = _Backstore(name, type(self), mode)
+        self._backstore = _Backstore(name, type(self), mode, index)
         self._path = "%s/%s" % (self._backstore.path, self.name)
         self.plugin = self._backstore.plugin
         try:
@@ -126,8 +126,8 @@ class StorageObject(CFSNode):
         Build a StorageObject of the correct type from a configfs path.
         '''
         so_name = os.path.basename(path)
-        so_type = path.split("/")[-2].rsplit("_", 1)[0]
-        return so_mapping[so_type](so_name)
+        so_type, so_index = path.split("/")[-2].rsplit("_", 1)
+        return so_mapping[so_type](so_name, index=so_index)
 
     def _get_wwn(self):
         self._check_self()
@@ -325,7 +325,7 @@ class PSCSIStorageObject(StorageObject):
 
     # PSCSIStorageObject private stuff
 
-    def __init__(self, name, dev=None):
+    def __init__(self, name, dev=None, index=None):
         '''
         A PSCSIStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -347,14 +347,14 @@ class PSCSIStorageObject(StorageObject):
         @return: A PSCSIStorageObject object.
         '''
         if dev is not None:
-            super(PSCSIStorageObject, self).__init__(name, 'create')
+            super(PSCSIStorageObject, self).__init__(name, 'create', index)
             try:
                 self._configure(dev)
             except:
                 self.delete()
                 raise
         else:
-            super(PSCSIStorageObject, self).__init__(name, 'lookup')
+            super(PSCSIStorageObject, self).__init__(name, 'lookup', index)
 
     def _configure(self, dev):
         self._check_self()
@@ -477,7 +477,7 @@ class RDMCPStorageObject(StorageObject):
 
     # RDMCPStorageObject private stuff
 
-    def __init__(self, name, size=None, wwn=None, nullio=False):
+    def __init__(self, name, size=None, wwn=None, nullio=False, index=None):
         '''
         A RDMCPStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{size} is specified, the underlying
@@ -502,14 +502,14 @@ class RDMCPStorageObject(StorageObject):
         '''
 
         if size is not None:
-            super(RDMCPStorageObject, self).__init__(name, 'create')
+            super(RDMCPStorageObject, self).__init__(name, 'create', index)
             try:
                 self._configure(size, wwn, nullio)
             except:
                 self.delete()
                 raise
         else:
-            super(RDMCPStorageObject, self).__init__(name, 'lookup')
+            super(RDMCPStorageObject, self).__init__(name, 'lookup', index)
 
     def _configure(self, size, wwn, nullio):
         self._check_self()
@@ -575,7 +575,7 @@ class FileIOStorageObject(StorageObject):
     # FileIOStorageObject private stuff
 
     def __init__(self, name, dev=None, size=None,
-                 wwn=None, write_back=False, aio=False):
+                 wwn=None, write_back=False, aio=False, index=None):
         '''
         A FileIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} and I{size} are specified, the
@@ -607,14 +607,14 @@ class FileIOStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(FileIOStorageObject, self).__init__(name, 'create')
+            super(FileIOStorageObject, self).__init__(name, 'create', index)
             try:
                 self._configure(dev, size, wwn, write_back, aio)
             except:
                 self.delete()
                 raise
         else:
-            super(FileIOStorageObject, self).__init__(name, 'lookup')
+            super(FileIOStorageObject, self).__init__(name, 'lookup', index)
 
     def _configure(self, dev, size, wwn, write_back, aio):
         self._check_self()
@@ -707,7 +707,7 @@ class BlockStorageObject(StorageObject):
     # BlockStorageObject private stuff
 
     def __init__(self, name, dev=None, wwn=None, readonly=False,
-                 write_back=False):
+                 write_back=False, index=None):
         '''
         A BlockIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -733,14 +733,14 @@ class BlockStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(BlockStorageObject, self).__init__(name, 'create')
+            super(BlockStorageObject, self).__init__(name, 'create', index)
             try:
                 self._configure(dev, wwn, readonly)
             except:
                 self.delete()
                 raise
         else:
-            super(BlockStorageObject, self).__init__(name, 'lookup')
+            super(BlockStorageObject, self).__init__(name, 'lookup', index)
 
     def _configure(self, dev, wwn, readonly):
         self._check_self()
@@ -808,7 +808,7 @@ class UserBackedStorageObject(StorageObject):
     '''
 
     def __init__(self, name, config=None, size=None, wwn=None,
-                 hw_max_sectors=None, control=None):
+                 hw_max_sectors=None, control=None, index=None):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -834,14 +834,14 @@ class UserBackedStorageObject(StorageObject):
             if '/' not in config:
                 raise RTSLibError("'config' must contain a '/' separating subtype "
                                   "from its configuration string")
-            super(UserBackedStorageObject, self).__init__(name, 'create')
+            super(UserBackedStorageObject, self).__init__(name, 'create', index)
             try:
                 self._configure(config, size, wwn, hw_max_sectors, control)
             except:
                 self.delete()
                 raise
         else:
-            super(UserBackedStorageObject, self).__init__(name, 'lookup')
+            super(UserBackedStorageObject, self).__init__(name, 'lookup', index)
 
     def _configure(self, config, size, wwn, hw_max_sectors, control):
         self._check_self()
@@ -958,15 +958,16 @@ class _Backstore(CFSNode):
     Created by storageobject ctor before SO configfs entry.
     """
 
-    def __init__(self, name, storage_object_cls, mode):
+    def __init__(self, name, storage_object_cls, mode, index=None):
         super(_Backstore, self).__init__()
         self._so_cls = storage_object_cls
         self._plugin = bs_params[self._so_cls]['name']
 
         dirp = bs_params[self._so_cls].get("alt_dirprefix", self._plugin)
 
+        # if the caller knows the index then skip the cache
         global bs_cache
-        if not bs_cache:
+        if index is None and not bs_cache:
             for dir in glob.iglob("%s/core/*_*/*/" % self.configfs_dir):
                 parts = dir.split("/")
                 bs_name = parts[-2]
@@ -974,14 +975,16 @@ class _Backstore(CFSNode):
                 current_key = "%s/%s" % (bs_dirp, bs_name)
                 bs_cache[current_key] = int(bs_index)
 
-        # mapping in cache?
         self._lookup_key = "%s/%s" % (dirp, name)
-        self._index = bs_cache.get(self._lookup_key, None)
+        if index is None:
+            self._index = bs_cache.get(self._lookup_key, None)
+            if self._index != None and mode == 'create':
+                raise RTSLibError("Storage object %s/%s exists" %
+                                  (self._plugin, name))
+        else:
+            self._index = int(index)
 
-        if self._index != None and mode == 'create':
-            raise RTSLibError("Storage object %s/%s exists" %
-                              (self._plugin, name))
-        elif self._index == None:
+        if self._index == None:
             if mode == 'lookup':
                 raise RTSLibNotInCFS("Storage object %s/%s not found" %
                                      (self._plugin, name))
@@ -1002,12 +1005,14 @@ class _Backstore(CFSNode):
         try:
             self._create_in_cfs_ine(mode)
         except:
-            del bs_cache[self._lookup_key]
+            if self._lookup_key in bs_cache:
+                del bs_cache[self._lookup_key]
             raise
 
     def delete(self):
         super(_Backstore, self).delete()
-        del bs_cache[self._lookup_key]
+        if self._lookup_key in bs_cache:
+            del bs_cache[self._lookup_key]
 
     def _get_index(self):
         return self._index
