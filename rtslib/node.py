@@ -20,6 +20,7 @@ under the License.
 
 import os
 import stat
+import errno
 from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
 
 
@@ -165,7 +166,14 @@ class CFSNode(object):
         if not os.path.isfile(path):
             raise RTSLibError("Cannot find attribute: %s" % attribute)
         else:
-            return fread(path)
+            try:
+                res = fread(path)
+            except IOError as e:
+                if e.errno == errno.EACCES:
+                    # assume write-only, so just return 0
+                    return 0
+                raise
+            return res
 
     def set_parameter(self, parameter, value):
         '''
