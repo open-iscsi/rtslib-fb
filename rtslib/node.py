@@ -81,31 +81,42 @@ class CFSNode(object):
             raise RTSLibNotInCFS("This %s does not exist in configFS"
                                  % self.__class__.__name__)
 
-    def _list_files(self, path, writable=None):
+    def _list_files(self, path, writable=None, readable=None):
         '''
         List files under a path depending on their owner's write permissions.
         @param path: The path under which the files are expected to be. If the
         path itself is not a directory, an empty list will be returned.
         @type path: str
-        @param writable: If None (default), returns all parameters, if True,
-        returns read-write parameters, if False, returns just the read-only
-        parameters.
+        @param writable: If None (default), return all files despite their
+        writability. If True, return only writable files. If False, return
+        only non-writable files.
         @type writable: bool or None
-        @return: List of file names filtered according to their write perms.
+        @param readable: If None (default), return all files despite their
+        readability. If True, return only readable files. If False, return
+        only non-readable files.
+        @type readable: bool or None
+        @return: List of file names filtered according to their
+        read/write perms.
         '''
         if not os.path.isdir(path):
             return []
 
-        if writable is None:
+        if writable is None and readable is None:
             names = os.listdir(path)
-        elif writable:
-            names = [name for name in os.listdir(path)
-                     if (os.stat("%s/%s" % (path, name))[stat.ST_MODE] \
-                         & stat.S_IWUSR)]
         else:
-            names = [os.path.basename(name) for name in os.listdir(path)
-                     if not (os.stat("%s/%s" % (path, name))[stat.ST_MODE] \
-                             & stat.S_IWUSR)]
+            names = []
+            for name in os.listdir(path):
+                sres = os.stat("%s/%s" % (path, name))
+                if writable is not None:
+                    if writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == \
+                            stat.S_IWUSR):
+                        continue
+                if readable is not None:
+                    if readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == \
+                            stat.S_IRUSR):
+                        continue
+                names.append(name)
+
         names.sort()
         return names
 
@@ -123,17 +134,21 @@ class CFSNode(object):
         path = "%s/param" % self.path
         return self._list_files(path, writable)
 
-    def list_attributes(self, writable=None):
+    def list_attributes(self, writable=None, readable=None):
         '''
-        @param writable: If None (default), returns all attributes, if True,
-        returns read-write attributes, if False, returns just the read-only
-        attributes.
+        @param writable: If None (default), return all files despite their
+        writability. If True, return only writable files. If False, return
+        only non-writable files.
         @type writable: bool or None
+        @param readable: If None (default), return all files despite their
+        readability. If True, return only readable files. If False, return
+        only non-readable files.
+        @type readable: bool or None
         @return: A list of existing attribute names as strings.
         '''
         self._check_self()
         path = "%s/attrib" % self.path
-        return self._list_files(path, writable)
+        return self._list_files(path, writable, readable)
 
     def set_attribute(self, attribute, value):
         '''
@@ -220,7 +235,7 @@ class CFSNode(object):
         d = {}
         attrs = {}
         params = {}
-        for item in self.list_attributes(writable=True):
+        for item in self.list_attributes(writable=True, readable=True):
             try:
                 attrs[item] = int(self.get_attribute(item))
             except ValueError:
