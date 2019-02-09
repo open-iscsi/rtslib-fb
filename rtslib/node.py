@@ -122,17 +122,21 @@ class CFSNode(object):
 
     # CFSNode public stuff
 
-    def list_parameters(self, writable=None):
+    def list_parameters(self, writable=None, readable=None):
         '''
-        @param writable: If None (default), returns all parameters, if True,
-        returns read-write parameters, if False, returns just the read-only
-        parameters.
+        @param writable: If None (default), return all parameters despite
+        their writability. If True, return only writable parameters. If
+        False, return only non-writable parameters.
         @type writable: bool or None
+        @param readable: If None (default), return all parameters despite
+        their readability. If True, return only readable parameters. If
+        False, return only non-readable parameters.
+        @type readable: bool or None
         @return: The list of existing RFC-3720 parameter names.
         '''
         self._check_self()
         path = "%s/param" % self.path
-        return self._list_files(path, writable)
+        return self._list_files(path, writable, readable)
 
     def list_attributes(self, writable=None, readable=None):
         '''
@@ -242,7 +246,7 @@ class CFSNode(object):
                 attrs[item] = self.get_attribute(item)
         if attrs:
             d['attributes'] = attrs
-        for item in self.list_parameters(writable=True):
+        for item in self.list_parameters(writable=True, readable=True):
             params[item] = self.get_parameter(item)
         if params:
             d['parameters'] = params
