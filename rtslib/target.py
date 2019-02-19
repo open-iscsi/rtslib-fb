@@ -1302,11 +1302,11 @@ class Group(object):
         for mem in self._mem_func(self):
             setattr(mem, prop, value)
 
-    def list_attributes(self, writable=None):
-        return self._get_first_member().list_attributes(writable)
+    def list_attributes(self, writable=None, readable=None):
+        return self._get_first_member().list_attributes(writable, readable)
 
-    def list_parameters(self, writable=None):
-        return self._get_first_member().list_parameters(writable)
+    def list_parameters(self, writable=None, readable=None):
+        return self._get_first_member().list_parameters(writable, readable)
 
     def set_attribute(self, attribute, value):
         for obj in self._mem_func(self):
