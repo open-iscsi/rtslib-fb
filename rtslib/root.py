@@ -23,6 +23,7 @@ import stat
 import json
 import glob
 import errno
+import shutil
 
 from .node import CFSNode
 from .target import Target
@@ -386,7 +387,9 @@ class RTSRoot(CFSNode):
         else:
             saveconf = self.dump()
 
-        with open(save_file+".temp", "w+") as f:
+        tmp_file = save_file + ".temp"
+
+        with open(tmp_file, "w+") as f:
             os.fchmod(f.fileno(), stat.S_IRUSR | stat.S_IWUSR)
             f.write(json.dumps(saveconf, sort_keys=True, indent=2))
             f.write("\n")
@@ -394,7 +397,8 @@ class RTSRoot(CFSNode):
             os.fsync(f.fileno())
             f.close()
 
-        os.rename(save_file+".temp", save_file)
+        shutil.copyfile(tmp_file, save_file)
+        os.remove(tmp_file)
 
     def restore_from_file(self, restore_file=None, clear_existing=True, abort_on_error=False):
         '''
