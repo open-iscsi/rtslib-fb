@@ -225,7 +225,7 @@ class RTSRoot(CFSNode):
             if '/backstores/' + sobj['plugin'] + '/' + sobj['name'] == so_path:
                 # Merge StorageObj
                 if fetch_cur_so:
-                    saveconf['storage_objects'][sidx] = current_so;
+                    saveconf['storage_objects'][sidx] = current_so
                 # Remove StorageObj
                 else:
                     saveconf['storage_objects'].remove(saveconf['storage_objects'][sidx])
@@ -244,7 +244,7 @@ class RTSRoot(CFSNode):
                         if lun['storage_object'] == so_path:
                             # Merge target
                             if fetch_cur_tg:
-                                saveconf['targets'][tidx] = current_tg;
+                                saveconf['targets'][tidx] = current_tg
                             # Remove target
                             else:
                                 saveconf['targets'].remove(saveconf['targets'][tidx])
