@@ -873,7 +873,10 @@ class UserBackedStorageObject(StorageObject):
         val = self._parse_info('MaxDataAreaMB')
         if val != "NULL":
             tuples.append("max_data_area_mb=%s" % val)
-        # 2. add next ...
+        val = self.get_attribute('hw_block_size')
+        if val != "NULL":
+            tuples.append("hw_block_size=%s" % val)
+        # 3. add next ...
 
         return ",".join(tuples)
 
