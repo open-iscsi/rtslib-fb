@@ -433,8 +433,8 @@ class RTSRoot(CFSNode):
                 # Instantiate target
                 Target.setup(fm_obj, t, err_func)
 
-            if target:
-                break
+                if target:
+                    break
 
         return errors
 
