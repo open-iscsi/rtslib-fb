@@ -486,3 +486,7 @@ class FabricModule(object):
     def all(cls):
         for mod in six.itervalues(fabric_modules):
             yield mod()
+
+    @classmethod
+    def list_registered_drivers(cls):
+        return os.listdir('/sys/module/target_core_mod/holders')
