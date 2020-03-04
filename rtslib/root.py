@@ -85,7 +85,7 @@ class RTSRoot(CFSNode):
             modprobe('target_core_mod')
             self._create_in_cfs_ine('any')
 
-        self._set_dbroot_if_needed()
+        self._set_dbroot()
 
     def _list_targets(self):
         self._check_self()
@@ -160,13 +160,21 @@ class RTSRoot(CFSNode):
     def __str__(self):
         return "rtslib"
 
-    def _set_dbroot_if_needed(self):
+    def _set_dbroot(self):
         dbroot_path = self.path + "/dbroot"
         if not os.path.exists(dbroot_path):
             self._dbroot = self._default_dbroot
             return
         self._dbroot = fread(dbroot_path)
         if self._dbroot != self._preferred_dbroot:
+            if len(FabricModule.list_registered_drivers()) is not 0:
+                # Writing to dbroot_path after drivers have been registered will make the kernel emit this error:
+                # db_root: cannot be changed: target drivers registered
+                from warnings import warn
+                warn("Cannot set dbroot to {}. Target drivers have already been registered."
+                     .format(self._preferred_dbroot))
+                return
+
             try:
                 fwrite(dbroot_path, self._preferred_dbroot+"\n")
             except:
