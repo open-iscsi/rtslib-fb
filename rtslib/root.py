@@ -486,7 +486,8 @@ class RTSRoot(CFSNode):
             os.fsync(f.fileno())
             f.close()
 
-        shutil.copyfile(tmp_file, save_file)
+        # copy along with permissions
+        shutil.copy(tmp_file, save_file)
         os.remove(tmp_file)
 
     def restore_from_file(self, restore_file=None, clear_existing=True,
