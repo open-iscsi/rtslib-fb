@@ -461,15 +461,33 @@ class RTSRoot(CFSNode):
 
         tmp_file = save_file + ".temp"
 
-        with open(tmp_file, "w+") as f:
-            os.fchmod(f.fileno(), stat.S_IRUSR | stat.S_IWUSR)
+        mode = stat.S_IRUSR | stat.S_IWUSR  # 0o600
+        umask = 0o777 ^ mode  # Prevents always downgrading umask to 0
+
+        # For security, remove file with potentially elevated mode
+        try:
+            os.remove(tmp_file)
+        except OSError:
+            pass
+
+        umask_original = os.umask(umask)
+        # Even though the old file is first deleted, a race condition is still
+        # possible. Including os.O_EXCL with os.O_CREAT in the flags will
+        # prevent the file from being created if it exists due to a race
+        try:
+            fdesc = os.open(tmp_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
+        finally:
+            os.umask(umask_original)
+
+        with os.fdopen(fdesc, 'w+') as f:
             f.write(json.dumps(saveconf, sort_keys=True, indent=2))
             f.write("\n")
             f.flush()
             os.fsync(f.fileno())
             f.close()
 
-        shutil.copyfile(tmp_file, save_file)
+        # copy along with permissions
+        shutil.copy(tmp_file, save_file)
         os.remove(tmp_file)
 
     def restore_from_file(self, restore_file=None, clear_existing=True,
