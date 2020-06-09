@@ -479,7 +479,7 @@ class RTSRoot(CFSNode):
         finally:
             os.umask(umask_original)
 
-        with os.fdopen(fdesc, 'w+') as f:
+        with os.fdopen(fdesc, 'w') as f:
             f.write(json.dumps(saveconf, sort_keys=True, indent=2))
             f.write("\n")
             f.flush()
