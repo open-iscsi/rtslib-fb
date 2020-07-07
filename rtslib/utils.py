@@ -114,7 +114,7 @@ def is_dev_in_use(path):
     '''
     path = os.path.realpath(str(path))
     try:
-        file_fd = os.open(path, os.O_EXCL|os.O_NDELAY)
+        file_fd = os.open(path, os.O_EXCL|os.O_NDELAY|os.O_RDWR)
     except OSError:
         return True
     else:
