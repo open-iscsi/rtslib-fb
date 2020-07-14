@@ -489,4 +489,7 @@ class FabricModule(object):
 
     @classmethod
     def list_registered_drivers(cls):
-        return os.listdir('/sys/module/target_core_mod/holders')
+        try:
+            return os.listdir('/sys/module/target_core_mod/holders')
+        except OSError:
+            return []
