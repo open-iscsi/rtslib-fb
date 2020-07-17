@@ -476,8 +476,8 @@ class RTSRoot(CFSNode):
         # prevent the file from being created if it exists due to a race
         try:
             fdesc = os.open(tmp_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
-        finally:
-            os.umask(umask_original)
+        except OSError:
+            raise ExecutionError("Could not open %s" % tmp_file)
 
         with os.fdopen(fdesc, 'w') as f:
             f.write(json.dumps(saveconf, sort_keys=True, indent=2))
@@ -488,6 +488,7 @@ class RTSRoot(CFSNode):
 
         # copy along with permissions
         shutil.copy(tmp_file, save_file)
+        os.umask(umask_original)
         os.remove(tmp_file)
 
     def restore_from_file(self, restore_file=None, clear_existing=True,
