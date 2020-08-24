@@ -36,7 +36,7 @@ from .tcm import StorageObjectFactory
 
 from .alua import ALUATargetPortGroup
 
-__version__ = '2.1.73'
+__version__ = '2.1.74'
 __author__ = "Jerome Martin <jxm@risingtidesystems.com>"
 __url__ = 'http://github.com/open-iscsi/rtslib-fb'
 __description__ = 'API for Linux kernel SCSI target (aka LIO)'
