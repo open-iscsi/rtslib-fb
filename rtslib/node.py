@@ -20,6 +20,7 @@ under the License.
 
 import os
 import stat
+import errno
 from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
 
 
@@ -27,6 +28,10 @@ class CFSNode(object):
 
     # Where is the configfs base LIO directory ?
     configfs_dir = '/sys/kernel/config/target'
+
+    # these two attributes can have file permissions of
+    # read-write but be read-only
+    may_be_ro_attrs = ['alua_support', 'pgr_support']
 
     # CFSNode private stuff
 
@@ -172,7 +177,8 @@ class CFSNode(object):
             try:
                 fwrite(path, "%s" % str(value))
             except Exception as e:
-                raise RTSLibError("Cannot set attribute %s: %s" % (attribute, e))
+                if attribute not in self.may_be_ro_attrs or e.errno != errno.EINVAL:
+                    raise RTSLibError("Cannot set attribute %s: %s" % (attribute, e))
 
     def get_attribute(self, attribute):
         '''
