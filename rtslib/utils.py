@@ -114,7 +114,11 @@ def is_dev_in_use(path):
     '''
     path = os.path.realpath(str(path))
     try:
-        file_fd = os.open(path, os.O_EXCL|os.O_NDELAY|os.O_RDWR)
+        device = pyudev.Device.from_device_file(_CONTEXT, path)
+        if device.subsystem == u'scsi_generic':
+            file_fd = os.open(path, os.O_EXCL|os.O_NDELAY|os.O_RDWR)
+        else:
+            file_fd = os.open(path, os.O_EXCL|os.O_NDELAY)
     except OSError:
         return True
     else:
