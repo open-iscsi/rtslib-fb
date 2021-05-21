@@ -159,7 +159,7 @@ class TPG(CFSNode):
         @param parent_target: The parent Target object of the TPG.
         @type parent_target: Target
         @param tag: The TPG Tag (TPGT).
-        @type tag: int > 0
+        @type tag: positive int
         @param mode:An optionnal string containing the object creation mode:
             - I{'any'} means the configFS object will be either looked up or
               created.
@@ -181,8 +181,8 @@ class TPG(CFSNode):
                 raise RTSLibError("Cannot find an available TPG Tag")
         else:
             tag = int(tag)
-            if not tag > 0:
-                raise RTSLibError("The TPG Tag must be >0")
+            if tag < 0:
+                raise RTSLibError("The TPG Tag must be >=0")
         self._tag = tag
 
         if isinstance(parent_target, Target):
