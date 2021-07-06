@@ -876,7 +876,11 @@ class UserBackedStorageObject(StorageObject):
         val = self.get_attribute('hw_block_size')
         if val != "NULL":
             tuples.append("hw_block_size=%s" % val)
-        # 3. add next ...
+        # 3. data_pages_per_blk
+        val = self._parse_info('DataPagesPerBlk')
+        if val != "NULL":
+            tuples.append("data_pages_per_blk=%s" % val)
+        # 4. add next ...
 
         return ",".join(tuples)
 
