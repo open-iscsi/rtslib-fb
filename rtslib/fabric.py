@@ -375,7 +375,29 @@ class Qla2xxxFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if not fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
+                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("QL"):
+                    yield "naa." + fread(wwn_file)[2:]
+
+
+class EfctFabricModule(_BaseFabricModule):
+    def __init__(self):
+        super(EfctFabricModule, self).__init__('efct')
+        self.features = ("acls",)
+        self.wwn_types = ('naa',)
+        self.kernel_module = "efct"
+
+    def to_fabric_wwn(self, wwn):
+        # strip 'naa.' and add colons
+        return colonize(wwn[4:])
+
+    def from_fabric_wwn(self, wwn):
+        return "naa." + wwn.replace(":", "")
+
+    @property
+    def wwns(self):
+        for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
+            with ignored(IOError):
+                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("Emulex"):
                     yield "naa." + fread(wwn_file)[2:]
 
 
@@ -465,6 +487,7 @@ fabric_modules = {
     "iscsi": ISCSIFabricModule,
     "loopback": LoopbackFabricModule,
     "qla2xxx": Qla2xxxFabricModule,
+    "efct": EfctFabricModule,
     "sbp": SBPFabricModule,
     "tcm_fc": FCoEFabricModule,
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
