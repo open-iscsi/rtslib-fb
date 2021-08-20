@@ -375,7 +375,10 @@ class Qla2xxxFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("QL"):
+                host = os.path.realpath(os.path.dirname(wwn_file))
+                device = host.rsplit('/', 3)[0]
+                driver = os.path.basename(os.path.realpath(device+"/driver"))
+                if driver == "qla2xxx":
                     yield "naa." + fread(wwn_file)[2:]
 
 
@@ -397,7 +400,10 @@ class EfctFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("Emulex"):
+                host = os.path.realpath(os.path.dirname(wwn_file))
+                device = host.rsplit('/', 3)[0]
+                driver = os.path.basename(os.path.realpath(device+"/driver"))
+                if driver == "efct":
                     yield "naa." + fread(wwn_file)[2:]
 
 
@@ -441,7 +447,10 @@ class FCoEFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
+                host = os.path.realpath(os.path.dirname(wwn_file))
+                device = host.rsplit('/', 3)[0]
+                subsystem = os.path.basename(os.path.realpath(device+"/subsystem"))
+                if subsystem == "fcoe":
                     yield "naa." + fread(wwn_file)[2:]
 
 
