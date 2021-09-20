@@ -375,7 +375,35 @@ class Qla2xxxFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if not fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
+                host = os.path.realpath(os.path.dirname(wwn_file))
+                device = host.rsplit('/', 3)[0]
+                driver = os.path.basename(os.path.realpath(device+"/driver"))
+                if driver == "qla2xxx":
+                    yield "naa." + fread(wwn_file)[2:]
+
+
+class EfctFabricModule(_BaseFabricModule):
+    def __init__(self):
+        super(EfctFabricModule, self).__init__('efct')
+        self.features = ("acls",)
+        self.wwn_types = ('naa',)
+        self.kernel_module = "efct"
+
+    def to_fabric_wwn(self, wwn):
+        # strip 'naa.' and add colons
+        return colonize(wwn[4:])
+
+    def from_fabric_wwn(self, wwn):
+        return "naa." + wwn.replace(":", "")
+
+    @property
+    def wwns(self):
+        for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
+            with ignored(IOError):
+                host = os.path.realpath(os.path.dirname(wwn_file))
+                device = host.rsplit('/', 3)[0]
+                driver = os.path.basename(os.path.realpath(device+"/driver"))
+                if driver == "efct":
                     yield "naa." + fread(wwn_file)[2:]
 
 
@@ -419,7 +447,10 @@ class FCoEFabricModule(_BaseFabricModule):
     def wwns(self):
         for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
             with ignored(IOError):
-                if fread(os.path.dirname(wwn_file)+"/symbolic_name").startswith("fcoe"):
+                host = os.path.realpath(os.path.dirname(wwn_file))
+                device = host.rsplit('/', 3)[0]
+                subsystem = os.path.basename(os.path.realpath(device+"/subsystem"))
+                if subsystem == "fcoe":
                     yield "naa." + fread(wwn_file)[2:]
 
 
@@ -465,6 +496,7 @@ fabric_modules = {
     "iscsi": ISCSIFabricModule,
     "loopback": LoopbackFabricModule,
     "qla2xxx": Qla2xxxFabricModule,
+    "efct": EfctFabricModule,
     "sbp": SBPFabricModule,
     "tcm_fc": FCoEFabricModule,
 #    "usb_gadget": USBGadgetFabricModule, # very rare, don't show
