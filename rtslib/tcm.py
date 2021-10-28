@@ -282,15 +282,14 @@ class StorageObject(CFSNode):
         '''
         @return: True if the StorageObject is configured, else returns False
         '''
-
         self._check_self()
         path = "%s/enable" % self.path
-        try:
-            configured = fread(path)
-        except IOError:
+        # If the StorageObject does not have the enable attribute,
+        # then it is always enabled.
+        if os.path.isfile(path):
+            return bool(int(fread(path)))
+        else:
             return True
-
-        return bool(int(configured))
 
     version = property(_get_version,
             doc="Get the version of the StorageObject's backstore")
