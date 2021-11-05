@@ -22,6 +22,7 @@ import os
 import stat
 import re
 import glob
+import fcntl
 import resource
 from six.moves import range
 
@@ -31,6 +32,10 @@ from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFS
 from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from .utils import is_dev_in_use, get_blockdev_type
 from .utils import get_size_for_blk_dev, get_size_for_disk_name
+
+lock_file = '/var/run/rtslib_backstore.lock'
+if not os.path.exists('/var/run'):
+    os.makedirs('/var/run')
 
 def storage_object_get_alua_support_attr(so):
     '''
@@ -997,6 +1002,8 @@ class _Backstore(CFSNode):
                                      (self._plugin, name))
             else:
                 # Allocate new index value
+                lkfd = open(lock_file, 'w+')
+                fcntl.flock(lkfd, fcntl.LOCK_EX)
                 indexes = set(bs_cache.values())
                 for index in range(1048576):
                     if index not in indexes:
@@ -1004,7 +1011,9 @@ class _Backstore(CFSNode):
                         bs_cache[self._lookup_key] = self._index
                         break
                 else:
+                    fcntl.flock(lkfd, fcntl.LOCK_UN)
                     raise RTSLibError("No available backstore index")
+                fcntl.flock(lkfd, fcntl.LOCK_UN)
 
         self._path = "%s/core/%s_%d" % (self.configfs_dir,
                                         dirp,
