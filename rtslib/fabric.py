@@ -118,9 +118,15 @@ from .utils import RTSLibError, modprobe, ignored
 from .target import Target
 from .utils import _get_auth_attr, _set_auth_attr
 
-version_attributes = set(["lio_version", "version"])
-discovery_auth_attributes = set(["discovery_auth"])
-target_names_excludes = version_attributes | discovery_auth_attributes
+excludes_list = [
+    # version_attributes
+    "lio_version", "version",
+    # discovery_auth_attributes
+    "discovery_auth",
+    # cpus_allowed_list_attributes
+    "cpus_allowed_list",
+]
+target_names_excludes = set(excludes_list)
 
 
 class _BaseFabricModule(CFSNode):
@@ -144,7 +150,8 @@ class _BaseFabricModule(CFSNode):
         self.name = name
         self.spec_file = "N/A"
         self._path = "%s/%s" % (self.configfs_dir, self.name)
-        self.features = ('discovery_auth', 'acls', 'auth', 'nps', 'tpgts')
+        self.features = ('discovery_auth', 'acls', 'auth', 'nps', 'tpgts',
+            'cpus_allowed_list')
         self.wwn_types = ('free',)
         self.kernel_module = "%s_target_mod" % self.name
 
@@ -220,6 +227,18 @@ class _BaseFabricModule(CFSNode):
             raise RTSLibError("Fabric module %s does not implement "
                               + "the %s feature" % (self.name, feature))
 
+    def _get_cpus_allowed_list(self):
+        self._check_self()
+        self._assert_feature('cpus_allowed_list')
+        path = "%s/cpus_allowed_list" % self.path
+        return fread(path)
+
+    def _set_cpus_allowed_list(self, allowed):
+        self._check_self()
+        self._assert_feature('cpus_allowed_list')
+        path = "%s/cpus_allowed_list" % self.path
+        fwrite(path, allowed)
+
     def clear_discovery_auth_settings(self):
         self._check_self()
         self._assert_feature('discovery_auth')
@@ -266,6 +285,11 @@ class _BaseFabricModule(CFSNode):
     def _set_disc_attr(self, *args, **kwargs):
         self._assert_feature('discovery_auth')
         _set_auth_attr(self, *args, **kwargs)
+
+    cpus_allowed_list = \
+            property(_get_cpus_allowed_list,
+                     _set_cpus_allowed_list,
+                     doc="Set or get the cpus_allowed_list attribute.")
 
     discovery_enable_auth = \
             property(_get_discovery_enable_auth,
