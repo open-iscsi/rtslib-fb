@@ -167,20 +167,20 @@ class RTSRoot(CFSNode):
             return
         self._dbroot = fread(dbroot_path)
         if self._dbroot != self._preferred_dbroot:
-            if len(FabricModule.list_registered_drivers()) != 0:
-                # Writing to dbroot_path after drivers have been registered will make the kernel emit this error:
-                # db_root: cannot be changed: target drivers registered
-                from warnings import warn
-                warn("Cannot set dbroot to {}. Target drivers have already been registered."
-                     .format(self._preferred_dbroot))
-                return
-
             try:
                 fwrite(dbroot_path, self._preferred_dbroot+"\n")
             except:
                 if not os.path.isdir(self._preferred_dbroot):
                     raise RTSLibError("Cannot set dbroot to {}. Please check if this directory exists."
                                       .format(self._preferred_dbroot))
+                else
+                    # Writing to dbroot_path after devices have been registered will make the kernel emit this error:
+                    # db_root: cannot be changed: target devices registered
+                    from warnings import warn
+                    warn("Cannot set dbroot to {}. Target devices have already been registered."
+                         .format(self._preferred_dbroot))
+                    return
+
             self._dbroot = fread(dbroot_path)
 
     def _get_dbroot(self):
