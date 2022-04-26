@@ -173,7 +173,7 @@ class RTSRoot(CFSNode):
                 if not os.path.isdir(self._preferred_dbroot):
                     raise RTSLibError("Cannot set dbroot to {}. Please check if this directory exists."
                                       .format(self._preferred_dbroot))
-                else
+                else:
                     # Writing to dbroot_path after devices have been registered will make the kernel emit this error:
                     # db_root: cannot be changed: target devices registered
                     from warnings import warn
