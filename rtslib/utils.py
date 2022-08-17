@@ -388,7 +388,7 @@ def normalize_wwn(wwn_types, wwn):
         re.match(r"iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
         and not re.search(' ', wwn) \
         and not re.search('_', wwn),
-    'naa': lambda wwn: re.match(r"naa\.[125][0-9a-fA-F]{15}$", wwn),
+    'naa': lambda wwn: re.match(r"naa\.[125c-fC-F][0-9a-fA-F]{15}$", wwn),
     'eui': lambda wwn: re.match(r"eui\.[0-9a-f]{16}$", wwn),
     'ib': lambda wwn: re.match(r"ib\.[0-9a-f]{32}$", wwn),
     'unit_serial': lambda wwn: \
