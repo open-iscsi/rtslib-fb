@@ -25,7 +25,7 @@ init_file_path = os.path.join(os.path.dirname(__file__), 'rtslib/__init__.py')
 
 with open(init_file_path) as f:
     for line in f:
-        match = re.match(r"__version__.*'([0-9.]+)'", line)
+        match = re.match(r"__version__.*'([0-9.]+)(\.g[0-9a-f]+)?'", line)
         if match:
             version = match.group(1)
             break
