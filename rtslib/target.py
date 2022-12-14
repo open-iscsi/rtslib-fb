@@ -1060,8 +1060,6 @@ class MappedLUN(CFSNode):
     the initiator node as the MappedLUN.
     '''
 
-    MAX_LUN = 255
-
     # MappedLUN private stuff
 
     def __repr__(self):
@@ -1108,9 +1106,8 @@ class MappedLUN(CFSNode):
         except ValueError:
             raise RTSLibError("The mapped_lun parameter must be an " \
                               + "integer value")
-
-        if self._mapped_lun < 0 or self._mapped_lun > self.MAX_LUN:
-            raise RTSLibError("Mapped LUN must be 0 to %d" % self.MAX_LUN)
+        if self._mapped_lun < 0:
+            raise RTSLibError("Mapped LUN must be >= 0")
 
         self._path = "%s/lun_%d" % (self.parent_nodeacl.path, self.mapped_lun)
 
