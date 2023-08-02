@@ -423,6 +423,8 @@ def modprobe(module):
 
     try:
         import kmod
+        import kmod.error
+        import kmod.Kmod
     except ImportError:
         process = subprocess.Popen(("modprobe", module),
                                    stdout=subprocess.PIPE,
