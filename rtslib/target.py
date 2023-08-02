@@ -466,6 +466,10 @@ class LUN(CFSNode):
 
     MAX_TARGET_LUN = 65535
 
+    ALUA_STATUS_NONE = 0
+    ALUA_STATUS_ALTERED_BY_EXPLICIT_STPG = 1
+    ALUA_STATUS_ALTERED_BY_IMPLICIT_ALUA = 2
+
     # LUN private stuff
 
     def __repr__(self):
@@ -620,6 +624,93 @@ class LUN(CFSNode):
 
         return 0
 
+    def _get_alua_tg_pt_offline(self):
+        self._check_self()
+
+        if self._get_storage_object().alua_supported is False:
+            return None
+
+        path = "%s/alua_tg_pt_offline" % self.path
+        try:
+            return bool(int(fread(path))) if os.path.isfile(path) else None
+        except IOError as e:
+            return None
+
+    def _set_alua_tg_pt_offline(self, boolean):
+        self._check_self()
+
+        if self._get_storage_object().alua_supported is False:
+            return -1
+
+        path = "%s/alua_tg_pt_offline" % self.path
+        try:
+            if os.path.isfile(path):
+                fwrite(path, "1" if boolean else "0")
+        except IOError as e:
+            return -1
+
+        return 0
+
+    def _get_alua_tg_pt_status(self):
+        self._check_self()
+
+        if self._get_storage_object().alua_supported is False:
+            return None
+
+        path = "%s/alua_tg_pt_status" % self.path
+        try:
+            return int(fread(path)) if os.path.isfile(path) else None
+        except IOError as e:
+            return None
+
+    def _set_alua_tg_pt_status(self, integer):
+        self._check_self()
+
+        if integer != self.ALUA_STATUS_NONE and\
+            integer != self.ALUA_STATUS_ALTERED_BY_EXPLICIT_STPG and\
+            integer != self.ALUA_STATUS_ALTERED_BY_IMPLICIT_ALUA:
+            return -1
+
+        if self._get_storage_object().alua_supported is False:
+            return -1
+
+        path = "%s/alua_tg_pt_status" % self.path
+        try:
+            if os.path.isfile(path):
+                fwrite(path, str(integer))
+        except IOError as e:
+            return -1
+
+        return 0
+
+    def _get_alua_tg_pt_write_md(self):
+        self._check_self()
+
+        if self._get_storage_object().alua_supported is False:
+            return None
+
+        path = "%s/alua_tg_pt_write_md" % self.path
+        try:
+            return bool(int(fread(path))) if os.path.isfile(path) else None
+        except IOError as e:
+            return None
+
+    def _set_alua_tg_pt_write_md(self, boolean):
+        self._check_self()
+
+        if self._get_storage_object().alua_supported is False:
+            return -1
+
+        path = "%s/alua_tg_pt_write_md" % self.path
+        try:
+            if os.path.isfile(path):
+                fwrite(path, "1" if boolean else "0")
+        except IOError as e:
+            return -1
+
+        return 0
+
+
     # LUN public stuff
 
     def delete(self):
@@ -655,6 +746,12 @@ class LUN(CFSNode):
             doc="List all MappedLUN objects referencing this LUN.")
     alua_tg_pt_gp_name = property(_get_alua_tg_pt_gp_name, _set_alua_tg_pt_gp_name,
             doc="Get and Set the LUN's ALUA Target Port Group")
+    alua_tg_pt_offline = property(_get_alua_tg_pt_offline, _set_alua_tg_pt_offline,
+            doc="Get and Set the LUN's ALUA Secondary Access State")
+    alua_tg_pt_status = property(_get_alua_tg_pt_status, _set_alua_tg_pt_status,
+            doc="Get and Set the LUN's ALUA Secondary Access Status")
+    alua_tg_pt_write_md = property(_get_alua_tg_pt_write_md, _set_alua_tg_pt_write_md,
+            doc="Get and Set the LUN's ALUA Secondary Write Metadata")
 
     @classmethod
     def setup(cls, tpg_obj, lun, err_func):
