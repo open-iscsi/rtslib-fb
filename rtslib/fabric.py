@@ -259,7 +259,11 @@ class _BaseFabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = "%s/discovery_auth/enforce_discovery_auth" % self.path
-        if int(enable):
+        if enable == 'True':
+            enable = 1
+        elif enable == 'False':
+            enable = 0
+        elif int(enable):
             enable = 1
         else:
             enable = 0
