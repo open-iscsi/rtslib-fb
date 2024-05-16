@@ -32,10 +32,10 @@ default_save_file = "/etc/target/saveconfig.json"
 err = sys.stderr
 
 def usage():
-    print("syntax: %s save [file_to_save_to]" % sys.argv[0], file=err)
-    print("        %s restore [file_to_restore_from]" % sys.argv[0], file=err)
-    print("        %s clear" % sys.argv[0], file=err)
-    print("  default file is: %s" % default_save_file, file=err)
+    print(f"syntax: {sys.argv[0]} save [file_to_save_to]\n"
+          f"        {sys.argv[0]} restore [file_to_restore_from]\n"
+          f"        {sys.argv[0]} clear\n"
+          f"default file is: {default_save_file}", file=err)
     sys.exit(-1)
 
 def save(to_file):
@@ -47,7 +47,7 @@ def restore(from_file):
         errors = RTSRoot().restore_from_file(restore_file=from_file)
     except IOError:
         # Not an error if the restore file is not present
-        print("No saved config file at %s, ok, exiting" % from_file)
+        print(f"No saved config file at {from_file}, ok, exiting")
         sys.exit(0)
 
     for error in errors:

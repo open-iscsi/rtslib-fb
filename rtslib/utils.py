@@ -334,10 +334,10 @@ def generate_wwn(wwn_type):
     elif wwn_type == 'iqn':
         localname = socket.gethostname().split(".")[0].replace("_", "")
         localarch = os.uname()[4].replace("_", "")
-        prefix = "iqn.2003-01.org.linux-iscsi.%s.%s" % (localname, localarch)
+        prefix = f"iqn.2003-01.org.linux-iscsi.{localname}.{localarch}"
         prefix = prefix.strip().lower()
-        serial = "sn.%s" % str(uuid.uuid4())[24:]
-        return "%s:%s" % (prefix, serial)
+        serial = f"sn.{str(uuid.uuid4())[24:]}"
+        return f"{prefix}:{serial}"
     elif wwn_type == 'naa':
         # see http://standards.ieee.org/develop/regauth/tut/fibre.pdf
         # 5 = IEEE registered
@@ -347,7 +347,7 @@ def generate_wwn(wwn_type):
     elif wwn_type == 'eui':
         return "eui.001405" + uuid.uuid4().hex[-10:]
     else:
-        raise ValueError("Unknown WWN type: %s" % wwn_type)
+        raise ValueError(f"Unknown WWN type: {wwn_type}")
 
 def colonize(str):
     '''
@@ -400,7 +400,7 @@ def normalize_wwn(wwn_types, wwn):
         if found_type:
             break
     else:
-        raise RTSLibError("WWN not valid as: %s" % ", ".join(wwn_types))
+        raise RTSLibError(f"WWN not valid as: {', '.join(wwn_types)}")
 
     return (clean_wwn, wwn_type)
 
@@ -436,7 +436,7 @@ def modprobe(module):
     try:
         kmod.Kmod().modprobe(module)
     except kmod.error.KmodError:
-        raise RTSLibError("Could not load module: %s" % module)
+        raise RTSLibError(f"Could not load module: {module}")
 
 def mount_configfs():
     if not os.path.ismount("/sys/kernel/config"):
@@ -476,7 +476,7 @@ def ignored(*exceptions):
 #
 def _get_auth_attr(self, attribute, ignore=False):
     self._check_self()
-    path = "%s/%s" % (self.path, attribute)
+    path = f"{self.path}/{attribute}"
     try:
         value = fread(path)
     except:
@@ -491,7 +491,7 @@ def _get_auth_attr(self, attribute, ignore=False):
 # Auth params take the string "NULL" to unset the attribute
 def _set_auth_attr(self, value, attribute, ignore=False):
     self._check_self()
-    path = "%s/%s" % (self.path, attribute)
+    path = f"{self.path}/{attribute}"
     value = value.strip()
     if value == "NULL":
         raise RTSLibError("'NULL' is not a permitted value")
@@ -500,7 +500,7 @@ def _set_auth_attr(self, value, attribute, ignore=False):
     if value == '':
         value = "NULL"
     try:
-        fwrite(path, "%s" % value)
+        fwrite(path, f"{value}")
     except:
         if not ignore:
             raise

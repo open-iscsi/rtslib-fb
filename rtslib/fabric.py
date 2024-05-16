@@ -103,7 +103,7 @@ Example: self.kernel_module = "my_module"
 * _path
 Sets the path of the configfs group used by the fabric module. Defaults to the
 name of the module from the fabrics list.
-Example: self._path = "%s/%s" % (self.configfs_dir, "my_cfs_dir")
+Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 
 '''
 
@@ -149,11 +149,11 @@ class _BaseFabricModule(CFSNode):
         super(_BaseFabricModule, self).__init__()
         self.name = name
         self.spec_file = "N/A"
-        self._path = "%s/%s" % (self.configfs_dir, self.name)
+        self._path = f"{self.configfs_dir}/{self.name}"
         self.features = ('discovery_auth', 'acls', 'auth', 'nps', 'tpgts',
             'cpus_allowed_list')
         self.wwn_types = ('free',)
-        self.kernel_module = "%s_target_mod" % self.name
+        self.kernel_module = f"{self.name}_target_mod"
 
     # FabricModule public stuff
 
@@ -175,19 +175,18 @@ class _BaseFabricModule(CFSNode):
     def _list_targets(self):
         if self.exists:
             for wwn in os.listdir(self.path):
-                if os.path.isdir("%s/%s" % (self.path, wwn)) and \
+                if os.path.isdir(f"{self.path}/{wwn}") and \
                         wwn not in target_names_excludes:
                     yield Target(self, self.from_fabric_wwn(wwn), 'lookup')
 
     def _get_version(self):
         if self.exists:
             for attr in self.version_attributes:
-                path = "%s/%s" % (self.path, attr)
+                path = f"{self.path}/{attr}"
                 if os.path.isfile(path):
                     return fread(path)
             else:
-                raise RTSLibError("Can't find version for fabric module %s"
-                                  % self.name)
+                raise RTSLibError(f"Can't find version for fabric module {self.name}")
         else:
             return None
 
@@ -224,19 +223,18 @@ class _BaseFabricModule(CFSNode):
 
     def _assert_feature(self, feature):
         if not self.has_feature(feature):
-            raise RTSLibError("Fabric module %s does not implement the %s feature" % (
-                self.name, feature))
+            raise RTSLibError(f"Fabric module {self.name} does not implement the {feature} feature")
 
     def _get_cpus_allowed_list(self):
         self._check_self()
         self._assert_feature('cpus_allowed_list')
-        path = "%s/cpus_allowed_list" % self.path
+        path = f"{self.path}/cpus_allowed_list"
         return fread(path)
 
     def _set_cpus_allowed_list(self, allowed):
         self._check_self()
         self._assert_feature('cpus_allowed_list')
-        path = "%s/cpus_allowed_list" % self.path
+        path = f"{self.path}/cpus_allowed_list"
         fwrite(path, allowed)
 
     def clear_discovery_auth_settings(self):
@@ -251,24 +249,24 @@ class _BaseFabricModule(CFSNode):
     def _get_discovery_enable_auth(self):
         self._check_self()
         self._assert_feature('discovery_auth')
-        path = "%s/discovery_auth/enforce_discovery_auth" % self.path
+        path = f"{self.path}/discovery_auth/enforce_discovery_auth"
         value = fread(path)
         return bool(int(value))
 
     def _set_discovery_enable_auth(self, enable):
         self._check_self()
         self._assert_feature('discovery_auth')
-        path = "%s/discovery_auth/enforce_discovery_auth" % self.path
+        path = f"{self.path}/discovery_auth/enforce_discovery_auth"
         if int(enable):
             enable = 1
         else:
             enable = 0
-        fwrite(path, "%s" % enable)
+        fwrite(path, f"{enable}")
 
     def _get_discovery_authenticate_target(self):
         self._check_self()
         self._assert_feature('discovery_auth')
-        path = "%s/discovery_auth/authenticate_target" % self.path
+        path = f"{self.path}/discovery_auth/authenticate_target"
         return bool(int(fread(path)))
 
     def _get_wwns(self):
@@ -329,7 +327,7 @@ class _BaseFabricModule(CFSNode):
                 try:
                     setattr(self, name, value)
                 except:
-                    err_func("Could not set fabric %s attribute '%s'" % (fm['name'], name))
+                    err_func(f"Could not set fabric {fm['name']} attribute '{name}'")
 
     def dump(self):
         d = super(_BaseFabricModule, self).dump()
@@ -458,7 +456,7 @@ class FCoEFabricModule(_BaseFabricModule):
         self.features = ("acls",)
         self.kernel_module = "tcm_fc"
         self.wwn_types=('naa',)
-        self._path = "%s/%s" % (self.configfs_dir, "fc")
+        self._path = f"{self.configfs_dir}/fc"
 
     def to_fabric_wwn(self, wwn):
         # strip 'naa.' and add colons
@@ -496,7 +494,7 @@ class VhostFabricModule(_BaseFabricModule):
 class XenPvScsiFabricModule(_BaseFabricModule):
     def __init__(self):
         super(XenPvScsiFabricModule, self).__init__('xen-pvscsi')
-        self._path = "%s/%s" % (self.configfs_dir, 'xen-pvscsi')
+        self._path = f"{self.configfs_dir}/xen-pvscsi"
         self.features = ("nexus", "tpgts")
         self.wwn_types = ('naa',)
         self.kernel_module = "xen-scsiback"

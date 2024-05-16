@@ -48,7 +48,7 @@ def human_to_bytes(hsize, kilo=1024):
     size = hsize.replace('i', '')
     size = size.lower()
     if not re.match("^[0-9\.]+[k|m|g|t]?[b]?$", size):
-        raise Exception("Cannot interpret size, wrong format: %s" % hsize)
+        raise Exception(f"Cannot interpret size, wrong format: {hsize}")
 
     size = size.rstrip('ib')
 

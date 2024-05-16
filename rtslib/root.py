@@ -170,14 +170,14 @@ class RTSRoot(CFSNode):
                 fwrite(dbroot_path, self._preferred_dbroot+"\n")
             except:
                 if not os.path.isdir(self._preferred_dbroot):
-                    raise RTSLibError("Cannot set dbroot to {}. Please check if this directory exists."
-                                      .format(self._preferred_dbroot))
+                    raise RTSLibError(f"Cannot set dbroot to {self._preferred_dbroot}. "
+                                      f"Please check if this directory exists.")
                 else:
-                    # Writing to dbroot_path after devices have been registered will make the kernel emit this error:
-                    # db_root: cannot be changed: target devices registered
+                    # Writing to dbroot_path after devices have been registered will make the
+                    # kernel emit this error: db_root: cannot be changed: target devices registered
                     from warnings import warn
-                    warn("Cannot set dbroot to {}. Target devices have already been registered."
-                         .format(self._preferred_dbroot))
+                    warn(f"Cannot set dbroot to {self._preferred_dbroot}. "
+                         f"Target devices have already been registered.")
                     return
 
             self._dbroot = fread(dbroot_path)
@@ -200,7 +200,7 @@ class RTSRoot(CFSNode):
             if e.errno == errno.ENOENT:
                 saveconf = {'storage_objects': [], 'targets': []}
             else:
-                raise IOError("Could not open %s" % save_file)
+                raise IOError(f"Could not open {save_file}")
 
         fetch_cur_so = False
         fetch_cur_tg = False
@@ -321,7 +321,7 @@ class RTSRoot(CFSNode):
         # If somehow some hbas still exist (no storage object within?) clean
         # them up too.
         if not (storage_object or target):
-            for hba_dir in glob.glob("%s/core/*_*" % self.configfs_dir):
+            for hba_dir in glob.glob(f"{self.configfs_dir}/core/*_*"):
                 os.rmdir(hba_dir)
 
     def restore(self, config, target=None, storage_object=None,
@@ -340,15 +340,14 @@ class RTSRoot(CFSNode):
                     for loaded_so in self.storage_objects:
                         if config_so['name'] == loaded_so.name and \
                            config_so['plugin'] == loaded_so.plugin:
-                            raise RTSLibError("storageobject '%s:%s' exist not restoring"
-                                              %(loaded_so.plugin, loaded_so.name))
+                            raise RTSLibError(f"storageobject '{loaded_so.plugin}:"
+                                              f"{loaded_so.name}' exist not restoring")
 
             if any(self.targets):
                 for config_tg in config.get('targets', []):
                     for loaded_tg in self.targets:
                         if config_tg['wwn'] == loaded_tg.wwn:
-                            raise RTSLibError("target with wwn %s exist, not restoring"
-                                              %(loaded_tg.wwn))
+                            raise RTSLibError(f"target with wwn {loaded_tg.wwn} exist, not restoring")
         errors = []
 
         if abort_on_error:
@@ -373,23 +372,24 @@ class RTSRoot(CFSNode):
                 try:
                     so_cls = so_mapping[so['plugin']]
                 except KeyError:
-                    err_func("'plugin' not defined or invalid in storageobject %s" % so['name'])
+                    err_func(f"'plugin' not defined or invalid in storageobject {so['name']}")
                     if storage_object:
                         break
                     continue
                 kwargs = so.copy()
-                dict_remove(kwargs, ('exists', 'attributes', 'plugin', 'buffered_mode', 'alua_tpgs'))
+                dict_remove(kwargs, (
+                    'exists', 'attributes', 'plugin', 'buffered_mode', 'alua_tpgs'))
                 try:
                     so_obj = so_cls(**kwargs)
                 except Exception as e:
-                    err_func("Could not create StorageObject %s: %s" % (so['name'], e))
+                    err_func(f"Could not create StorageObject {so['name']}: {e}")
                     if storage_object:
                         break
                     continue
 
                 # Custom err func to include block name
                 def so_err_func(x):
-                    return err_func("Storage Object %s/%s: %s" % (so['plugin'], so['name'], x))
+                    return err_func(f"Storage Object {so['plugin']}/{so['name']}: {x}")
 
                 set_attributes(so_obj, so.get('attributes', {}), so_err_func)
 
@@ -425,12 +425,12 @@ class RTSRoot(CFSNode):
             #   restoreconfig, then go ahead and load all targets
             if (not storage_object and not target) or (target and t['wwn'] == target):
                 if 'fabric' not in t:
-                    err_func("target %s missing 'fabric' field" % t['wwn'])
+                    err_func(f"target {t['wwn']} missing 'fabric' field")
                     if target:
                         break
                     continue
                 if t['fabric'] not in (f.name for f in self.fabric_modules):
-                    err_func("Unknown fabric '%s'" % t['fabric'])
+                    err_func(f"Unknown fabric '{t['fabric']}'")
                     if target:
                         break
                     continue
