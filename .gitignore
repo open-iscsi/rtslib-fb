@@ -19,4 +19,6 @@ doc/*
 debian/python-rtslib.substvars
 debian/rtslib-doc.debhelper.log
 debian/tmp/
-rtslib-*
+venv/
+.idea
+*egg-info/
