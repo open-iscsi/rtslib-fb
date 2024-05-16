@@ -36,7 +36,7 @@ class RTSLibError(Exception):
     '''
     pass
 
-class RTSLibALUANotSupported(RTSLibError):
+class RTSLibALUANotSupportedError(RTSLibError):
     '''
     Backend does not support ALUA.
     '''
@@ -48,7 +48,7 @@ class RTSLibBrokenLink(RTSLibError):
     '''
     pass
 
-class RTSLibNotInCFS(RTSLibError):
+class RTSLibNotInCFSError(RTSLibError):
     '''
     The underlying configfs object does not exist. Happens when
     calling methods of an object that is instantiated but have

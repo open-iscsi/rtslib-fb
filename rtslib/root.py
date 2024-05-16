@@ -28,7 +28,7 @@ from .node import CFSNode
 from .target import Target
 from .fabric import FabricModule
 from .tcm import so_mapping, bs_cache, StorageObject
-from .utils import RTSLibError, RTSLibALUANotSupported, modprobe, mount_configfs
+from .utils import RTSLibError, RTSLibALUANotSupportedError, modprobe, mount_configfs
 from .utils import dict_remove, set_attributes
 from .utils import fread, fwrite
 from .alua import ALUATargetPortGroup
@@ -177,7 +177,7 @@ class RTSRoot(CFSNode):
                     # kernel emit this error: db_root: cannot be changed: target devices registered
                     from warnings import warn
                     warn(f"Cannot set dbroot to {self._preferred_dbroot}. "
-                         f"Target devices have already been registered.")
+                         f"Target devices have already been registered.", stacklevel=1)
                     return
 
             self._dbroot = fread(dbroot_path)
@@ -390,14 +390,14 @@ class RTSRoot(CFSNode):
 
                 # Custom err func to include block name
                 def so_err_func(x):
-                    return err_func(f"Storage Object {so['plugin']}/{so['name']}: {x}")
+                    return err_func(f"Storage Object {so['plugin']}/{so['name']}: {x}")  # noqa: B023 TODO
 
                 set_attributes(so_obj, so.get('attributes', {}), so_err_func)
 
                 for alua_tpg in so.get('alua_tpgs', {}):
                     try:
                         ALUATargetPortGroup.setup(so_obj, alua_tpg, err_func)
-                    except RTSLibALUANotSupported:
+                    except RTSLibALUANotSupportedError:
                         pass
 
                 if storage_object:

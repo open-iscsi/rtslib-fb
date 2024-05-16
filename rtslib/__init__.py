@@ -17,8 +17,8 @@ under the License.
 '''
 
 from .root import RTSRoot
-from .utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
-from .utils import RTSLibALUANotSupported
+from .utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFSError
+from .utils import RTSLibALUANotSupportedError
 
 from .target import LUN, MappedLUN
 from .target import NodeACL, NetworkPortal, TPG, Target
@@ -36,8 +36,8 @@ __all__ = [
     "RTSRoot",
     "RTSLibError",
     "RTSLibBrokenLink",
-    "RTSLibNotInCFS",
-    "RTSLibALUANotSupported",
+    "RTSLibNotInCFSError",
+    "RTSLibALUANotSupportedError",
     "LUN",
     "MappedLUN",
     "NodeACL",

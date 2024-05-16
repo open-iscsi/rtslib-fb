@@ -28,7 +28,7 @@ from six.moves import range
 
 from .alua import ALUATargetPortGroup
 from .node import CFSNode
-from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFS
+from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFSError
 from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
 from .utils import is_dev_in_use, get_blockdev_type
 from .utils import get_size_for_blk_dev, get_size_for_disk_name
@@ -994,7 +994,7 @@ class _Backstore(CFSNode):
 
         if self._index is None:
             if mode == 'lookup':
-                raise RTSLibNotInCFS(f"Storage object {self._plugin}/{name} not found")
+                raise RTSLibNotInCFSError(f"Storage object {self._plugin}/{name} not found")
             else:
                 # Allocate new index value
                 if not os.path.exists('/var/run'):

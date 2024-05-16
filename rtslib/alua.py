@@ -18,7 +18,7 @@ a copy of the License at
 '''
 
 from .node import CFSNode
-from .utils import RTSLibError, RTSLibALUANotSupported, fread, fwrite
+from .utils import RTSLibError, RTSLibALUANotSupportedError, fread, fwrite
 import six
 
 alua_rw_params = ['alua_access_state', 'alua_access_status',
@@ -48,7 +48,7 @@ class ALUATargetPortGroup(CFSNode):
                     up existing ALUA TPG with the same name
         """
         if storage_object.alua_supported is False:
-            raise RTSLibALUANotSupported("Backend does not support ALUA setup")
+            raise RTSLibALUANotSupportedError("Backend does not support ALUA setup")
 
         # default_tg_pt_gp takes tag 1
         if tag is not None and (tag > 65535 or tag < 1):

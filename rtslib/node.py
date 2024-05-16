@@ -20,7 +20,7 @@ under the License.
 
 import os
 import stat
-from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
+from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFSError
 
 
 class CFSNode(object):
@@ -62,7 +62,7 @@ class CFSNode(object):
                raise RTSLibError(f"This {self.__class__.__name__} already exists in configFS")
 
         elif not self.exists and mode == 'lookup':
-            raise RTSLibNotInCFS(f"No such {self.__class__.__name__} in configfs: {self.path}")
+            raise RTSLibNotInCFSError(f"No such {self.__class__.__name__} in configfs: {self.path}")
 
         if not self.exists:
             try:
@@ -75,7 +75,7 @@ class CFSNode(object):
 
     def _check_self(self):
         if not self.exists:
-            raise RTSLibNotInCFS(f"This {self.__class__.__name__} does not exist in configFS")
+            raise RTSLibNotInCFSError(f"This {self.__class__.__name__} does not exist in configFS")
 
     def _list_files(self, path, writable=None, readable=None):
         '''
