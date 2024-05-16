@@ -21,7 +21,6 @@ under the License.
 import os
 from glob import iglob as glob
 from functools import partial
-from six.moves import range
 import uuid
 
 from .node import CFSNode
@@ -30,8 +29,6 @@ from .utils import fread, fwrite, normalize_wwn, generate_wwn
 from .utils import dict_remove, set_attributes, set_parameters, ignored
 from .utils import _get_auth_attr, _set_auth_attr
 from . import tcm
-
-import six
 
 auth_params = ('userid', 'password', 'mutual_userid', 'mutual_password')
 
@@ -63,7 +60,7 @@ class Target(CFSNode):
         @return: A Target object.
         '''
 
-        super(Target, self).__init__()
+        super().__init__()
         self.fabric_module = fabric_module
 
         fabric_module._check_self()
@@ -107,7 +104,7 @@ class Target(CFSNode):
         self._check_self()
         for tpg in self.tpgs:
             tpg.delete()
-        super(Target, self).delete()
+        super().delete()
 
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
 
@@ -133,7 +130,7 @@ class Target(CFSNode):
             TPG.setup(t_obj, tpg, err_func)
 
     def dump(self):
-        d = super(Target, self).dump()
+        d = super().dump()
         d['wwn'] = self.wwn
         d['fabric'] = self.fabric_module.name
         d['tpgs'] = [tpg.dump() for tpg in self.tpgs]
@@ -169,7 +166,7 @@ class TPG(CFSNode):
         @return: A TPG object.
         '''
 
-        super(TPG, self).__init__()
+        super().__init__()
 
         if tag is None:
             tags = [tpg.tag for tpg in parent_target.tpgs]
@@ -241,7 +238,7 @@ class TPG(CFSNode):
         if os.path.isfile(path) and (boolean != self._get_enable()):
             try:
                 fwrite(path, str(int(boolean)))
-            except IOError as e:
+            except OSError as e:
                 raise RTSLibError(f"Cannot change enable state: {e}")
 
     def _get_nexus(self):
@@ -252,7 +249,7 @@ class TPG(CFSNode):
         if self.has_feature('nexus'):
             try:
                 nexus_wwn = fread(f"{self.path}/nexus")
-            except IOError:
+            except OSError:
                 nexus_wwn = ''
             return nexus_wwn
         else:
@@ -344,7 +341,7 @@ class TPG(CFSNode):
             lun.delete()
         for portal in self.network_portals:
             portal.delete()
-        super(TPG, self).delete()
+        super().delete()
 
     def node_acl(self, node_wwn, mode='any'):
         '''
@@ -439,7 +436,7 @@ class TPG(CFSNode):
         tpg_obj.enable = tpg.get('enable', True)
         dict_remove(tpg, ('luns', 'portals', 'node_acls', 'tag',
                           'attributes', 'parameters', 'enable'))
-        for name, value in six.iteritems(tpg):
+        for name, value in tpg.items():
             if value:
                 try:
                     setattr(tpg_obj, name, value)
@@ -447,7 +444,7 @@ class TPG(CFSNode):
                     err_func(f"Could not set tpg {tpg_obj.tag} attribute '{name}'")
 
     def dump(self):
-        d = super(TPG, self).dump()
+        d = super().dump()
         d['tag'] = self.tag
         d['enable'] = self.enable
         d['luns'] = [lun.dump() for lun in self.luns]
@@ -502,7 +499,7 @@ class LUN(CFSNode):
         @type alias: string
         @return: A LUN object.
         '''
-        super(LUN, self).__init__()
+        super().__init__()
 
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
@@ -610,7 +607,7 @@ class LUN(CFSNode):
                 return None
             group_line = info.splitlines()[0]
             return group_line.split(':')[1].strip()
-        except IOError:
+        except OSError:
             return None
 
     def _set_alua_tg_pt_gp_name(self, group_name):
@@ -622,7 +619,7 @@ class LUN(CFSNode):
         path = f"{self.path}/alua_tg_pt_gp"
         try:
             fwrite(path, group_name)
-        except IOError:
+        except OSError:
             return -1
 
         return 0
@@ -636,7 +633,7 @@ class LUN(CFSNode):
         path = f"{self.path}/alua_tg_pt_offline"
         try:
             return bool(int(fread(path))) if os.path.isfile(path) else None
-        except IOError:
+        except OSError:
             return None
 
     def _set_alua_tg_pt_offline(self, boolean):
@@ -649,7 +646,7 @@ class LUN(CFSNode):
         try:
             if os.path.isfile(path):
                 fwrite(path, "1" if boolean else "0")
-        except IOError:
+        except OSError:
             return -1
 
         return 0
@@ -663,7 +660,7 @@ class LUN(CFSNode):
         path = f"{self.path}/alua_tg_pt_status"
         try:
             return int(fread(path)) if os.path.isfile(path) else None
-        except IOError:
+        except OSError:
             return None
 
     def _set_alua_tg_pt_status(self, integer):
@@ -681,7 +678,7 @@ class LUN(CFSNode):
         try:
             if os.path.isfile(path):
                 fwrite(path, str(integer))
-        except IOError:
+        except OSError:
             return -1
 
         return 0
@@ -695,7 +692,7 @@ class LUN(CFSNode):
         path = f"{self.path}/alua_tg_pt_write_md"
         try:
             return bool(int(fread(path))) if os.path.isfile(path) else None
-        except IOError:
+        except OSError:
             return None
 
     def _set_alua_tg_pt_write_md(self, boolean):
@@ -708,7 +705,7 @@ class LUN(CFSNode):
         try:
             if os.path.isfile(path):
                 fwrite(path, "1" if boolean else "0")
-        except IOError:
+        except OSError:
             return -1
 
         return 0
@@ -735,7 +732,7 @@ class LUN(CFSNode):
             if os.path.islink(f"{self.path}/{link}"):
                 os.unlink(f"{self.path}/{link}")
 
-        super(LUN, self).delete()
+        super().delete()
 
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
@@ -789,7 +786,7 @@ class LUN(CFSNode):
             pass
 
     def dump(self):
-        d = super(LUN, self).dump()
+        d = super().dump()
         d['storage_object'] = f"/backstores/{self.storage_object.plugin}/{self.storage_object.name}"
         d['index'] = self.lun
         d['alias'] = self.alias
@@ -828,7 +825,7 @@ class NetworkPortal(CFSNode):
         @type mode:string
         @return: A NetworkPortal object.
         '''
-        super(NetworkPortal, self).__init__()
+        super().__init__()
 
         self._ip_address = str(ip_address)
 
@@ -862,14 +859,14 @@ class NetworkPortal(CFSNode):
     def _get_iser(self):
         try:
             return bool(int(fread(f"{self.path}/iser")))
-        except IOError:
+        except OSError:
             return False
 
     def _set_iser(self, boolean):
         path = f"{self.path}/iser"
         try:
             fwrite(path, str(int(boolean)))
-        except IOError:
+        except OSError:
             # b/w compat: don't complain if iser entry is missing
             if os.path.isfile(path):
                 raise RTSLibError("Cannot change iser")
@@ -878,14 +875,14 @@ class NetworkPortal(CFSNode):
         try:
             # only offload at the moment is cxgbit
             return bool(int(fread(f"{self.path}/cxgbit")))
-        except IOError:
+        except OSError:
             return False
 
     def _set_offload(self, boolean):
         path = f"{self.path}/cxgbit"
         try:
             fwrite(path, str(int(boolean)))
-        except IOError:
+        except OSError:
             # b/w compat: don't complain if cxgbit entry is missing
             if os.path.isfile(path):
                 raise RTSLibError("Cannot change offload")
@@ -895,7 +892,7 @@ class NetworkPortal(CFSNode):
     def delete(self):
         self.iser = False
         self.offload = False
-        super(NetworkPortal, self).delete()
+        super().delete()
 
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
@@ -927,7 +924,7 @@ class NetworkPortal(CFSNode):
             err_func(f"Creating NetworkPortal object {p['ip_address']}:{p['port']} failed: {e}")
 
     def dump(self):
-        d = super(NetworkPortal, self).dump()
+        d = super().dump()
         d['port'] = self.port
         d['ip_address'] = self.ip_address
         d['iser'] = self.iser
@@ -962,7 +959,7 @@ class NodeACL(CFSNode):
         @return: A NodeACL object.
         '''
 
-        super(NodeACL, self).__init__()
+        super().__init__()
 
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
@@ -990,7 +987,7 @@ class NodeACL(CFSNode):
         path = f"{self.path}/cmdsn_depth"
         try:
             fwrite(path, f"{depth}")
-        except IOError as msg:
+        except OSError as msg:
             msg = msg[1]
             raise RTSLibError(f"Cannot set tcq_depth: {str(msg)}")
 
@@ -1001,7 +998,7 @@ class NodeACL(CFSNode):
             if tag:
                 return tag
             return None
-        except IOError:
+        except OSError:
             return None
 
     def _set_tag(self, tag_str):
@@ -1020,7 +1017,7 @@ class NodeACL(CFSNode):
     def _get_session(self):
         try:
             lines = fread(f"{self.path}/info").splitlines()
-        except IOError:
+        except OSError:
             return None
 
         if lines[0].startswith("No active"):
@@ -1065,7 +1062,7 @@ class NodeACL(CFSNode):
         self._check_self()
         for mapped_lun in self.mapped_luns:
             mapped_lun.delete()
-        super(NodeACL, self).delete()
+        super().delete()
 
     def mapped_lun(self, mapped_lun, tpg_lun=None, write_protect=None):
         '''
@@ -1127,7 +1124,7 @@ class NodeACL(CFSNode):
             MappedLUN.setup(tpg_obj, acl_obj, mlun, err_func)
 
         dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
-        for name, value in six.iteritems(acl):
+        for name, value in acl.items():
             if value:
                 try:
                     setattr(acl_obj, name, value)
@@ -1135,7 +1132,7 @@ class NodeACL(CFSNode):
                     err_func(f"Could not set nodeacl {acl['node_wwn']} attribute '{name}'")
 
     def dump(self):
-        d = super(NodeACL, self).dump()
+        d = super().dump()
         d['node_wwn'] = self.node_wwn
         d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
         if self.tag:
@@ -1188,7 +1185,7 @@ class MappedLUN(CFSNode):
         @type write_protect: bool
         '''
 
-        super(MappedLUN, self).__init__()
+        super().__init__()
 
         if not isinstance(parent_nodeacl, NodeACL):
             raise RTSLibError("The parent_nodeacl parameter must be " \
@@ -1303,7 +1300,7 @@ class MappedLUN(CFSNode):
         else:
             if os.path.islink(lun_link):
                 os.unlink(lun_link)
-        super(MappedLUN, self).delete()
+        super().delete()
 
     mapped_lun = property(_get_mapped_lun,
             doc="Get the integer MappedLUN mapped_lun index.")
@@ -1347,7 +1344,7 @@ class MappedLUN(CFSNode):
             err_func("Creating MappedLUN object %d failed" % mlun['index'])
 
     def dump(self):
-        d = super(MappedLUN, self).dump()
+        d = super().dump()
         d['write_protect'] = self.write_protect
         d['index'] = self.mapped_lun
         d['tpg_lun'] = self.tpg_lun.lun
@@ -1355,7 +1352,7 @@ class MappedLUN(CFSNode):
         return d
 
 
-class Group(object):
+class Group:
     '''
     An abstract base class akin to CFSNode, but for classes that
     emulate a higher-level group object across the actual NodeACL
@@ -1441,7 +1438,7 @@ class NodeACLGroup(Group):
         return f"<NodeACLGroup {self.name}>"
 
     def __init__(self, parent_tpg, name):
-        super(NodeACLGroup, self).__init__(NodeACLGroup._node_acls.fget)
+        super().__init__(NodeACLGroup._node_acls.fget)
         _check_group_name(name)
         self._name = name
         self._parent_tpg = parent_tpg
@@ -1641,7 +1638,7 @@ class MappedLUNGroup(Group):
         return "<MappedLUNGroup %s:lun %d>" % (self._nag.name, self._mapped_lun)
 
     def __init__(self, nodeaclgroup, mapped_lun, *args, **kwargs):
-        super(MappedLUNGroup, self).__init__(MappedLUNGroup._mapped_luns.fget)
+        super().__init__(MappedLUNGroup._mapped_luns.fget)
         self._nag = nodeaclgroup
         self._mapped_lun = mapped_lun
         for na in self._nag._node_acls:

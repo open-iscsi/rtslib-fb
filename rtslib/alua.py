@@ -18,8 +18,7 @@ a copy of the License at
 '''
 
 from .node import CFSNode
-from .utils import RTSLibError, RTSLibALUANotSupportedError, fread, fwrite
-import six
+from .utils import RTSLibALUANotSupportedError, RTSLibError, fread, fwrite
 
 alua_rw_params = ['alua_access_state', 'alua_access_status',
                   'alua_write_metadata', 'alua_access_type', 'preferred',
@@ -54,7 +53,7 @@ class ALUATargetPortGroup(CFSNode):
         if tag is not None and (tag > 65535 or tag < 1):
             raise RTSLibError("The TPG Tag must be between 1 and 65535")
 
-        super(ALUATargetPortGroup, self).__init__()
+        super().__init__()
         self.name = name
         self.storage_object = storage_object
 
@@ -68,7 +67,7 @@ class ALUATargetPortGroup(CFSNode):
 
             try:
                 fwrite(f"{self._path}/tg_pt_gp_id", tag)
-            except IOError as msg:
+            except OSError as msg:
                 self.delete()
                 raise RTSLibError("Cannot set id to %d: %s" % (tag, str(msg)))
         else:
@@ -90,7 +89,7 @@ class ALUATargetPortGroup(CFSNode):
             raise RTSLibError("Can not delete default_tg_pt_gp")
 
         # This will reset the ALUA tpg to default_tg_pt_gp
-        super(ALUATargetPortGroup, self).delete()
+        super().delete()
 
     def _get_alua_access_state(self):
         self._check_self()
@@ -102,7 +101,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_access_state"
         try:
             fwrite(path, str(int(newstate)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot change ALUA state: {e}")
 
     def _get_alua_access_status(self):
@@ -116,7 +115,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_access_status"
         try:
             fwrite(path, str(int(newstatus)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot change ALUA status: {e}")
 
     def _get_alua_access_type(self):
@@ -130,7 +129,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_access_type"
         try:
             fwrite(path, str(int(access_type)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot change ALUA access type: {e}")
 
     def _get_preferred(self):
@@ -143,7 +142,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/preferred"
         try:
             fwrite(path, str(int(pref)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set preferred: {e}")
 
     def _get_alua_write_metadata(self):
@@ -156,7 +155,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_write_metadata"
         try:
             fwrite(path, str(int(pref)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_write_metadata: {e}")
 
     def _get_alua_support_active_nonoptimized(self):
@@ -169,7 +168,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_support_active_nonoptimized"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_support_active_nonoptimized: {e}")
 
     def _get_alua_support_active_optimized(self):
@@ -182,7 +181,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_support_active_optimized"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_support_active_optimized: {e}")
 
     def _get_alua_support_offline(self):
@@ -195,7 +194,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_support_offline"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_support_offline: {e}")
 
     def _get_alua_support_unavailable(self):
@@ -208,7 +207,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_support_unavailable"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_support_unavailable: {e}")
 
     def _get_alua_support_standby(self):
@@ -221,7 +220,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_support_standby"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_support_standby: {e}")
 
     def _get_alua_support_transitioning(self):
@@ -234,7 +233,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/alua_support_transitioning"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set alua_support_transitioning: {e}")
 
     def _get_alua_support_lba_dependent(self):
@@ -272,7 +271,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/trans_delay_msecs"
         try:
             fwrite(path, str(int(secs)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set trans_delay_msecs: {e}")
 
     def _get_implicit_trans_secs(self):
@@ -285,7 +284,7 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/implicit_trans_secs"
         try:
             fwrite(path, str(int(secs)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set implicit_trans_secs: {e}")
 
     def _get_nonop_delay_msecs(self):
@@ -298,11 +297,11 @@ class ALUATargetPortGroup(CFSNode):
         path = f"{self.path}/nonop_delay_msecs"
         try:
             fwrite(path, str(int(delay)))
-        except IOError as e:
+        except OSError as e:
             raise RTSLibError(f"Cannot set nonop_delay_msecs: {e}")
 
     def dump(self):
-        d = super(ALUATargetPortGroup, self).dump()
+        d = super().dump()
         d['name'] = self.name
         d['tg_pt_gp_id'] = self.tg_pt_gp_id
         for param in alua_rw_params:
@@ -394,7 +393,7 @@ class ALUATargetPortGroup(CFSNode):
             return
 
         alua_tpg_obj = cls(storage_obj, name, alua_tpg['tg_pt_gp_id'])
-        for param, value in six.iteritems(alua_tpg):
+        for param, value in alua_tpg.items():
             if param != 'name' and param != 'tg_pt_gp_id':
                 try:
                     setattr(alua_tpg_obj, param, value)

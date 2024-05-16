@@ -23,7 +23,7 @@ import stat
 from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFSError
 
 
-class CFSNode(object):
+class CFSNode:
 
     # Where is the configfs base LIO directory ?
     configfs_dir = '/sys/kernel/config/target'

@@ -24,7 +24,6 @@ import re
 import glob
 import fcntl
 import resource
-from six.moves import range
 
 from .alua import ALUATargetPortGroup
 from .node import CFSNode
@@ -60,7 +59,7 @@ class StorageObject(CFSNode):
         return f"<{self.__class__.__name__} {self.plugin}/{self.name}>"
 
     def __init__(self, name, mode, index=None):
-        super(StorageObject, self).__init__()
+        super().__init__()
         if "/" in name or " " in name or "\t" in name or "\n" in name:
             raise RTSLibError("A storage object's name cannot contain "
                               " /, newline or spaces/tabs")
@@ -232,8 +231,7 @@ class StorageObject(CFSNode):
         Generates all luns attached to a storage object.
         '''
         self._check_self()
-        for lun in self._gen_attached_luns():
-            yield lun
+        yield from self._gen_attached_luns()
 
     def _list_alua_tpgs(self):
         '''
@@ -274,7 +272,7 @@ class StorageObject(CFSNode):
                 else:
                     lun.delete()
 
-        super(StorageObject, self).delete()
+        super().delete()
         self._backstore.delete()
         if save:
             from .root import RTSRoot, default_save_file
@@ -312,7 +310,7 @@ class StorageObject(CFSNode):
             doc="Returns true if ALUA can be setup. False if not supported.")
 
     def dump(self):
-        d = super(StorageObject, self).dump()
+        d = super().dump()
         d['name'] = self.name
         d['plugin'] = self.plugin
         d['alua_tpgs'] = [tpg.dump() for tpg in self.alua_tpgs]
@@ -348,14 +346,14 @@ class PSCSIStorageObject(StorageObject):
         @return: A PSCSIStorageObject object.
         '''
         if dev is not None:
-            super(PSCSIStorageObject, self).__init__(name, 'create', index)
+            super().__init__(name, 'create', index)
             try:
                 self._configure(dev)
             except:
                 self.delete()
                 raise
         else:
-            super(PSCSIStorageObject, self).__init__(name, 'lookup', index)
+            super().__init__(name, 'lookup', index)
 
     def _configure(self, dev):
         self._check_self()
@@ -401,7 +399,7 @@ class PSCSIStorageObject(StorageObject):
         self._set_udev_path(udev_path)
         self._enable()
 
-        super(PSCSIStorageObject, self)._configure()
+        super()._configure()
 
     def _set_wwn(self, wwn):
         # pscsi doesn't support setting wwn
@@ -466,7 +464,7 @@ class PSCSIStorageObject(StorageObject):
             doc="Returns true if ALUA can be setup. False if not supported.")
 
     def dump(self):
-        d = super(PSCSIStorageObject, self).dump()
+        d = super().dump()
         d['dev'] = self.udev_path
         return d
 
@@ -503,14 +501,14 @@ class RDMCPStorageObject(StorageObject):
         '''
 
         if size is not None:
-            super(RDMCPStorageObject, self).__init__(name, 'create', index)
+            super().__init__(name, 'create', index)
             try:
                 self._configure(size, wwn, nullio)
             except:
                 self.delete()
                 raise
         else:
-            super(RDMCPStorageObject, self).__init__(name, 'lookup', index)
+            super().__init__(name, 'lookup', index)
 
     def _configure(self, size, wwn, nullio):
         self._check_self()
@@ -524,7 +522,7 @@ class RDMCPStorageObject(StorageObject):
             self._control("rd_nullio=1")
         self._enable()
 
-        super(RDMCPStorageObject, self)._configure(wwn)
+        super()._configure(wwn)
 
     def _get_page_size(self):
         self._check_self()
@@ -559,7 +557,7 @@ class RDMCPStorageObject(StorageObject):
             doc="Get the nullio status.")
 
     def dump(self):
-        d = super(RDMCPStorageObject, self).dump()
+        d = super().dump()
         d['wwn'] = self.wwn
         d['size'] = self.size
         # only dump nullio if enabled
@@ -608,14 +606,14 @@ class FileIOStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(FileIOStorageObject, self).__init__(name, 'create', index)
+            super().__init__(name, 'create', index)
             try:
                 self._configure(dev, size, wwn, write_back, aio)
             except:
                 self.delete()
                 raise
         else:
-            super(FileIOStorageObject, self).__init__(name, 'lookup', index)
+            super().__init__(name, 'lookup', index)
 
     def _configure(self, dev, size, wwn, write_back, aio):
         self._check_self()
@@ -652,7 +650,7 @@ class FileIOStorageObject(StorageObject):
 
         self._enable()
 
-        super(FileIOStorageObject, self)._configure(wwn)
+        super()._configure(wwn)
 
     def _get_wb_enabled(self):
         self._check_self()
@@ -691,7 +689,7 @@ class FileIOStorageObject(StorageObject):
             doc="True if asynchronous I/O is enabled")
 
     def dump(self):
-        d = super(FileIOStorageObject, self).dump()
+        d = super().dump()
         d['write_back'] = self.write_back
         d['wwn'] = self.wwn
         d['dev'] = self.udev_path
@@ -734,14 +732,14 @@ class BlockStorageObject(StorageObject):
         '''
 
         if dev is not None:
-            super(BlockStorageObject, self).__init__(name, 'create', index)
+            super().__init__(name, 'create', index)
             try:
                 self._configure(dev, wwn, readonly)
             except:
                 self.delete()
                 raise
         else:
-            super(BlockStorageObject, self).__init__(name, 'lookup', index)
+            super().__init__(name, 'lookup', index)
 
     def _configure(self, dev, wwn, readonly):
         self._check_self()
@@ -755,7 +753,7 @@ class BlockStorageObject(StorageObject):
         self._control("readonly=%d" % readonly)
         self._enable()
 
-        super(BlockStorageObject, self)._configure(wwn)
+        super()._configure(wwn)
 
     def _get_major(self):
         self._check_self()
@@ -796,7 +794,7 @@ class BlockStorageObject(StorageObject):
             doc="True if the device is read-only, False if read/write")
 
     def dump(self):
-        d = super(BlockStorageObject, self).dump()
+        d = super().dump()
         d['write_back'] = self.write_back
         d['readonly'] = self.readonly
         d['wwn'] = self.wwn
@@ -836,14 +834,14 @@ class UserBackedStorageObject(StorageObject):
             if '/' not in config:
                 raise RTSLibError("'config' must contain a '/' separating subtype "
                                   "from its configuration string")
-            super(UserBackedStorageObject, self).__init__(name, 'create', index)
+            super().__init__(name, 'create', index)
             try:
                 self._configure(config, size, wwn, hw_max_sectors, control)
             except:
                 self.delete()
                 raise
         else:
-            super(UserBackedStorageObject, self).__init__(name, 'lookup', index)
+            super().__init__(name, 'lookup', index)
 
     def _configure(self, config, size, wwn, hw_max_sectors, control):
         self._check_self()
@@ -858,7 +856,7 @@ class UserBackedStorageObject(StorageObject):
             self._control(control)
         self._enable()
 
-        super(UserBackedStorageObject, self)._configure(wwn)
+        super()._configure(wwn)
 
     def _get_size(self):
         self._check_self()
@@ -909,7 +907,7 @@ class UserBackedStorageObject(StorageObject):
             doc="Returns true if ALUA can be setup. False if not supported.")
 
     def dump(self):
-        d = super(UserBackedStorageObject, self).dump()
+        d = super().dump()
         d['wwn'] = self.wwn
         d['size'] = self.size
         d['config'] = self.config
@@ -919,7 +917,7 @@ class UserBackedStorageObject(StorageObject):
         return d
 
 
-class StorageObjectFactory(object):
+class StorageObjectFactory:
     """
     Create a storage object based on a given path.
     Only works for file & block.
@@ -968,7 +966,7 @@ class _Backstore(CFSNode):
     """
 
     def __init__(self, name, storage_object_cls, mode, index=None):
-        super(_Backstore, self).__init__()
+        super().__init__()
         self._so_cls = storage_object_cls
         self._plugin = bs_params[self._so_cls]['name']
 
@@ -1023,7 +1021,7 @@ class _Backstore(CFSNode):
             raise
 
     def delete(self):
-        super(_Backstore, self).delete()
+        super().delete()
         if self._lookup_key in bs_cache:
             del bs_cache[self._lookup_key]
 

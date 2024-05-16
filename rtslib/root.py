@@ -71,7 +71,7 @@ class RTSRoot(CFSNode):
         Instantiate an RTSRoot object. Basically checks for configfs setup and
         base kernel modules (tcm)
         '''
-        super(RTSRoot, self).__init__()
+        super().__init__()
         try:
             mount_configfs()
         except RTSLibError:
@@ -89,61 +89,51 @@ class RTSRoot(CFSNode):
     def _list_targets(self):
         self._check_self()
         for fabric_module in self.fabric_modules:
-            for target in fabric_module.targets:
-                yield target
+            yield from fabric_module.targets
 
     def _list_storage_objects(self):
         self._check_self()
-        for so in StorageObject.all():
-            yield so
+        yield from StorageObject.all()
 
     def _list_alua_tpgs(self):
         self._check_self()
         for so in self.storage_objects:
-            for a in so.alua_tpgs:
-                yield a
+            yield from so.alua_tpgs
 
     def _list_tpgs(self):
         self._check_self()
         for t in self.targets:
-            for tpg in t.tpgs:
-                yield tpg
+            yield from t.tpgs
 
     def _list_node_acls(self):
         self._check_self()
         for t in self.tpgs:
-            for node_acl in t.node_acls:
-                yield node_acl
+            yield from t.node_acls
 
     def _list_node_acl_groups(self):
         self._check_self()
         for t in self.tpgs:
-            for nag in t.node_acl_groups:
-                yield nag
+            yield from t.node_acl_groups
 
     def _list_mapped_luns(self):
         self._check_self()
         for na in self.node_acls:
-            for mlun in na.mapped_luns:
-                yield mlun
+            yield from na.mapped_luns
 
     def _list_mapped_lun_groups(self):
         self._check_self()
         for nag in self.node_acl_groups:
-            for mlg in nag.mapped_lun_groups:
-                yield mlg
+            yield from nag.mapped_lun_groups
 
     def _list_network_portals(self):
         self._check_self()
         for t in self.tpgs:
-            for p in t.network_portals:
-                yield p
+            yield from t.network_portals
 
     def _list_luns(self):
         self._check_self()
         for t in self.tpgs:
-            for lun in t.luns:
-                yield lun
+            yield from t.luns
 
     def _list_sessions(self):
         self._check_self()
@@ -153,8 +143,7 @@ class RTSRoot(CFSNode):
 
     def _list_fabric_modules(self):
         self._check_self()
-        for mod in FabricModule.all():
-            yield mod
+        yield from FabricModule.all()
 
     def __str__(self):
         return "rtslib"
@@ -194,13 +183,13 @@ class RTSRoot(CFSNode):
         current = self.dump()
 
         try:
-            with open(save_file, "r") as f:
+            with open(save_file) as f:
                 saveconf = json.loads(f.read())
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 saveconf = {'storage_objects': [], 'targets': []}
             else:
-                raise IOError(f"Could not open {save_file}")
+                raise OSError(f"Could not open {save_file}")
 
         fetch_cur_so = False
         fetch_cur_tg = False
@@ -275,7 +264,7 @@ class RTSRoot(CFSNode):
         config, suitable for serialization/deserialization, and then
         handing to restore().
         '''
-        d = super(RTSRoot, self).dump()
+        d = super().dump()
         d['storage_objects'] = [so.dump() for so in self.storage_objects]
         d['targets'] = [t.dump() for t in self.targets]
         d['fabric_modules'] = [f.dump() for f in self.fabric_modules
@@ -505,7 +494,7 @@ class RTSRoot(CFSNode):
         if not restore_file:
             restore_file = default_save_file
 
-        with open(restore_file, "r") as f:
+        with open(restore_file) as f:
             config = json.loads(f.read())
             return self.restore(config, target, storage_object,
                                 clear_existing=clear_existing,

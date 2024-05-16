@@ -96,7 +96,7 @@ def fread(path):
     @return: A string containing the file's contents.
 
     '''
-    with open(path, 'r') as file_fd:
+    with open(path) as file_fd:
         return file_fd.read().strip()
 
 def is_dev_in_use(path):
@@ -114,7 +114,7 @@ def is_dev_in_use(path):
     path = os.path.realpath(str(path))
     try:
         device = pyudev.Device.from_device_file(_CONTEXT, path)
-        if device.subsystem == u'scsi_generic':
+        if device.subsystem == 'scsi_generic':
             file_fd = os.open(path, os.O_EXCL|os.O_NDELAY|os.O_RDWR)
         else:
             file_fd = os.open(path, os.O_EXCL|os.O_NDELAY)
@@ -219,10 +219,10 @@ def get_blockdev_type(path):
     '''
     try:
         device = pyudev.Device.from_device_file(_CONTEXT, path)
-    except (pyudev.DeviceNotFoundError, EnvironmentError, ValueError):
+    except (OSError, pyudev.DeviceNotFoundError, ValueError):
         return None
 
-    if device.subsystem != u'block':
+    if device.subsystem != 'block':
         return None
 
     attributes = device.attributes
@@ -506,14 +506,14 @@ def _set_auth_attr(self, value, attribute, ignore=False):
             raise
 
 def set_attributes(obj, attr_dict, err_func):
-    for name, value in six.iteritems(attr_dict):
+    for name, value in attr_dict.items():
         try:
             obj.set_attribute(name, value)
         except RTSLibError as e:
             err_func(str(e))
 
 def set_parameters(obj, param_dict, err_func):
-    for name, value in six.iteritems(param_dict):
+    for name, value in param_dict.items():
         try:
             obj.set_parameter(name, value)
         except RTSLibError as e:

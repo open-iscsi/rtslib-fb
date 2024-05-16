@@ -108,9 +108,7 @@ Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 '''
 
 from functools import partial
-from glob import iglob as glob
-import os
-import six
+from pathlib import Path
 
 from .node import CFSNode
 from .utils import fread, fwrite, normalize_wwn, colonize
@@ -146,7 +144,7 @@ class _BaseFabricModule(CFSNode):
         @param name: the name of the FabricModule object.
         @type name: str
         '''
-        super(_BaseFabricModule, self).__init__()
+        super().__init__()
         self.name = name
         self.spec_file = "N/A"
         self._path = f"{self.configfs_dir}/{self.name}"
@@ -164,7 +162,7 @@ class _BaseFabricModule(CFSNode):
             except RTSLibError:
                 modprobe(self.kernel_module)
                 self._create_in_cfs_ine('any')
-        super(_BaseFabricModule, self)._check_self()
+        super()._check_self()
 
     def has_feature(self, feature):
         # Handle a renamed feature
@@ -326,7 +324,7 @@ class _BaseFabricModule(CFSNode):
         '''
         Setup fabricmodule with settings from fm dict.
         '''
-        for name, value in six.iteritems(fm):
+        for name, value in fm.items():
             if name != 'name':
                 try:
                     setattr(self, name, value)
@@ -334,7 +332,7 @@ class _BaseFabricModule(CFSNode):
                     err_func(f"Could not set fabric {fm['name']} attribute '{name}'")
 
     def dump(self):
-        d = super(_BaseFabricModule, self).dump()
+        d = super().dump()
         d['name'] = self.name
         if self.has_feature("discovery_auth"):
             for attr in ("userid", "password", "mutual_userid", "mutual_password"):
@@ -348,13 +346,13 @@ class _BaseFabricModule(CFSNode):
 class ISCSIFabricModule(_BaseFabricModule):
 
     def __init__(self):
-        super(ISCSIFabricModule, self).__init__('iscsi')
+        super().__init__('iscsi')
         self.wwn_types = ('iqn', 'naa', 'eui')
 
 
 class LoopbackFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(LoopbackFabricModule, self).__init__('loopback')
+        super().__init__('loopback')
         self.features = ("nexus",)
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_loop"
@@ -362,7 +360,7 @@ class LoopbackFabricModule(_BaseFabricModule):
 
 class SBPFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(SBPFabricModule, self).__init__('sbp')
+        super().__init__('sbp')
         self.features = ()
         self.wwn_types = ('eui',)
         self.kernel_module = "sbp_target"
@@ -385,7 +383,7 @@ class SBPFabricModule(_BaseFabricModule):
 
 class Qla2xxxFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(Qla2xxxFabricModule, self).__init__('qla2xxx')
+        super().__init__('qla2xxx')
         self.features = ("acls",)
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_qla2xxx"
@@ -410,7 +408,7 @@ class Qla2xxxFabricModule(_BaseFabricModule):
 
 class EfctFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(EfctFabricModule, self).__init__('efct')
+        super().__init__('efct')
         self.features = ("acls",)
         self.wwn_types = ('naa',)
         self.kernel_module = "efct"
@@ -435,7 +433,7 @@ class EfctFabricModule(_BaseFabricModule):
 
 class SRPTFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(SRPTFabricModule, self).__init__('srpt')
+        super().__init__('srpt')
         self.features = ("acls",)
         self.wwn_types = ('ib',)
         self.kernel_module = "ib_srpt"
@@ -455,7 +453,7 @@ class SRPTFabricModule(_BaseFabricModule):
 
 class FCoEFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(FCoEFabricModule, self).__init__('tcm_fc')
+        super().__init__('tcm_fc')
 
         self.features = ("acls",)
         self.kernel_module = "tcm_fc"
@@ -482,7 +480,7 @@ class FCoEFabricModule(_BaseFabricModule):
 
 class USBGadgetFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(USBGadgetFabricModule, self).__init__('usb_gadget')
+        super().__init__('usb_gadget')
         self.features = ("nexus",)
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_usb_gadget"
@@ -490,14 +488,14 @@ class USBGadgetFabricModule(_BaseFabricModule):
 
 class VhostFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(VhostFabricModule, self).__init__('vhost')
+        super().__init__('vhost')
         self.features = ("nexus", "acls", "tpgts")
         self.wwn_types = ('naa',)
         self.kernel_module = "tcm_vhost"
 
 class XenPvScsiFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(XenPvScsiFabricModule, self).__init__('xen-pvscsi')
+        super().__init__('xen-pvscsi')
         self._path = f"{self.configfs_dir}/xen-pvscsi"
         self.features = ("nexus", "tpgts")
         self.wwn_types = ('naa',)
@@ -506,7 +504,7 @@ class XenPvScsiFabricModule(_BaseFabricModule):
 
 class IbmvscsisFabricModule(_BaseFabricModule):
     def __init__(self):
-        super(IbmvscsisFabricModule, self).__init__('ibmvscsis')
+        super().__init__('ibmvscsis')
         self.features = ()
         self.kernel_module = "ibmvscsis"
 
@@ -535,14 +533,14 @@ fabric_modules = {
 # Maintain compatibility with existing FabricModule(fabricname) usage
 # e.g. FabricModule('iscsi') returns an ISCSIFabricModule
 #
-class FabricModule(object):
+class FabricModule:
 
     def __new__(cls, name):
         return fabric_modules[name]()
 
     @classmethod
     def all(cls):
-        for mod in six.itervalues(fabric_modules):
+        for mod in fabric_modules.values():
             yield mod()
 
     @classmethod

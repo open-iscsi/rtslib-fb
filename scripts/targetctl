@@ -22,7 +22,6 @@ under the License.
 # A script to save/restore LIO configuration to/from a file in json format
 #
 
-from __future__ import print_function
 
 from rtslib_fb import RTSRoot
 import os
@@ -45,7 +44,7 @@ def restore(from_file):
 
     try:
         errors = RTSRoot().restore_from_file(restore_file=from_file)
-    except IOError:
+    except OSError:
         # Not an error if the restore file is not present
         print(f"No saved config file at {from_file}, ok, exiting")
         sys.exit(0)
