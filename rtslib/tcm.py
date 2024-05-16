@@ -987,12 +987,12 @@ class _Backstore(CFSNode):
         self._lookup_key = f"{dirp}/{name}"
         if index is None:
             self._index = bs_cache.get(self._lookup_key, None)
-            if self._index != None and mode == 'create':
+            if self._index is not None and mode == 'create':
                 raise RTSLibError(f"Storage object {self._plugin}/{name} exists")
         else:
             self._index = int(index)
 
-        if self._index == None:
+        if self._index is None:
             if mode == 'lookup':
                 raise RTSLibNotInCFS(f"Storage object {self._plugin}/{name} not found")
             else:

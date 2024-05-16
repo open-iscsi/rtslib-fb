@@ -47,7 +47,7 @@ def human_to_bytes(hsize, kilo=1024):
     '''
     size = hsize.replace('i', '')
     size = size.lower()
-    if not re.match("^[0-9\.]+[k|m|g|t]?[b]?$", size):
+    if not re.match(r"^[0-9\.]+[k|m|g|t]?[b]?$", size):
         raise Exception(f"Cannot interpret size, wrong format: {hsize}")
 
     size = size.rstrip('ib')
@@ -212,8 +212,8 @@ def parse_tpg(tag, txt, cur):
                 tpg["auth"] = auth
             continue
         if txt[cur] == "lun":
-            cur, l = parse_lun(txt, cur)
-            luns.append(l)
+            cur, lun = parse_lun(txt, cur)
+            luns.append(lun)
             continue
         if txt[cur] == "acl":
             cur, acl = parse_acl(txt, cur)
@@ -289,16 +289,16 @@ def split(s):
     for c in s:
         if c not in " \n\t\"":
             new_str.append(c)
-        elif c == '\"' and in_quotes == False:
+        elif c == '\"' and not in_quotes:
             in_quotes = True
-        elif c == '\"' and in_quotes == True:
+        elif c == '\"' and in_quotes:
             in_quotes = False
             if len(new_str) == 0:
                 # don't include things that are set to '""'
                 del new_lst[-1]
-        elif in_quotes == True: # append ws if in quotes
+        elif in_quotes:  # append ws if in quotes
             new_str.append(c)
-        elif len(new_str): # not in quotes, break on ws if anything in new_str
+        elif len(new_str):  # not in quotes, break on ws if anything in new_str
             new_lst.append("".join(new_str))
             new_str = []
         else:

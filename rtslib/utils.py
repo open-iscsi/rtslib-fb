@@ -312,7 +312,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
     )
 
     path = next((dev.device_node for dev in devices), '')
-    if path == None:
+    if path is None:
         raise RTSLibError("Could not find path for SCSI hctl")
     return path
 

@@ -313,7 +313,7 @@ class RTSRoot(CFSNode):
             #   delete any storage_object's
             # * If restoreconfig was not supplied with neither target=iqn.xxx
             #   nor storage_object=blockx then delete all storage_object's
-            if (not storage_object and not target) or (storage_object and so.name == storage_object):
+            if (not storage_object and not target) or (storage_object and so.name == storage_object):  # noqa: E501
                 so.delete()
                 if storage_object:
                     break
@@ -347,7 +347,8 @@ class RTSRoot(CFSNode):
                 for config_tg in config.get('targets', []):
                     for loaded_tg in self.targets:
                         if config_tg['wwn'] == loaded_tg.wwn:
-                            raise RTSLibError(f"target with wwn {loaded_tg.wwn} exist, not restoring")
+                            raise RTSLibError(
+                                f"target with wwn {loaded_tg.wwn} exist, not restoring")
         errors = []
 
         if abort_on_error:
@@ -368,7 +369,7 @@ class RTSRoot(CFSNode):
             #   was supplied then do not load any storage_object's
             # * If neither storage_object nor target option was supplied to
             #   restoreconfig, then go ahead and load all storage_object's
-            if (not storage_object and not target) or (storage_object and so['name'] == storage_object):
+            if (not storage_object and not target) or (storage_object and so['name'] == storage_object):  # noqa: E501
                 try:
                     so_cls = so_mapping[so['plugin']]
                 except KeyError:

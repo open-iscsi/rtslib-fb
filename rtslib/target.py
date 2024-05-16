@@ -393,18 +393,22 @@ class TPG(CFSNode):
     nexus = property(_get_nexus, _set_nexus,
                      doc="Get or set (once) the TPG's Nexus is used.")
 
-    chap_userid = property(partial(_get_auth_attr, attribute='auth/userid', ignore=True),
-                           partial(_set_auth_attr, attribute='auth/userid', ignore=True),
-                           doc="Set or get the initiator CHAP auth userid.")
-    chap_password = property(partial(_get_auth_attr, attribute='auth/password', ignore=True),
-                             partial(_set_auth_attr, attribute='auth/password', ignore=True),
-                             doc="Set or get the initiator CHAP auth password.")
-    chap_mutual_userid = property(partial(_get_auth_attr, attribute='auth/userid_mutual', ignore=True),
-                                  partial(_set_auth_attr, attribute='auth/userid_mutual', ignore=True),
-                                  doc="Set or get the initiator CHAP auth userid.")
-    chap_mutual_password = property(partial(_get_auth_attr, attribute='auth/password_mutual', ignore=True),
-                                    partial(_set_auth_attr, attribute='auth/password_mutual', ignore=True),
-                                    doc="Set or get the initiator CHAP auth password.")
+    chap_userid = property(
+        partial(_get_auth_attr, attribute='auth/userid', ignore=True),
+        partial(_set_auth_attr, attribute='auth/userid', ignore=True),
+        doc="Set or get the initiator CHAP auth userid.")
+    chap_password = property(
+        partial(_get_auth_attr, attribute='auth/password', ignore=True),
+        partial(_set_auth_attr, attribute='auth/password', ignore=True),
+        doc="Set or get the initiator CHAP auth password.")
+    chap_mutual_userid = property(
+        partial(_get_auth_attr, attribute='auth/userid_mutual', ignore=True),
+        partial(_set_auth_attr, attribute='auth/userid_mutual', ignore=True),
+        doc="Set or get the initiator CHAP auth userid.")
+    chap_mutual_password = property(
+        partial(_get_auth_attr, attribute='auth/password_mutual', ignore=True),
+        partial(_set_auth_attr, attribute='auth/password_mutual', ignore=True),
+        doc="Set or get the initiator CHAP auth password.")
 
     def _get_authenticate_target(self):
         self._check_self()
@@ -506,7 +510,7 @@ class LUN(CFSNode):
             raise RTSLibError("Invalid parent TPG")
 
         if lun is None:
-            luns = [l.lun for l in self.parent_tpg.luns]
+            luns = [tpg_lun.lun for tpg_lun in self.parent_tpg.luns]
             for index in range(self.MAX_TARGET_LUN+1):
                 if index not in luns:
                     lun = index
