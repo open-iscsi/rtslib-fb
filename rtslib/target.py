@@ -607,7 +607,7 @@ class LUN(CFSNode):
                 return None
             group_line = info.splitlines()[0]
             return group_line.split(':')[1].strip()
-        except IOError as e:
+        except IOError:
             return None
 
     def _set_alua_tg_pt_gp_name(self, group_name):
@@ -619,7 +619,7 @@ class LUN(CFSNode):
         path = "%s/alua_tg_pt_gp" % self.path
         try:
             fwrite(path, group_name)
-        except IOError as e:
+        except IOError:
             return -1
 
         return 0
@@ -633,7 +633,7 @@ class LUN(CFSNode):
         path = "%s/alua_tg_pt_offline" % self.path
         try:
             return bool(int(fread(path))) if os.path.isfile(path) else None
-        except IOError as e:
+        except IOError:
             return None
 
     def _set_alua_tg_pt_offline(self, boolean):
@@ -646,7 +646,7 @@ class LUN(CFSNode):
         try:
             if os.path.isfile(path):
                 fwrite(path, "1" if boolean else "0")
-        except IOError as e:
+        except IOError:
             return -1
 
         return 0
@@ -660,7 +660,7 @@ class LUN(CFSNode):
         path = "%s/alua_tg_pt_status" % self.path
         try:
             return int(fread(path)) if os.path.isfile(path) else None
-        except IOError as e:
+        except IOError:
             return None
 
     def _set_alua_tg_pt_status(self, integer):
@@ -678,7 +678,7 @@ class LUN(CFSNode):
         try:
             if os.path.isfile(path):
                 fwrite(path, str(integer))
-        except IOError as e:
+        except IOError:
             return -1
 
         return 0
@@ -692,7 +692,7 @@ class LUN(CFSNode):
         path = "%s/alua_tg_pt_write_md" % self.path
         try:
             return bool(int(fread(path))) if os.path.isfile(path) else None
-        except IOError as e:
+        except IOError:
             return None
 
     def _set_alua_tg_pt_write_md(self, boolean):
@@ -705,7 +705,7 @@ class LUN(CFSNode):
         try:
             if os.path.isfile(path):
                 fwrite(path, "1" if boolean else "0")
-        except IOError as e:
+        except IOError:
             return -1
 
         return 0

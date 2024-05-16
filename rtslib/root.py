@@ -19,11 +19,10 @@ under the License.
 '''
 
 import os
-import stat
 import json
 import glob
 import errno
-import shutil
+from pathlib import Path
 
 from .node import CFSNode
 from .target import Target
@@ -201,7 +200,7 @@ class RTSRoot(CFSNode):
             if e.errno == errno.ENOENT:
                 saveconf = {'storage_objects': [], 'targets': []}
             else:
-                raise ExecutionError("Could not open %s" % save_file)
+                raise IOError("Could not open %s" % save_file)
 
         fetch_cur_so = False
         fetch_cur_tg = False
@@ -452,44 +451,46 @@ class RTSRoot(CFSNode):
         Save file defaults to '/etc/target/saveconfig.json'.
         '''
         if not save_file:
-            save_file = default_save_file
+            save_file = Path(default_save_file)
+        else:
+            save_file = Path(save_file)
 
         if so_path:
             saveconf = self._get_saveconf(so_path, save_file)
         else:
             saveconf = self.dump()
 
-        tmp_file = save_file + ".temp"
+        tmp_file = save_file.with_name(f"{save_file.name}.temp")
 
-        mode = stat.S_IRUSR | stat.S_IWUSR  # 0o600
+        mode = 0o600  # rw-------
         umask = 0o777 ^ mode  # Prevents always downgrading umask to 0
 
         # For security, remove file with potentially elevated mode
         try:
-            os.remove(tmp_file)
-        except OSError:
+            tmp_file.unlink()
+        except FileNotFoundError:
             pass
 
-        umask_original = os.umask(umask)
+        original_umask = os.umask(umask)
         # Even though the old file is first deleted, a race condition is still
-        # possible. Including os.O_EXCL with os.O_CREAT in the flags will
-        # prevent the file from being created if it exists due to a race
+        # possible. mode='x' opens the file for exclusive creation,
+        # failing if the file already exists
         try:
-            fdesc = os.open(tmp_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
-        except OSError:
-            raise ExecutionError("Could not open %s" % tmp_file)
+            with tmp_file.open(mode="x"):
+                pass
+        except OSError as e:
+            raise RuntimeError(f"Could not open {tmp_file}") from e
 
-        with os.fdopen(fdesc, 'w') as f:
-            f.write(json.dumps(saveconf, sort_keys=True, indent=2))
+        with tmp_file.open(mode="w") as f:
+            json.dump(saveconf, f, sort_keys=True, indent=2)
             f.write("\n")
             f.flush()
             os.fsync(f.fileno())
-            f.close()
 
-        # copy along with permissions
-        shutil.copy(tmp_file, save_file)
-        os.umask(umask_original)
-        os.remove(tmp_file)
+        # move along with permissions
+        tmp_file.replace(save_file)
+        save_file.chmod(mode)
+        os.umask(original_umask)
 
     def restore_from_file(self, restore_file=None, clear_existing=True,
                           target=None, storage_object=None,

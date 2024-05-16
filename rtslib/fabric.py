@@ -181,7 +181,7 @@ class _BaseFabricModule(CFSNode):
 
     def _get_version(self):
         if self.exists:
-            for attr in version_attributes:
+            for attr in self.version_attributes:
                 path = "%s/%s" % (self.path, attr)
                 if os.path.isfile(path):
                     return fread(path)
@@ -224,8 +224,8 @@ class _BaseFabricModule(CFSNode):
 
     def _assert_feature(self, feature):
         if not self.has_feature(feature):
-            raise RTSLibError("Fabric module %s does not implement "
-                              + "the %s feature" % (self.name, feature))
+            raise RTSLibError("Fabric module %s does not implement the %s feature" % (
+                self.name, feature))
 
     def _get_cpus_allowed_list(self):
         self._check_self()

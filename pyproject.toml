@@ -8,7 +8,10 @@ description = "API for Linux kernel SCSI target (aka LIO)"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.9"
-authors = [{email = "agrover@redhat.com", name = "Andy Grover"}]
+authors = [
+    {email = "agrover@redhat.com", name = "Andy Grover"},
+    {email = "jxm@risingtidesystems.com", name = "Jerome Martin"}
+]
 maintainers = [{email = "mlombard@redhat.com", name = "Maurizio Lombardi"}]
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
@@ -34,4 +37,52 @@ source = "vcs"
 dependencies = [
     "ruff",
     "pre-commit",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "F",    # Pyflakes
+    "E",    # pycodestyle error
+    "W",    # pycodestyle warning
+#    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+#    "YTT",  # flake8-2020
+#    "S",    # flake8-bandit
+    "B",    # flake8-bugbear
+#    "A",    # flake8-builtins
+#    "COM",  # flake8-commas
+#    "C4",   # flake8-comprehensions
+#    "EXE",  # flake8-executable
+#    "FA",   # flake8-future-annotations
+#    "ISC",  # flake8-implicit-str-concat
+#    "ICN",  # flake8-import-conventions
+    "PIE",  # flake8-pie
+#    "Q003", # flake8-quotes avoidable-escaped-quote
+#    "Q004", # flake8-quotes unnecessary-escaped-quote
+#    "RSE",  # flake8-raise
+#    "RET",  # flake8-return
+#    "SIM",  # flake8-simplify
+#    "TID",  # flake8-tidy-imports
+#    "INT",  # flake8-gettext
+#    "ARG",  # flake8-unused-argument
+#    #"PTH", # flake8-use-pathlib TODO
+    "PL",   # Pylint
+#   "FLY",  # flynt
+#    "PERF", # Perflint
+#    "FURB", # refurb
+#    "RUF",  # Ruff
+]
+ignore = [
+    "E722",  # TODO do not use bare 'except'
+    "B904",  # raise-without-from-inside-except
+#    "S104",  # Possible binding to all interfaces (0.0.0.0)
+#    "RUF012",  # TODO Mutable class attributes should be annotated with `typing.ClassVar`
+#    "B904",  # raise-without-from-inside-except
+#    "ARG002", "PLR6301",  # TODO Unused self, parameter in methods definitions
+#    "PLR09",  # Too many branches/statements/arguments
+#    "PLW1514", # TODO `open` in text mode without explicit `encoding` argument
 ]

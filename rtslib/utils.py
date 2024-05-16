@@ -22,7 +22,6 @@ import os
 import re
 import six
 import socket
-import stat
 import subprocess
 import uuid
 from contextlib import contextmanager
