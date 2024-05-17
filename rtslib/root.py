@@ -18,20 +18,28 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import os
-import json
-import glob
 import errno
+import glob
+import json
+import os
+from contextlib import suppress
 from pathlib import Path
 
+from .alua import ALUATargetPortGroup
+from .fabric import FabricModule
 from .node import CFSNode
 from .target import Target
-from .fabric import FabricModule
-from .tcm import so_mapping, bs_cache, StorageObject
-from .utils import RTSLibError, RTSLibALUANotSupportedError, modprobe, mount_configfs
-from .utils import dict_remove, set_attributes
-from .utils import fread, fwrite
-from .alua import ALUATargetPortGroup
+from .tcm import StorageObject, bs_cache, so_mapping
+from .utils import (
+    RTSLibALUANotSupportedError,
+    RTSLibError,
+    dict_remove,
+    fread,
+    fwrite,
+    modprobe,
+    mount_configfs,
+    set_attributes,
+)
 
 default_save_file = "/etc/target/saveconfig.json"
 
@@ -384,10 +392,8 @@ class RTSRoot(CFSNode):
                 set_attributes(so_obj, so.get('attributes', {}), so_err_func)
 
                 for alua_tpg in so.get('alua_tpgs', {}):
-                    try:
+                    with suppress(RTSLibALUANotSupportedError):
                         ALUATargetPortGroup.setup(so_obj, alua_tpg, err_func)
-                    except RTSLibALUANotSupportedError:
-                        pass
 
                 if storage_object:
                     break
@@ -440,15 +446,9 @@ class RTSRoot(CFSNode):
         Write the configuration in json format to a file.
         Save file defaults to '/etc/target/saveconfig.json'.
         '''
-        if not save_file:
-            save_file = Path(default_save_file)
-        else:
-            save_file = Path(save_file)
+        save_file = Path(default_save_file) if not save_file else Path(save_file)
 
-        if so_path:
-            saveconf = self._get_saveconf(so_path, save_file)
-        else:
-            saveconf = self.dump()
+        saveconf = self._get_saveconf(so_path, save_file) if so_path else self.dump()
 
         tmp_file = save_file.with_name(f"{save_file.name}.temp")
 
@@ -456,10 +456,8 @@ class RTSRoot(CFSNode):
         umask = 0o777 ^ mode  # Prevents always downgrading umask to 0
 
         # For security, remove file with potentially elevated mode
-        try:
+        with suppress(OSError):
             tmp_file.unlink()
-        except FileNotFoundError:
-            pass
 
         original_umask = os.umask(umask)
         # Even though the old file is first deleted, a race condition is still

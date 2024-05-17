@@ -20,7 +20,8 @@ under the License.
 
 import os
 import stat
-from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFSError
+
+from .utils import RTSLibError, RTSLibNotInCFSError, fread, fwrite
 
 
 class CFSNode:
@@ -50,7 +51,7 @@ class CFSNode:
         lookup -> make sure it does NOT exist
         create -> create the node which must not exist beforehand
         '''
-        if mode not in ['any', 'lookup', 'create']:
+        if mode not in ('any', 'lookup', 'create'):
             raise RTSLibError(f"Invalid mode: {mode}")
 
         if self.exists and mode == 'create':
@@ -103,14 +104,12 @@ class CFSNode:
             names = []
             for name in os.listdir(path):
                 sres = os.stat(f"{path}/{name}")
-                if writable is not None:
-                    if writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == \
-                            stat.S_IWUSR):
-                        continue
-                if readable is not None:
-                    if readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == \
-                            stat.S_IRUSR):
-                        continue
+                if (writable is not None and
+                        writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == stat.S_IWUSR)):
+                    continue
+                if (readable is not None and
+                        readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == stat.S_IRUSR)):
+                    continue
                 names.append(name)
 
         names.sort()
@@ -160,12 +159,12 @@ class CFSNode:
         @type value: string
         '''
         self._check_self()
-        path = f"{self.path}/attrib/{str(attribute)}"
+        path = f"{self.path}/attrib/{attribute!s}"
         if not os.path.isfile(path):
-            raise RTSLibError(f"Cannot find attribute: {str(attribute)}")
+            raise RTSLibError(f"Cannot find attribute: {attribute!s}")
         else:
             try:
-                fwrite(path, f"{str(value)}")
+                fwrite(path, f"{value!s}")
             except Exception as e:
                 raise RTSLibError(f"Cannot set attribute {attribute}: {e}")
 
@@ -175,7 +174,7 @@ class CFSNode:
         @return: The named attribute's value, as a string.
         '''
         self._check_self()
-        path = f"{self.path}/attrib/{str(attribute)}"
+        path = f"{self.path}/attrib/{attribute!s}"
         if not os.path.isfile(path):
             raise RTSLibError(f"Cannot find attribute: {attribute}")
         else:
@@ -191,12 +190,12 @@ class CFSNode:
         @type value: string
         '''
         self._check_self()
-        path = f"{self.path}/param/{str(parameter)}"
+        path = f"{self.path}/param/{parameter!s}"
         if not os.path.isfile(path):
             raise RTSLibError(f"Cannot find parameter: {parameter}")
         else:
             try:
-                fwrite(path, f"{str(value)}\n")
+                fwrite(path, f"{value!s}\n")
             except Exception as e:
                 raise RTSLibError(f"Cannot set parameter {parameter}: {e}")
 
@@ -207,7 +206,7 @@ class CFSNode:
         @return: The named parameter value as a string.
         '''
         self._check_self()
-        path = f"{self.path}/param/{str(parameter)}"
+        path = f"{self.path}/param/{parameter!s}"
         if not os.path.isfile(path):
             raise RTSLibError(f"Cannot find RFC-3720 parameter: {parameter}")
         else:
@@ -224,11 +223,11 @@ class CFSNode:
 
     path = property(_get_path,
             doc="Get the configFS object path.")
-    exists = property(_exists,
-            doc="Is True as long as the underlying configFS object exists. " \
-                      + "If the underlying configFS objects gets deleted " \
-                      + "either by calling the delete() method, or by any " \
-                      + "other means, it will be False.")
+    exists = property(
+        _exists,
+        doc="Is True as long as the underlying configFS object exists. "
+            "If the underlying configFS objects gets deleted either by calling "
+            "the delete() method, or by any other means, it will be False.")
 
     def dump(self):
         d = {}

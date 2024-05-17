@@ -50,8 +50,9 @@ class ALUATargetPortGroup(CFSNode):
             raise RTSLibALUANotSupportedError("Backend does not support ALUA setup")
 
         # default_tg_pt_gp takes tag 1
-        if tag is not None and (tag > 65535 or tag < 1):
-            raise RTSLibError("The TPG Tag must be between 1 and 65535")
+        max_tag_no = 65535
+        if tag is not None and (tag > max_tag_no or tag < 1):
+            raise RTSLibError(f"The TPG Tag must be between 1 and {max_tag_no}")
 
         super().__init__()
         self.name = name
@@ -249,7 +250,7 @@ class ALUATargetPortGroup(CFSNode):
 
         for member in fread(path).splitlines():
             lun_path = member.split("/")
-            if len(lun_path) != 4:
+            if len(lun_path) != 4:  # noqa: PLR2004
                 continue
             member_list.append({ 'driver': lun_path[0], 'target': lun_path[1],
                                  'tpgt': int(lun_path[2].split("_", 1)[1]),
@@ -387,14 +388,14 @@ class ALUATargetPortGroup(CFSNode):
                                  doc="msecs to delay IO when non-optimized")
 
     @classmethod
-    def setup(cls, storage_obj, alua_tpg, err_func):
+    def setup(cls, storage_obj, alua_tpg, err_func):  # noqa: ARG003 TODO
         name = alua_tpg['name']
         if name == 'default_tg_pt_gp':
             return
 
         alua_tpg_obj = cls(storage_obj, name, alua_tpg['tg_pt_gp_id'])
         for param, value in alua_tpg.items():
-            if param != 'name' and param != 'tg_pt_gp_id':
+            if param not in ('name', 'tg_pt_gp_id'):
                 try:
                     setattr(alua_tpg_obj, param, value)
                 except:

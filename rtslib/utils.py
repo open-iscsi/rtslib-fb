@@ -20,11 +20,11 @@ under the License.
 
 import os
 import re
-import six
 import socket
 import subprocess
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
+from pathlib import Path
 
 import pyudev
 
@@ -34,19 +34,16 @@ class RTSLibError(Exception):
     '''
     Generic rtslib error.
     '''
-    pass
 
 class RTSLibALUANotSupportedError(RTSLibError):
     '''
     Backend does not support ALUA.
     '''
-    pass
 
-class RTSLibBrokenLink(RTSLibError):
+class RTSLibBrokenLink(RTSLibError):  # noqa: N818
     '''
     Broken link in configfs, i.e. missing LUN storage object.
     '''
-    pass
 
 class RTSLibNotInCFSError(RTSLibError):
     '''
@@ -55,7 +52,6 @@ class RTSLibNotInCFSError(RTSLibError):
     been deleted from congifs, or when trying to lookup an
     object that does not exist.
     '''
-    pass
 
 def fwrite(path, string):
     '''
@@ -74,8 +70,7 @@ def fwrite(path, string):
     @type string: string
 
     '''
-    with open(path, 'w') as file_fd:
-        file_fd.write(str(string))
+    Path(path).write_text(str(string))
 
 def fread(path):
     '''
@@ -96,8 +91,7 @@ def fread(path):
     @return: A string containing the file's contents.
 
     '''
-    with open(path) as file_fd:
-        return file_fd.read().strip()
+    return Path(path).read_text().strip()
 
 def is_dev_in_use(path):
     '''
@@ -228,10 +222,8 @@ def get_blockdev_type(path):
     attributes = device.attributes
 
     disk_type = 0
-    try:
+    with suppress(KeyError, UnicodeDecodeError, ValueError):
         disk_type = attributes.asint('device/type')
-    except (KeyError, UnicodeDecodeError, ValueError):
-        pass
     return disk_type
 
 get_block_type = get_blockdev_type
@@ -308,7 +300,7 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
 
     devices = _CONTEXT.list_devices(
        subsystem='block',
-       parent=scsi_device
+       parent=scsi_device,
     )
 
     path = next((dev.device_node for dev in devices), '')
@@ -349,11 +341,11 @@ def generate_wwn(wwn_type):
     else:
         raise ValueError(f"Unknown WWN type: {wwn_type}")
 
-def colonize(str):
+def colonize(string):
     '''
     helper function to add colons every 2 chars
     '''
-    return ":".join(str[i:i+2] for i in range(0, len(str), 2))
+    return ":".join(string[i:i + 2] for i in range(0, len(string), 2))
 
 def _cleanse_wwn(wwn_type, wwn):
     '''
@@ -363,13 +355,11 @@ def _cleanse_wwn(wwn_type, wwn):
     wwn = str(wwn.strip()).lower()
 
     if wwn_type in ('naa', 'eui', 'ib'):
-        if wwn.startswith("0x"):
-            wwn = wwn[2:]
+        wwn = wwn.removeprefix("0x")
         wwn = wwn.replace("-", "")
         wwn = wwn.replace(":", "")
 
-        if not (wwn.startswith("naa.") or wwn.startswith("eui.") or \
-            wwn.startswith("ib.")):
+        if not (wwn.startswith(('naa.', 'eui.', 'ib.'))):
             wwn = wwn_type + "." + wwn
 
     return wwn
@@ -382,16 +372,15 @@ def normalize_wwn(wwn_types, wwn):
     Returns (normalized_wwn, wwn_type), or exception if invalid wwn.
     '''
     wwn_test = {
-    'free': lambda wwn: True,
-    'iqn': lambda wwn: \
-        re.match(r"iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
-        and not re.search(' ', wwn) \
-        and not re.search('_', wwn),
+    'free': lambda wwn: True,  # noqa: ARG005 TODO
+    'iqn': lambda wwn: re.match(r"iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn)
+                       and not re.search(' ', wwn)
+                       and not re.search('_', wwn),
     'naa': lambda wwn: re.match(r"naa\.[125c-fC-F][0-9a-fA-F]{15}$", wwn),
     'eui': lambda wwn: re.match(r"eui\.[0-9a-f]{16}$", wwn),
     'ib': lambda wwn: re.match(r"ib\.[0-9a-f]{32}$", wwn),
-    'unit_serial': lambda wwn: \
-        re.match("[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
+    'unit_serial': lambda wwn: re.match(
+        "[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
     }
 
     for wwn_type in wwn_types:
@@ -420,18 +409,16 @@ def modprobe(module):
     if module in list_loaded_kernel_modules():
         return
 
+    import subprocess
+
     try:
         import kmod
         import kmod.error
         import kmod.Kmod
     except ImportError:
-        process = subprocess.Popen(("modprobe", module),
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        (stdoutdata, stderrdata) = process.communicate()
-        if process.returncode != 0:
-            raise RTSLibError(stderrdata)
-        return
+        out = subprocess.run(["modprobe", module], shell=True, capture_output=True, check=False)  # noqa: S602, S607
+        if out.returncode != 0:
+            raise RTSLibError(out.stderr.decode().rstrip())
 
     try:
         kmod.Kmod().modprobe(module)
@@ -439,14 +426,12 @@ def modprobe(module):
         raise RTSLibError(f"Could not load module: {module}")
 
 def mount_configfs():
-    if not os.path.ismount("/sys/kernel/config"):
-        cmdline = "mount -t configfs none /sys/kernel/config"
-        process = subprocess.Popen(cmdline.split(),
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        (stdoutdata, stderrdata) = process.communicate()
-        if process.returncode != 0 and not os.path.ismount(
-            "/sys/kernel/config"):
+    config_dir = "/sys/kernel/config"
+    config_path = Path(config_dir)
+    if not config_path.is_mount():
+        cmdline = ["mount", "-t", "configfs", "none", config_dir]
+        out = subprocess.run(cmdline, shell=True, capture_output=True, check=False)  # noqa: S602
+        if out.returncode != 0 and not config_path.is_mount():
             raise RTSLibError("Cannot mount configfs")
 
 def dict_remove(d, items):
@@ -456,7 +441,7 @@ def dict_remove(d, items):
 
 @contextmanager
 def ignored(*exceptions):
-    try:
+    try:  # noqa: SIM105 TODO
         yield
     except exceptions:
         pass
@@ -495,12 +480,13 @@ def _set_auth_attr(self, value, attribute, ignore=False):
     value = value.strip()
     if value == "NULL":
         raise RTSLibError("'NULL' is not a permitted value")
-    if len(value) > 255:
-        raise RTSLibError("Value longer than maximum length of 255")
+    max_value = 255
+    if len(value) > max_value:
+        raise RTSLibError(f"Value longer than maximum length of {max_value}")
     if value == '':
         value = "NULL"
     try:
-        fwrite(path, f"{value}")
+        fwrite(path, str(value))
     except:
         if not ignore:
             raise

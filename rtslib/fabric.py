@@ -107,14 +107,23 @@ Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 
 '''
 
+import os
 from functools import partial
 from pathlib import Path
 
 from .node import CFSNode
-from .utils import fread, fwrite, normalize_wwn, colonize
-from .utils import RTSLibError, modprobe, ignored
 from .target import Target
-from .utils import _get_auth_attr, _set_auth_attr
+from .utils import (
+    RTSLibError,
+    _get_auth_attr,
+    _set_auth_attr,
+    colonize,
+    fread,
+    fwrite,
+    ignored,
+    modprobe,
+    normalize_wwn,
+)
 
 excludes_list = [
     # version_attributes
@@ -179,14 +188,14 @@ class _BaseFabricModule(CFSNode):
 
     def _get_version(self):
         if self.exists:
-            for attr in self.version_attributes:
+            for attr in self.version_attributes:  # TODO
                 path = f"{self.path}/{attr}"
                 if os.path.isfile(path):
                     return fread(path)
-            else:
-                raise RTSLibError(f"Can't find version for fabric module {self.name}")
-        else:
+                else:
+                    raise RTSLibError(f"Can't find version for fabric module {self.name}")
             return None
+        return None
 
     def to_normalized_wwn(self, wwn):
         '''
@@ -255,11 +264,8 @@ class _BaseFabricModule(CFSNode):
         self._check_self()
         self._assert_feature('discovery_auth')
         path = f"{self.path}/discovery_auth/enforce_discovery_auth"
-        if int(enable):
-            enable = 1
-        else:
-            enable = 0
-        fwrite(path, f"{enable}")
+        enable = 1 if int(enable) else 0
+        fwrite(path, str(enable))
 
     def _get_discovery_authenticate_target(self):
         self._check_self()
@@ -272,7 +278,6 @@ class _BaseFabricModule(CFSNode):
         Returns either iterable or None. None means fabric allows
         arbitrary WWNs.
         '''
-        return None
 
     def _get_disc_attr(self, *args, **kwargs):
         self._assert_feature('discovery_auth')

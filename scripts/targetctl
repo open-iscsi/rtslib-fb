@@ -22,10 +22,10 @@ under the License.
 # A script to save/restore LIO configuration to/from a file in json format
 #
 
-
-from rtslib_fb import RTSRoot
 import os
 import sys
+
+from rtslib_fb import RTSRoot
 
 default_save_file = "/etc/target/saveconfig.json"
 err = sys.stderr
@@ -52,10 +52,10 @@ def restore(from_file):
     for error in errors:
         print(error, file=err)
 
-def clear(unused):
+def clear():
     RTSRoot().clear_existing(confirm=True)
 
-funcs = dict(save=save, restore=restore, clear=clear)
+funcs = {"save": save, "restore": restore, "clear": clear}
 
 def main():
     if os.geteuid() != 0:
@@ -68,7 +68,7 @@ def main():
     if sys.argv[1] == "--help":
         usage()
 
-    if sys.argv[1] not in funcs.keys():
+    if sys.argv[1] not in funcs:
         usage()
 
     savefile = default_save_file

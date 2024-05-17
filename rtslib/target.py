@@ -18,17 +18,28 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
+import contextlib
 import os
-from glob import iglob as glob
-from functools import partial
 import uuid
+from functools import partial
+from glob import iglob as glob
 
-from .node import CFSNode
-from .utils import RTSLibBrokenLink, RTSLibError
-from .utils import fread, fwrite, normalize_wwn, generate_wwn
-from .utils import dict_remove, set_attributes, set_parameters, ignored
-from .utils import _get_auth_attr, _set_auth_attr
 from . import tcm
+from .node import CFSNode
+from .utils import (
+    RTSLibBrokenLink,
+    RTSLibError,
+    _get_auth_attr,
+    _set_auth_attr,
+    dict_remove,
+    fread,
+    fwrite,
+    generate_wwn,
+    ignored,
+    normalize_wwn,
+    set_attributes,
+    set_parameters,
+)
 
 auth_params = ('userid', 'password', 'mutual_userid', 'mutual_password')
 
@@ -291,9 +302,9 @@ class TPG(CFSNode):
     def _list_node_acl_groups(self):
         self._check_self()
         if not self.has_feature('acls'):
-            return
+            return None
 
-        names = set([])
+        names = set()
 
         for na in self.node_acls:
             tag = na.tag
@@ -314,7 +325,7 @@ class TPG(CFSNode):
     def _control(self, command):
         self._check_self()
         path = f"{self.path}/control"
-        fwrite(path, f"{str(command)}\n")
+        fwrite(path, f"{command!s}\n")
 
     # TPG public stuff
 
@@ -364,31 +375,31 @@ class TPG(CFSNode):
         self._check_self()
         return LUN(self, lun=lun, storage_object=storage_object, alias=alias)
 
-    tag = property(_get_tag,
-            doc="Get the TPG Tag as an int.")
-    parent_target = property(_get_parent_target,
-                             doc="Get the parent Target object to which the " \
-                             + "TPG is attached.")
-    enable = property(_get_enable, _set_enable,
-                      doc="Get or set a boolean value representing the " \
-                      + "enable status of the TPG. " \
-                      + "True means the TPG is enabled, False means it is " \
-                      + "disabled.")
-    network_portals = property(_list_network_portals,
-            doc="Get the list of NetworkPortal objects currently attached " \
-                               + "to the TPG.")
-    node_acls = property(_list_node_acls,
-                         doc="Get the list of NodeACL objects currently " \
-                         + "attached to the TPG.")
-    node_acl_groups = property(_list_node_acl_groups,
-                         doc="Get the list of NodeACL groups currently " \
-                         + "attached to the TPG.")
-    luns = property(_list_luns,
-                    doc="Get the list of LUN objects currently attached " \
-                    + "to the TPG.")
-
-    nexus = property(_get_nexus, _set_nexus,
-                     doc="Get or set (once) the TPG's Nexus is used.")
+    tag = property(_get_tag,doc="Get the TPG Tag as an int.")
+    parent_target = property(
+        _get_parent_target,
+        doc="Get the parent Target object to which the TPG is attached.")
+    enable = property(
+        _get_enable,
+        _set_enable,
+        doc="Get or set a boolean value representing the enable status of the TPG. "
+            "True means the TPG is enabled, False means it is disabled.")
+    network_portals = property(
+        _list_network_portals,
+        doc="Get the list of NetworkPortal objects currently attached to the TPG.")
+    node_acls = property(
+        _list_node_acls,
+        doc="Get the list of NodeACL objects currently attached to the TPG.")
+    node_acl_groups = property(
+        _list_node_acl_groups,
+        doc="Get the list of NodeACL groups currently attached to the TPG.")
+    luns = property(
+        _list_luns,
+        doc="Get the list of LUN objects currently attached to the TPG.")
+    nexus = property(
+        _get_nexus,
+        _set_nexus,
+        doc="Get or set (once) the TPG's Nexus is used.")
 
     chap_userid = property(
         partial(_get_auth_attr, attribute='auth/userid', ignore=True),
@@ -415,8 +426,9 @@ class TPG(CFSNode):
         except:
             return None
 
-    authenticate_target = property(_get_authenticate_target,
-                                   doc="Get the boolean authenticate target flag.")
+    authenticate_target = property(
+        _get_authenticate_target,
+        doc="Get the boolean authenticate target flag.")
 
     @classmethod
     def setup(cls, t_obj, tpg, err_func):
@@ -524,8 +536,8 @@ class LUN(CFSNode):
         self._path = "%s/lun/lun_%d" % (self.parent_tpg.path, self.lun)
 
         if storage_object is None and alias is not None:
-            raise RTSLibError("The alias parameter has no meaning " \
-                              + "without the storage_object parameter")
+            raise RTSLibError("The alias parameter has no meaning "
+                              "without the storage_object parameter")
 
         if storage_object is not None:
             self._create_in_cfs_ine('create')
@@ -666,9 +678,9 @@ class LUN(CFSNode):
     def _set_alua_tg_pt_status(self, integer):
         self._check_self()
 
-        if integer != self.ALUA_STATUS_NONE and\
-            integer != self.ALUA_STATUS_ALTERED_BY_EXPLICIT_STPG and\
-            integer != self.ALUA_STATUS_ALTERED_BY_IMPLICIT_ALUA:
+        if integer not in (self.ALUA_STATUS_NONE,
+                           self.ALUA_STATUS_ALTERED_BY_EXPLICIT_STPG,
+                           self.ALUA_STATUS_ALTERED_BY_IMPLICIT_ALUA):
             return -1
 
         if self._get_storage_object().alua_supported is False:
@@ -779,11 +791,9 @@ class LUN(CFSNode):
             err_func("Creating TPG %d LUN index %d failed" %
                      (tpg_obj.tag, lun['index']))
 
-        try:
+        # alua_tg_pt_gp support not present in older versions
+        with contextlib.suppress(KeyError):
             lun_obj.alua_tg_pt_gp_name = lun['alua_tg_pt_gp_name']
-        except KeyError:
-            # alua_tg_pt_gp support not present in older versions
-            pass
 
     def dump(self):
         d = super().dump()
@@ -901,11 +911,11 @@ class NetworkPortal(CFSNode):
     ip_address = property(_get_ip_address,
             doc="Get the NetworkPortal's IP address as a string.")
     iser = property(_get_iser, _set_iser,
-                    doc="Get or set a boolean value representing if this " \
-                        + "NetworkPortal supports iSER.")
+                    doc="Get or set a boolean value representing if "
+                        "this NetworkPortal supports iSER.")
     offload = property(_get_offload, _set_offload,
-                    doc="Get or set a boolean value representing if this " \
-                        + "NetworkPortal supports offload.")
+                    doc="Get or set a boolean value representing if "
+                        "this NetworkPortal supports offload.")
 
     @classmethod
     def setup(cls, tpg_obj, p, err_func):
@@ -986,10 +996,10 @@ class NodeACL(CFSNode):
         self._check_self()
         path = f"{self.path}/cmdsn_depth"
         try:
-            fwrite(path, f"{depth}")
+            fwrite(path, str(depth))
         except OSError as msg:
             msg = msg[1]
-            raise RTSLibError(f"Cannot set tcq_depth: {str(msg)}")
+            raise RTSLibError(f"Cannot set tcq_depth: {msg!s}")
 
     def _get_tag(self):
         self._check_self()
@@ -1039,7 +1049,7 @@ class NodeACL(CFSNode):
             elif "TARG_CONN_STATE_" in line:
                 cid = int(line.split(":")[1].split()[0])
                 cstate = line.split("_STATE_")[1].split()[0]
-                session['connections'].append(dict(cid=cid, cstate=cstate))
+                session['connections'].append({'cid': cid, 'cstate': cstate})
             elif "Address" in line:
                 session['connections'][-1]['address'] = line.split()[1]
                 session['connections'][-1]['transport'] = line.split()[2]
@@ -1073,8 +1083,8 @@ class NodeACL(CFSNode):
                          write_protect=write_protect)
 
     tcq_depth = property(_get_tcq_depth, _set_tcq_depth,
-                         doc="Set or get the TCQ depth for the initiator " \
-                         + "sessions matching this NodeACL.")
+                         doc="Set or get the TCQ depth for the initiator "
+                             "sessions matching this NodeACL.")
     tag = property(_get_tag, _set_tag,
             doc="Set or get the NodeACL tag. If not supported, return None")
     parent_tpg = property(_get_parent_tpg,
@@ -1090,7 +1100,7 @@ class NodeACL(CFSNode):
                            partial(_set_auth_attr, attribute='auth/userid'),
                            doc="Set or get the initiator CHAP auth userid.")
     chap_password = property(partial(_get_auth_attr, attribute='auth/password'),
-                             partial(_set_auth_attr, attribute='auth/password',),
+                             partial(_set_auth_attr, attribute='auth/password'),
                              doc="Set or get the initiator CHAP auth password.")
     chap_mutual_userid = property(partial(_get_auth_attr, attribute='auth/userid_mutual'),
                                   partial(_set_auth_attr, attribute='auth/userid_mutual'),
@@ -1188,8 +1198,7 @@ class MappedLUN(CFSNode):
         super().__init__()
 
         if not isinstance(parent_nodeacl, NodeACL):
-            raise RTSLibError("The parent_nodeacl parameter must be " \
-                              + "a NodeACL object")
+            raise RTSLibError("The parent_nodeacl parameter must be a NodeACL object")
         else:
             self._parent_nodeacl = parent_nodeacl
             if not parent_nodeacl.exists:
@@ -1198,16 +1207,15 @@ class MappedLUN(CFSNode):
         try:
             self._mapped_lun = int(mapped_lun)
         except ValueError:
-            raise RTSLibError("The mapped_lun parameter must be an " \
-                              + "integer value")
+            raise RTSLibError("The mapped_lun parameter must be an integer value")
         if self._mapped_lun < 0:
             raise RTSLibError("Mapped LUN must be >= 0")
 
         self._path = "%s/lun_%d" % (self.parent_nodeacl.path, self.mapped_lun)
 
         if tpg_lun is None and write_protect is not None:
-            raise RTSLibError("The write_protect parameter has no " \
-                              + "meaning without the tpg_lun parameter")
+            raise RTSLibError("The write_protect parameter has no "
+                              "meaning without the tpg_lun parameter")
 
         if tpg_lun is not None:
             self._create_in_cfs_ine('create')
@@ -1227,15 +1235,14 @@ class MappedLUN(CFSNode):
             try:
                 tpg_lun = int(tpg_lun)
             except ValueError:
-                raise RTSLibError("The tpg_lun must be either an "
-                                  + "integer or a LUN object")
+                raise RTSLibError("The tpg_lun must be either an integer or a LUN object")
         # Check that the tpg_lun exists in the TPG
         for lun in self.parent_nodeacl.parent_tpg.luns:
             if lun.lun == tpg_lun:
                 tpg_lun = lun
                 break
         if not (isinstance(tpg_lun, LUN) and tpg_lun):
-            raise RTSLibError(f"LUN {str(tpg_lun)} does not exist in this TPG")
+            raise RTSLibError(f"LUN {tpg_lun!s} does not exist in this TPG")
 
         if not alias:
             alias = str(uuid.uuid4())[-10:]
@@ -1623,7 +1630,7 @@ class NodeACLGroup(Group):
     tcq_depth = property(partial(Group._get_prop, prop="tcq_depth"),
                          partial(Group._set_prop, prop="tcq_depth"),
                          doc="Set or get the TCQ depth for the initiator "
-                         + "sessions matching this NodeACLGroup")
+                             "sessions matching this NodeACLGroup")
     authenticate_target = property(partial(Group._get_prop, prop="authenticate_target"),
                                    doc="Get the boolean authenticate target flag.")
 
@@ -1642,7 +1649,7 @@ class MappedLUNGroup(Group):
         self._nag = nodeaclgroup
         self._mapped_lun = mapped_lun
         for na in self._nag._node_acls:
-            MappedLUN(na, mapped_lun=mapped_lun, *args, **kwargs)
+            MappedLUN(na, *args, mapped_lun=mapped_lun, **kwargs)
 
     @property
     def _mapped_luns(self):

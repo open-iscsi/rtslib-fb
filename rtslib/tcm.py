@@ -18,19 +18,29 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import os
-import stat
-import re
-import glob
 import fcntl
+import glob
+import os
+import re
 import resource
+from contextlib import suppress
+import stat
 
 from .alua import ALUATargetPortGroup
 from .node import CFSNode
-from .utils import fread, fwrite, generate_wwn, RTSLibError, RTSLibNotInCFSError
-from .utils import convert_scsi_path_to_hctl, convert_scsi_hctl_to_path
-from .utils import is_dev_in_use, get_blockdev_type
-from .utils import get_size_for_blk_dev, get_size_for_disk_name
+from .utils import (
+    RTSLibError,
+    RTSLibNotInCFSError,
+    convert_scsi_hctl_to_path,
+    convert_scsi_path_to_hctl,
+    fread,
+    fwrite,
+    generate_wwn,
+    get_blockdev_type,
+    get_size_for_blk_dev,
+    get_size_for_disk_name,
+    is_dev_in_use,
+)
 
 lock_file = '/var/run/rtslib_backstore.lock'
 
@@ -38,11 +48,9 @@ def storage_object_get_alua_support_attr(so):
     '''
     Helper function that can be called by passthrough type of backends.
     '''
-    try:
+    with suppress(RTSLibError):
         if int(so.get_attribute("alua_support")) == 1:
             return True
-    except RTSLibError:
-            pass
     # Default to false because older kernels will crash when
     # reading/writing to some ALUA files when ALUA was not
     # fully supported by pscsi and tcmu.
@@ -137,8 +145,8 @@ class StorageObject(CFSNode):
             path = f"{self.path}/wwn/vpd_unit_serial"
             return fread(path).partition(":")[2].strip()
         else:
-            raise RTSLibError("Cannot read a T10 WWN Unit Serial from "
-                              + "an unconfigured StorageObject")
+            raise RTSLibError(
+                "Cannot read a T10 WWN Unit Serial from an unconfigured StorageObject")
 
     def _set_wwn(self, wwn):
         self._check_self()
@@ -146,13 +154,13 @@ class StorageObject(CFSNode):
             path = f"{self.path}/wwn/vpd_unit_serial"
             fwrite(path, f"{wwn}\n")
         else:
-            raise RTSLibError("Cannot write a T10 WWN Unit Serial to "
-                              + "an unconfigured StorageObject")
+            raise RTSLibError(
+                "Cannot write a T10 WWN Unit Serial to an unconfigured StorageObject")
 
     def _set_udev_path(self, udev_path):
         self._check_self()
         path = f"{self.path}/udev_path"
-        fwrite(path, f"{udev_path}")
+        fwrite(path, str(udev_path))
 
     def _get_udev_path(self):
         self._check_self()
@@ -176,12 +184,12 @@ class StorageObject(CFSNode):
     def _control(self, command):
         self._check_self()
         path = f"{self.path}/control"
-        fwrite(path, f"{str(command).strip()}")
+        fwrite(path, str(command).strip())
 
     def _write_fd(self, contents):
         self._check_self()
         path = f"{self.path}/fd"
-        fwrite(path, f"{str(contents).strip()}")
+        fwrite(path, str(contents).strip())
 
     def _parse_info(self, key):
         self._check_self()
@@ -205,9 +213,9 @@ class StorageObject(CFSNode):
         listdir = os.listdir
         realpath = os.path.realpath
         path = self.path
+        from .fabric import target_names_excludes
         from .root import RTSRoot
         from .target import LUN, TPG, Target
-        from .fabric import target_names_excludes
 
         for base, fm in ((fm.path, fm) for fm in RTSRoot().fabric_modules if fm.exists):
             for tgt_dir in listdir(base):
@@ -300,8 +308,7 @@ class StorageObject(CFSNode):
     wwn = property(_get_wwn, _set_wwn,
             doc="Get or set the StorageObject T10 WWN Serial as a string.")
     status = property(_get_status,
-            doc="Get the storage object status, depending on whether or not it"\
-                + "is used by any LUN")
+            doc="Get the storage object status, depending on whether or not it is used by any LUN")
     attached_luns = property(_list_attached_luns,
             doc="Get the list of all LUN objects attached.")
     alua_tpgs = property(_list_alua_tpgs,
@@ -373,10 +380,8 @@ class PSCSIStorageObject(StorageObject):
                 targetid = int(targetid)
                 lunid = int(lunid)
             except ValueError:
-                raise RTSLibError("Cannot find SCSI device by "
-                                  + "path, and dev "
-                                  + "parameter not in H:C:T:L "
-                                  + f"format: {dev}")
+                raise RTSLibError("Cannot find SCSI device by path, and dev "
+                                  "parameter not in H:C:T:L format: {dev}")
 
             udev_path = convert_scsi_hctl_to_path(hostid,
                                                   channelid,
@@ -444,8 +449,8 @@ class PSCSIStorageObject(StorageObject):
     # PSCSIStorageObject public stuff
 
     wwn = property(StorageObject._get_wwn, _set_wwn,
-            doc="Get the StorageObject T10 WWN Unit Serial as a string."
-            + " You cannot set it for pscsi-backed StorageObjects.")
+            doc="Get the StorageObject T10 WWN Unit Serial as a string. "
+                "You cannot set it for pscsi-backed StorageObjects.")
     model = property(_get_model,
             doc="Get the SCSI device model string")
     vendor = property(_get_vendor,
@@ -706,7 +711,7 @@ class BlockStorageObject(StorageObject):
     # BlockStorageObject private stuff
 
     def __init__(self, name, dev=None, wwn=None, readonly=False,
-                 write_back=False, index=None):
+                 write_back=False, index=None):  # noqa: ARG002 TODO
         '''
         A BlockIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -746,8 +751,8 @@ class BlockStorageObject(StorageObject):
         if get_blockdev_type(dev) != 0:
             raise RTSLibError(f"Device {dev} is not a TYPE_DISK block device")
         if is_dev_in_use(dev):
-            raise RTSLibError("Cannot configure StorageObject because "
-                              + f"device {dev} is already in use")
+            raise RTSLibError(
+                "Cannot configure StorageObject because device {dev} is already in use")
         self._set_udev_path(dev)
         self._control(f"udev_path={dev}")
         self._control("readonly=%d" % readonly)
@@ -929,7 +934,7 @@ class StorageObjectFactory:
             s = os.stat(path)
             if stat.S_ISBLK(s.st_mode):
                 return BlockStorageObject(name=name, dev=path)
-            elif stat.S_ISREG(s.st_mode):
+            if stat.S_ISREG(s.st_mode):
                 return FileIOStorageObject(name=name, dev=path, size=s.st_size)
 
         raise RTSLibError(f"Can't create storageobject from path: {path}")
@@ -949,11 +954,11 @@ so_mapping = {
 
 
 bs_params = {
-    PSCSIStorageObject: dict(name='pscsi'),
-    RDMCPStorageObject: dict(name='ramdisk', alt_dirprefix='rd_mcp'),
-    FileIOStorageObject: dict(name='fileio'),
-    BlockStorageObject: dict(name='block', alt_dirprefix='iblock'),
-    UserBackedStorageObject: dict(name='user'),
+    PSCSIStorageObject: {'name': 'pscsi'},
+    RDMCPStorageObject: {'name': 'ramdisk', 'alt_dirprefix': 'rd_mcp'},
+    FileIOStorageObject: {'name': 'fileio'},
+    BlockStorageObject: {'name': 'block', 'alt_dirprefix': 'iblock'},
+    UserBackedStorageObject: {'name': 'user'},
     }
 
 bs_cache = {}
@@ -973,10 +978,10 @@ class _Backstore(CFSNode):
         dirp = bs_params[self._so_cls].get("alt_dirprefix", self._plugin)
 
         # if the caller knows the index then skip the cache
-        global bs_cache
+        global bs_cache  # noqa: PLW0602  TODO
         if index is None and not bs_cache:
-            for dir in glob.iglob(f"{self.configfs_dir}/core/*_*/*/"):
-                parts = dir.split("/")
+            for directory in glob.iglob(f"{self.configfs_dir}/core/*_*/*/"):
+                parts = directory.split("/")
                 bs_name = parts[-2]
                 bs_dirp, bs_index = parts[-3].rsplit("_", 1)
                 current_key = f"{bs_dirp}/{bs_name}"
