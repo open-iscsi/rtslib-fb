@@ -19,7 +19,6 @@ under the License.
 '''
 
 import errno
-import glob
 import json
 import os
 from contextlib import suppress
@@ -157,16 +156,16 @@ class RTSRoot(CFSNode):
         return "rtslib"
 
     def _set_dbroot(self):
-        dbroot_path = self.path + "/dbroot"
-        if not os.path.exists(dbroot_path):
+        dbroot_path = Path(self.path) / "dbroot"
+        if not dbroot_path.exists():
             self._dbroot = self._default_dbroot
             return
         self._dbroot = fread(dbroot_path)
         if self._dbroot != self._preferred_dbroot:
             try:
-                fwrite(dbroot_path, self._preferred_dbroot+"\n")
+                fwrite(dbroot_path, f"{self._preferred_dbroot}\n")
             except:
-                if not os.path.isdir(self._preferred_dbroot):
+                if not Path(self._preferred_dbroot).is_dir():
                     raise RTSLibError(f"Cannot set dbroot to {self._preferred_dbroot}. "
                                       f"Please check if this directory exists.")
                 else:
@@ -191,7 +190,7 @@ class RTSRoot(CFSNode):
         current = self.dump()
 
         try:
-            with open(save_file) as f:
+            with Path(save_file).open as f:
                 saveconf = json.loads(f.read())
         except OSError as e:
             if e.errno == errno.ENOENT:
@@ -318,8 +317,8 @@ class RTSRoot(CFSNode):
         # If somehow some hbas still exist (no storage object within?) clean
         # them up too.
         if not (storage_object or target):
-            for hba_dir in glob.glob(f"{self.configfs_dir}/core/*_*"):
-                os.rmdir(hba_dir)
+            for hba_dir in Path(self.configfs_dir, 'core').glob('*_*'):
+                hba_dir.rmdir()
 
     def restore(self, config, target=None, storage_object=None,
                 clear_existing=False, abort_on_error=False):
@@ -456,24 +455,20 @@ class RTSRoot(CFSNode):
         umask = 0o777 ^ mode  # Prevents always downgrading umask to 0
 
         # For security, remove file with potentially elevated mode
-        with suppress(OSError):
-            tmp_file.unlink()
+        tmp_file.unlink(missing_ok=True)
 
         original_umask = os.umask(umask)
         # Even though the old file is first deleted, a race condition is still
         # possible. mode='x' opens the file for exclusive creation,
         # failing if the file already exists
         try:
-            with tmp_file.open(mode="x"):
-                pass
+            with tmp_file.open(mode="x") as f:
+                json.dump(saveconf, f, sort_keys=True, indent=2)
+                f.write("\n")
+                f.flush()
+                os.fsync(f.fileno())
         except OSError as e:
             raise RuntimeError(f"Could not open {tmp_file}") from e
-
-        with tmp_file.open(mode="w") as f:
-            json.dump(saveconf, f, sort_keys=True, indent=2)
-            f.write("\n")
-            f.flush()
-            os.fsync(f.fileno())
 
         # move along with permissions
         tmp_file.replace(save_file)
@@ -492,7 +487,7 @@ class RTSRoot(CFSNode):
         if not restore_file:
             restore_file = default_save_file
 
-        with open(restore_file) as f:
+        with Path(restore_file).open as f:
             config = json.loads(f.read())
             return self.restore(config, target, storage_object,
                                 clear_existing=clear_existing,

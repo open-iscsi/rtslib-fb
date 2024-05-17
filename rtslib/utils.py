@@ -65,7 +65,7 @@ def fwrite(path, string):
     'hello'
 
     @param path: The file to write to.
-    @type path: string
+    @type path: string or Path object
     @param string: The string to write to the file.
     @type string: string
 
@@ -87,7 +87,7 @@ def fread(path):
     IOError: [Errno 2] No such file or directory: '/tmp/notexistingfile'
 
     @param path: The path to the file to read from.
-    @type path: string
+    @type path: string or Path object
     @return: A string containing the file's contents.
 
     '''
@@ -253,8 +253,7 @@ def convert_scsi_path_to_hctl(path):
     values representing the SCSI ID of the device, or raise RTSLibError.
     '''
     try:
-        path = os.path.realpath(path)
-        device = pyudev.Device.from_device_file(_CONTEXT, path)
+        device = pyudev.Devices.from_device_file(_CONTEXT, str(Path(path).resolve()))
         parent = device.find_parent(subsystem='scsi')
         return [int(data) for data in parent.sys_name.split(':')]
     except:

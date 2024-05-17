@@ -24,6 +24,7 @@ under the License.
 
 import os
 import sys
+from pathlib import Path
 
 from rtslib_fb import RTSRoot
 
@@ -73,7 +74,7 @@ def main():
 
     savefile = default_save_file
     if len(sys.argv) == 3:
-        savefile = os.path.expanduser(sys.argv[2])
+        savefile = Path(sys.argv[2]).expanduser()
 
     funcs[sys.argv[1]](savefile)
 

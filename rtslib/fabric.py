@@ -108,6 +108,7 @@ Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 '''
 
 import os
+from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
@@ -120,7 +121,6 @@ from .utils import (
     colonize,
     fread,
     fwrite,
-    ignored,
     modprobe,
     normalize_wwn,
 )
@@ -181,16 +181,15 @@ class _BaseFabricModule(CFSNode):
 
     def _list_targets(self):
         if self.exists:
-            for wwn in os.listdir(self.path):
-                if os.path.isdir(f"{self.path}/{wwn}") and \
-                        wwn not in target_names_excludes:
-                    yield Target(self, self.from_fabric_wwn(wwn), 'lookup')
+            for wwn in Path(self.path).iterdir():
+                if wwn.is_dir() and wwn.name not in target_names_excludes:
+                    yield Target(self, self.from_fabric_wwn(wwn.name), 'lookup')
 
     def _get_version(self):
         if self.exists:
             for attr in self.version_attributes:  # TODO
-                path = f"{self.path}/{attr}"
-                if os.path.isfile(path):
+                path = Path(self.path) / attr
+                if path.is_file():
                     return fread(path)
                 else:
                     raise RTSLibError(f"Can't find version for fabric module {self.name}")
@@ -379,10 +378,10 @@ class SBPFabricModule(_BaseFabricModule):
     # return 1st local guid (is unique) so our share is named uniquely
     @property
     def wwns(self):
-        for fname in glob("/sys/bus/firewire/devices/fw*/is_local"):
+        for fname in Path("/sys/bus/firewire/devices").glob("fw*/is_local"):
             if bool(int(fread(fname))):
-                guid_path = os.path.dirname(fname) + "/guid"
-                yield "eui." + fread(guid_path)[2:]
+                guid_path = fname.parent / "guid"
+                yield f"eui.{fread(guid_path)[2:]}"
                 break
 
 
@@ -402,13 +401,13 @@ class Qla2xxxFabricModule(_BaseFabricModule):
 
     @property
     def wwns(self):
-        for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            with ignored(IOError):
-                host = os.path.realpath(os.path.dirname(wwn_file))
-                device = host.rsplit('/', 3)[0]
-                driver = os.path.basename(os.path.realpath(device+"/driver"))
-                if driver == "qla2xxx":
-                    yield "naa." + fread(wwn_file)[2:]
+        for wwn_file in Path("/sys/class/fc_host").glob("host*/port_name"):
+            with suppress(IOError):
+                host = Path(wwn_file).resolve().parent
+                device = host.parents[2]
+                driver = (device / "driver").resolve().name
+                if driver == "qla2xxx":  # TODO
+                    yield f"naa.{fread(wwn_file)[2:]}"
 
 
 class EfctFabricModule(_BaseFabricModule):
@@ -427,13 +426,13 @@ class EfctFabricModule(_BaseFabricModule):
 
     @property
     def wwns(self):
-        for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            with ignored(IOError):
-                host = os.path.realpath(os.path.dirname(wwn_file))
-                device = host.rsplit('/', 3)[0]
-                driver = os.path.basename(os.path.realpath(device+"/driver"))
-                if driver == "efct":
-                    yield "naa." + fread(wwn_file)[2:]
+        for wwn_file in Path("/sys/class/fc_host").glob("host*/port_name"):
+            with suppress(IOError):
+                host = Path(wwn_file).resolve().parent
+                device = host.parents[2]
+                driver = (device / "driver").resolve().name
+                if driver == "efct":  # TODO
+                    yield f"naa.{fread(wwn_file)[2:]}"
 
 
 class SRPTFabricModule(_BaseFabricModule):
@@ -452,8 +451,8 @@ class SRPTFabricModule(_BaseFabricModule):
 
     @property
     def wwns(self):
-        for wwn_file in glob("/sys/class/infiniband/*/ports/*/gids/0"):
-            yield "ib." + fread(wwn_file).replace(":", "")
+        for wwn_file in Path("/sys/class/infiniband").glob("**/ports/*/gids/0"):
+            yield f"ib.{fread(wwn_file).replace(':', '')}"
 
 
 class FCoEFabricModule(_BaseFabricModule):
@@ -474,13 +473,13 @@ class FCoEFabricModule(_BaseFabricModule):
 
     @property
     def wwns(self):
-        for wwn_file in glob("/sys/class/fc_host/host*/port_name"):
-            with ignored(IOError):
-                host = os.path.realpath(os.path.dirname(wwn_file))
-                device = host.rsplit('/', 3)[0]
-                subsystem = os.path.basename(os.path.realpath(device+"/subsystem"))
+        for wwn_file in Path("/sys/class/fc_host").glob("host*/port_name"):
+            with suppress(IOError):
+                host = Path(wwn_file).resolve().parent
+                device = host.parents[2]
+                subsystem = (device / "subsystem").resolve().name
                 if subsystem == "fcoe":
-                    yield "naa." + fread(wwn_file)[2:]
+                    yield f"naa.{fread(wwn_file)[2:]}"
 
 
 class USBGadgetFabricModule(_BaseFabricModule):
@@ -515,7 +514,7 @@ class IbmvscsisFabricModule(_BaseFabricModule):
 
     @property
     def wwns(self):
-        for wwn_file in glob("/sys/module/ibmvscsis/drivers/vio:ibmvscsis/*/devspec"):
+        for wwn_file in Path("/sys/module/ibmvscsis/drivers/vio:ibmvscsis").glob("*/devspec"):
             name = fread(wwn_file)
             yield name[name.find("@") + 1:]
 

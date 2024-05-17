@@ -19,12 +19,11 @@ under the License.
 '''
 
 import fcntl
-import glob
 import os
 import re
 import resource
 from contextlib import suppress
-import stat
+from pathlib import Path
 
 from .alua import ALUATargetPortGroup
 from .node import CFSNode
@@ -126,8 +125,8 @@ class StorageObject(CFSNode):
 
     @classmethod
     def all(cls):
-        for so_dir in glob.glob(f"{cls.configfs_dir}/core/*_*/*"):
-            if os.path.isdir(so_dir):
+        for so_dir in Path(cls.configfs_dir, 'core').glob('*_*/*'):
+            if so_dir.is_dir():
                 yield cls.so_from_path(so_dir)
 
     @classmethod
@@ -135,8 +134,9 @@ class StorageObject(CFSNode):
         '''
         Build a StorageObject of the correct type from a configfs path.
         '''
-        so_name = os.path.basename(path)
-        so_type, so_index = path.split("/")[-2].rsplit("_", 1)
+        path = Path(path)  # Ensure path is a Path object
+        so_name = path.name
+        so_type, so_index = path.parts[-2].rsplit("_", 1)
         return so_mapping[so_type](so_name, index=so_index)
 
     def _get_wwn(self):
@@ -291,10 +291,10 @@ class StorageObject(CFSNode):
         @return: True if the StorageObject is configured, else returns False
         '''
         self._check_self()
-        path = f"{self.path}/enable"
+        path = Path(self.path) / 'enable'
         # If the StorageObject does not have the enable attribute,
         # then it is always enabled.
-        if os.path.isfile(path):
+        if path.is_file():
             return bool(int(fread(path)))
         else:
             return True
@@ -624,7 +624,7 @@ class FileIOStorageObject(StorageObject):
         self._check_self()
         block_type = get_blockdev_type(dev)
         if block_type is None: # a file
-            if os.path.exists(dev) and not os.path.isfile(dev):
+            if Path(dev).exists() and not Path(dev).is_file():
                 raise RTSLibError("Path not to a file or block device")
 
             if size is None:
@@ -929,13 +929,13 @@ class StorageObjectFactory:
     """
 
     def __new__(cls, path):
-        name = path.strip("/").replace("/", "-")
-        if os.path.exists(path):
-            s = os.stat(path)
-            if stat.S_ISBLK(s.st_mode):
-                return BlockStorageObject(name=name, dev=path)
-            if stat.S_ISREG(s.st_mode):
-                return FileIOStorageObject(name=name, dev=path, size=s.st_size)
+        path = Path(path)
+        name = path.name.replace("/", "-")
+        if path.exists():
+            if path.is_block_device():
+                return BlockStorageObject(name=name, dev=str(path))
+            elif path.is_file():
+                return FileIOStorageObject(name=name, dev=str(path), size=path.stat().st_size)
 
         raise RTSLibError(f"Can't create storageobject from path: {path}")
 
@@ -980,10 +980,10 @@ class _Backstore(CFSNode):
         # if the caller knows the index then skip the cache
         global bs_cache  # noqa: PLW0602  TODO
         if index is None and not bs_cache:
-            for directory in glob.iglob(f"{self.configfs_dir}/core/*_*/*/"):
-                parts = directory.split("/")
-                bs_name = parts[-2]
-                bs_dirp, bs_index = parts[-3].rsplit("_", 1)
+            for directory in Path(self.configfs_dir).glob("core/*_*/*/"):
+                parts = directory.parts
+                bs_name = parts[-1]
+                bs_dirp, bs_index = parts[-2].rsplit("_", 1)
                 current_key = f"{bs_dirp}/{bs_name}"
                 bs_cache[current_key] = int(bs_index)
 
@@ -1000,30 +1000,28 @@ class _Backstore(CFSNode):
                 raise RTSLibNotInCFSError(f"Storage object {self._plugin}/{name} not found")
             else:
                 # Allocate new index value
-                if not os.path.exists('/var/run'):
-                    os.makedirs('/var/run')
-                lkfd = open(lock_file, 'w+')
-                fcntl.flock(lkfd, fcntl.LOCK_EX)
-                indexes = set(bs_cache.values())
-                for index in range(1048576):
-                    if index not in indexes:
-                        self._index = index
-                        bs_cache[self._lookup_key] = self._index
-                        break
-                else:
+                Path('/var/run').mkdir(parents=True, exist_ok=True)
+                lock_file_path = Path(lock_file)
+                with lock_file_path.open('w+') as lkfd:
+                    fcntl.flock(lkfd, fcntl.LOCK_EX)
+                    indexes = set(bs_cache.values())
+                    for index in range(1048576):
+                        if index not in indexes:
+                            self._index = index
+                            bs_cache[self._lookup_key] = self._index
+                            break
+                    else:
+                        fcntl.flock(lkfd, fcntl.LOCK_UN)
+                        raise RTSLibError("No available backstore index")
                     fcntl.flock(lkfd, fcntl.LOCK_UN)
-                    raise RTSLibError("No available backstore index")
-                fcntl.flock(lkfd, fcntl.LOCK_UN)
 
-        self._path = "%s/core/%s_%d" % (self.configfs_dir,
-                                        dirp,
-                                        self._index)
+        self._path = Path(self.configfs_dir) / "core" / f"{dirp}_{self._index}"
         try:
             self._create_in_cfs_ine(mode)
-        except:
+        except Exception as e:
             if self._lookup_key in bs_cache:
                 del bs_cache[self._lookup_key]
-            raise
+            raise e
 
     def delete(self):
         super().delete()

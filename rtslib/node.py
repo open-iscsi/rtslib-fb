@@ -18,8 +18,8 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import os
 import stat
+from pathlib import Path
 
 from .utils import RTSLibError, RTSLibNotInCFSError, fread, fwrite
 
@@ -56,23 +56,25 @@ class CFSNode:
 
         if self.exists and mode == 'create':
             # ensure that self.path is not stale hba-only dir
-            if os.path.samefile(os.path.dirname(self.path), self.configfs_dir+'/core') \
-               and not next(os.walk(self.path))[1]:
-                os.rmdir(self.path)
+            path = Path(self._path)
+            if path.resolve().parent.samefile(Path(self.configfs_dir) / 'core') \
+                    and not any(path.iterdir()):
+                path.rmdir()
             else:
-               raise RTSLibError(f"This {self.__class__.__name__} already exists in configFS")
+                raise RTSLibError(f"This {self.__class__.__name__} already exists in configFS")
 
         elif not self.exists and mode == 'lookup':
-            raise RTSLibNotInCFSError(f"No such {self.__class__.__name__} in configfs: {self.path}")
+            raise RTSLibNotInCFSError(
+                f"No such {self.__class__.__name__} in configfs: {self.path}")
 
         if not self.exists:
             try:
-                os.mkdir(self.path)
-            except:
-                raise RTSLibError(f"Could not create {self.__class__.__name__} in configFS")
+                Path(self.path).mkdir()
+            except Exception as e:
+                raise RTSLibError(f"Could not create {self.__class__.__name__} in configFS: {e}")
 
     def _exists(self):
-        return os.path.isdir(self.path)
+        return Path(self.path).is_dir()
 
     def _check_self(self):
         if not self.exists:
@@ -95,25 +97,26 @@ class CFSNode:
         @return: List of file names filtered according to their
         read/write perms.
         '''
-        if not os.path.isdir(path):
+        path = Path(path)
+        if not path.is_dir():
             return []
 
         if writable is None and readable is None:
-            names = os.listdir(path)
+            names = [p.name for p in path.glob('*') if p.is_file()]
         else:
             names = []
-            for name in os.listdir(path):
-                sres = os.stat(f"{path}/{name}")
-                if (writable is not None and
-                        writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == stat.S_IWUSR)):
-                    continue
-                if (readable is not None and
-                        readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == stat.S_IRUSR)):
-                    continue
-                names.append(name)
+            for p in path.iterdir():
+                if p.is_file():
+                    sres = Path.stat(p)
+                    if (writable is not None and
+                            writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == stat.S_IWUSR)):
+                        continue
+                    if (readable is not None and
+                            readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == stat.S_IRUSR)):
+                        continue
+                    names.append(p.name)
 
-        names.sort()
-        return names
+        return sorted(names)
 
     # CFSNode public stuff
 
@@ -159,8 +162,8 @@ class CFSNode:
         @type value: string
         '''
         self._check_self()
-        path = f"{self.path}/attrib/{attribute!s}"
-        if not os.path.isfile(path):
+        path = Path(self.path) / 'attrib' / attribute
+        if not path.is_file():
             raise RTSLibError(f"Cannot find attribute: {attribute!s}")
         else:
             try:
@@ -174,8 +177,8 @@ class CFSNode:
         @return: The named attribute's value, as a string.
         '''
         self._check_self()
-        path = f"{self.path}/attrib/{attribute!s}"
-        if not os.path.isfile(path):
+        path = Path(self.path) / "attrib" / attribute
+        if not path.is_file():
             raise RTSLibError(f"Cannot find attribute: {attribute}")
         else:
             return fread(path)
@@ -190,8 +193,8 @@ class CFSNode:
         @type value: string
         '''
         self._check_self()
-        path = f"{self.path}/param/{parameter!s}"
-        if not os.path.isfile(path):
+        path = Path(self.path) / "param" / parameter
+        if not path.is_file():
             raise RTSLibError(f"Cannot find parameter: {parameter}")
         else:
             try:
@@ -206,8 +209,8 @@ class CFSNode:
         @return: The named parameter value as a string.
         '''
         self._check_self()
-        path = f"{self.path}/param/{parameter!s}"
-        if not os.path.isfile(path):
+        path = Path(self.path) / "param" / parameter
+        if not path.is_file():
             raise RTSLibError(f"Cannot find RFC-3720 parameter: {parameter}")
         else:
             return fread(path)
@@ -219,7 +222,7 @@ class CFSNode:
         to delete it.
         '''
         if self.exists:
-            os.rmdir(self.path)
+            Path(self.path).rmdir()
 
     path = property(_get_path,
             doc="Get the configFS object path.")

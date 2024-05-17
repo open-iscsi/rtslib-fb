@@ -24,6 +24,8 @@ under the License.
 
 import json
 import re
+from pathlib import Path
+
 
 def human_to_bytes(hsize, kilo=1024):
     '''
@@ -316,7 +318,7 @@ def parse(txt, cur):
         elif txt[cur] == "fabric":
             cur = parse_fabric(txt, cur)
 
-with open("/etc/target/scsi_target.lio") as f:
+with Path("/etc/target/scsi_target.lio").open as f:
     txt = f.read()
     txt = split(txt)
     cur = parse(txt, 0)
