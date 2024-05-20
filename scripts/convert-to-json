@@ -326,4 +326,3 @@ with Path("/etc/target/scsi_target.lio").open as f:
 output = {'storage_objects': sos, 'fabric_modules': fabs, 'targets': targs}
 
 print(json.dumps(output, indent=2, sort_keys=True))
-

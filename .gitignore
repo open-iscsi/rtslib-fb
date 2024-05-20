@@ -16,9 +16,7 @@ debian/tmp/
 dist/*
 doc/*
 *.pyc
-debian/python-rtslib.substvars
 debian/rtslib-doc.debhelper.log
-debian/tmp/
 venv/
 .idea
 *egg-info/
