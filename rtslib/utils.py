@@ -415,9 +415,10 @@ def modprobe(module):
         import kmod.error
         import kmod.Kmod
     except ImportError:
-        out = subprocess.run(["modprobe", module], shell=True, capture_output=True, check=False)  # noqa: S602, S607
+        out = subprocess.run(f"modprobe {module}", shell=True, capture_output=True, check=False)  # noqa: S602, S607
         if out.returncode != 0:
             raise RTSLibError(out.stderr.decode().rstrip())
+        return
 
     try:
         kmod.Kmod().modprobe(module)
@@ -428,7 +429,7 @@ def mount_configfs():
     config_dir = "/sys/kernel/config"
     config_path = Path(config_dir)
     if not config_path.is_mount():
-        cmdline = ["mount", "-t", "configfs", "none", config_dir]
+        cmdline = ["mount -t configfs none {config_dir}"]
         out = subprocess.run(cmdline, shell=True, capture_output=True, check=False)  # noqa: S602
         if out.returncode != 0 and not config_path.is_mount():
             raise RTSLibError("Cannot mount configfs")
