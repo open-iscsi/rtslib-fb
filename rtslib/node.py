@@ -18,12 +18,13 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import os
 import stat
-from .utils import fread, fwrite, RTSLibError, RTSLibNotInCFS
+from pathlib import Path
+
+from .utils import RTSLibError, RTSLibNotInCFSError, fread, fwrite
 
 
-class CFSNode(object):
+class CFSNode:
 
     # Where is the configfs base LIO directory ?
     configfs_dir = '/sys/kernel/config/target'
@@ -50,36 +51,34 @@ class CFSNode(object):
         lookup -> make sure it does NOT exist
         create -> create the node which must not exist beforehand
         '''
-        if mode not in ['any', 'lookup', 'create']:
-            raise RTSLibError("Invalid mode: %s" % mode)
+        if mode not in ('any', 'lookup', 'create'):
+            raise RTSLibError(f"Invalid mode: {mode}")
 
         if self.exists and mode == 'create':
             # ensure that self.path is not stale hba-only dir
-            if os.path.samefile(os.path.dirname(self.path), self.configfs_dir+'/core') \
-               and not next(os.walk(self.path))[1]:
-                os.rmdir(self.path)
+            path = Path(self._path)
+            if path.resolve().parent.samefile(Path(self.configfs_dir) / 'core') \
+                    and not any(path.iterdir()):
+                path.rmdir()
             else:
-               raise RTSLibError("This %s already exists in configFS"
-                                 % self.__class__.__name__)
+                raise RTSLibError(f"This {self.__class__.__name__} already exists in configFS")
 
         elif not self.exists and mode == 'lookup':
-            raise RTSLibNotInCFS("No such %s in configfs: %s"
-                                 % (self.__class__.__name__, self.path))
+            raise RTSLibNotInCFSError(
+                f"No such {self.__class__.__name__} in configfs: {self.path}")
 
         if not self.exists:
             try:
-                os.mkdir(self.path)
-            except:
-                raise RTSLibError("Could not create %s in configFS"
-                                  % self.__class__.__name__)
+                Path(self.path).mkdir()
+            except Exception as e:
+                raise RTSLibError(f"Could not create {self.__class__.__name__} in configFS: {e}")
 
     def _exists(self):
-        return os.path.isdir(self.path)
+        return Path(self.path).is_dir()
 
     def _check_self(self):
         if not self.exists:
-            raise RTSLibNotInCFS("This %s does not exist in configFS"
-                                 % self.__class__.__name__)
+            raise RTSLibNotInCFSError(f"This {self.__class__.__name__} does not exist in configFS")
 
     def _list_files(self, path, writable=None, readable=None):
         '''
@@ -98,27 +97,26 @@ class CFSNode(object):
         @return: List of file names filtered according to their
         read/write perms.
         '''
-        if not os.path.isdir(path):
+        path = Path(path)
+        if not path.is_dir():
             return []
 
         if writable is None and readable is None:
-            names = os.listdir(path)
+            names = [p.name for p in path.glob('*') if p.is_file()]
         else:
             names = []
-            for name in os.listdir(path):
-                sres = os.stat("%s/%s" % (path, name))
-                if writable is not None:
-                    if writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == \
-                            stat.S_IWUSR):
+            for p in path.iterdir():
+                if p.is_file():
+                    sres = Path.stat(p)
+                    if (writable is not None and
+                            writable != ((sres[stat.ST_MODE] & stat.S_IWUSR) == stat.S_IWUSR)):
                         continue
-                if readable is not None:
-                    if readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == \
-                            stat.S_IRUSR):
+                    if (readable is not None and
+                            readable != ((sres[stat.ST_MODE] & stat.S_IRUSR) == stat.S_IRUSR)):
                         continue
-                names.append(name)
+                    names.append(p.name)
 
-        names.sort()
-        return names
+        return sorted(names)
 
     # CFSNode public stuff
 
@@ -135,7 +133,7 @@ class CFSNode(object):
         @return: The list of existing RFC-3720 parameter names.
         '''
         self._check_self()
-        path = "%s/param" % self.path
+        path = f"{self.path}/param"
         return self._list_files(path, writable, readable)
 
     def list_attributes(self, writable=None, readable=None):
@@ -151,7 +149,7 @@ class CFSNode(object):
         @return: A list of existing attribute names as strings.
         '''
         self._check_self()
-        path = "%s/attrib" % self.path
+        path = f"{self.path}/attrib"
         return self._list_files(path, writable, readable)
 
     def set_attribute(self, attribute, value):
@@ -164,15 +162,14 @@ class CFSNode(object):
         @type value: string
         '''
         self._check_self()
-        path = "%s/attrib/%s" % (self.path, str(attribute))
-        if not os.path.isfile(path):
-            raise RTSLibError("Cannot find attribute: %s"
-                              % str(attribute))
+        path = Path(self.path) / 'attrib' / attribute
+        if not path.is_file():
+            raise RTSLibError(f"Cannot find attribute: {attribute!s}")
         else:
             try:
-                fwrite(path, "%s" % str(value))
+                fwrite(path, f"{value!s}")
             except Exception as e:
-                raise RTSLibError("Cannot set attribute %s: %s" % (attribute, e))
+                raise RTSLibError(f"Cannot set attribute {attribute}: {e}")
 
     def get_attribute(self, attribute):
         '''
@@ -180,9 +177,9 @@ class CFSNode(object):
         @return: The named attribute's value, as a string.
         '''
         self._check_self()
-        path = "%s/attrib/%s" % (self.path, str(attribute))
-        if not os.path.isfile(path):
-            raise RTSLibError("Cannot find attribute: %s" % attribute)
+        path = Path(self.path) / "attrib" / attribute
+        if not path.is_file():
+            raise RTSLibError(f"Cannot find attribute: {attribute}")
         else:
             return fread(path)
 
@@ -196,14 +193,14 @@ class CFSNode(object):
         @type value: string
         '''
         self._check_self()
-        path = "%s/param/%s" % (self.path, str(parameter))
-        if not os.path.isfile(path):
-            raise RTSLibError("Cannot find parameter: %s" % parameter)
+        path = Path(self.path) / "param" / parameter
+        if not path.is_file():
+            raise RTSLibError(f"Cannot find parameter: {parameter}")
         else:
             try:
-                fwrite(path, "%s\n" % str(value))
+                fwrite(path, f"{value!s}\n")
             except Exception as e:
-                raise RTSLibError("Cannot set parameter %s: %s" % (parameter, e))
+                raise RTSLibError(f"Cannot set parameter {parameter}: {e}")
 
     def get_parameter(self, parameter):
         '''
@@ -212,9 +209,9 @@ class CFSNode(object):
         @return: The named parameter value as a string.
         '''
         self._check_self()
-        path = "%s/param/%s" % (self.path, str(parameter))
-        if not os.path.isfile(path):
-            raise RTSLibError("Cannot find RFC-3720 parameter: %s" % parameter)
+        path = Path(self.path) / "param" / parameter
+        if not path.is_file():
+            raise RTSLibError(f"Cannot find RFC-3720 parameter: {parameter}")
         else:
             return fread(path)
 
@@ -225,15 +222,15 @@ class CFSNode(object):
         to delete it.
         '''
         if self.exists:
-            os.rmdir(self.path)
+            Path(self.path).rmdir()
 
     path = property(_get_path,
             doc="Get the configFS object path.")
-    exists = property(_exists,
-            doc="Is True as long as the underlying configFS object exists. " \
-                      + "If the underlying configFS objects gets deleted " \
-                      + "either by calling the delete() method, or by any " \
-                      + "other means, it will be False.")
+    exists = property(
+        _exists,
+        doc="Is True as long as the underlying configFS object exists. "
+            "If the underlying configFS objects gets deleted either by calling "
+            "the delete() method, or by any other means, it will be False.")
 
     def dump(self):
         d = {}

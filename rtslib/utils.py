@@ -20,12 +20,11 @@ under the License.
 
 import os
 import re
-import six
 import socket
-import stat
 import subprocess
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
+from pathlib import Path
 
 import pyudev
 
@@ -35,28 +34,24 @@ class RTSLibError(Exception):
     '''
     Generic rtslib error.
     '''
-    pass
 
-class RTSLibALUANotSupported(RTSLibError):
+class RTSLibALUANotSupportedError(RTSLibError):
     '''
     Backend does not support ALUA.
     '''
-    pass
 
-class RTSLibBrokenLink(RTSLibError):
+class RTSLibBrokenLink(RTSLibError):  # noqa: N818
     '''
     Broken link in configfs, i.e. missing LUN storage object.
     '''
-    pass
 
-class RTSLibNotInCFS(RTSLibError):
+class RTSLibNotInCFSError(RTSLibError):
     '''
     The underlying configfs object does not exist. Happens when
     calling methods of an object that is instantiated but have
     been deleted from congifs, or when trying to lookup an
     object that does not exist.
     '''
-    pass
 
 def fwrite(path, string):
     '''
@@ -70,13 +65,12 @@ def fwrite(path, string):
     'hello'
 
     @param path: The file to write to.
-    @type path: string
+    @type path: string or Path object
     @param string: The string to write to the file.
     @type string: string
 
     '''
-    with open(path, 'w') as file_fd:
-        file_fd.write(str(string))
+    Path(path).write_text(str(string))
 
 def fread(path):
     '''
@@ -93,12 +87,11 @@ def fread(path):
     IOError: [Errno 2] No such file or directory: '/tmp/notexistingfile'
 
     @param path: The path to the file to read from.
-    @type path: string
+    @type path: string or Path object
     @return: A string containing the file's contents.
 
     '''
-    with open(path, 'r') as file_fd:
-        return file_fd.read().strip()
+    return Path(path).read_text().strip()
 
 def is_dev_in_use(path):
     '''
@@ -115,7 +108,7 @@ def is_dev_in_use(path):
     path = os.path.realpath(str(path))
     try:
         device = pyudev.Device.from_device_file(_CONTEXT, path)
-        if device.subsystem == u'scsi_generic':
+        if device.subsystem == 'scsi_generic':
             file_fd = os.open(path, os.O_EXCL|os.O_NDELAY|os.O_RDWR)
         else:
             file_fd = os.open(path, os.O_EXCL|os.O_NDELAY)
@@ -220,19 +213,17 @@ def get_blockdev_type(path):
     '''
     try:
         device = pyudev.Device.from_device_file(_CONTEXT, path)
-    except (pyudev.DeviceNotFoundError, EnvironmentError, ValueError):
+    except (OSError, pyudev.DeviceNotFoundError, ValueError):
         return None
 
-    if device.subsystem != u'block':
+    if device.subsystem != 'block':
         return None
 
     attributes = device.attributes
 
     disk_type = 0
-    try:
+    with suppress(KeyError, UnicodeDecodeError, ValueError):
         disk_type = attributes.asint('device/type')
-    except (KeyError, UnicodeDecodeError, ValueError):
-        pass
     return disk_type
 
 get_block_type = get_blockdev_type
@@ -262,8 +253,7 @@ def convert_scsi_path_to_hctl(path):
     values representing the SCSI ID of the device, or raise RTSLibError.
     '''
     try:
-        path = os.path.realpath(path)
-        device = pyudev.Device.from_device_file(_CONTEXT, path)
+        device = pyudev.Devices.from_device_file(_CONTEXT, str(Path(path).resolve()))
         parent = device.find_parent(subsystem='scsi')
         return [int(data) for data in parent.sys_name.split(':')]
     except:
@@ -309,11 +299,11 @@ def convert_scsi_hctl_to_path(host, controller, target, lun):
 
     devices = _CONTEXT.list_devices(
        subsystem='block',
-       parent=scsi_device
+       parent=scsi_device,
     )
 
     path = next((dev.device_node for dev in devices), '')
-    if path == None:
+    if path is None:
         raise RTSLibError("Could not find path for SCSI hctl")
     return path
 
@@ -335,10 +325,10 @@ def generate_wwn(wwn_type):
     elif wwn_type == 'iqn':
         localname = socket.gethostname().split(".")[0].replace("_", "")
         localarch = os.uname()[4].replace("_", "")
-        prefix = "iqn.2003-01.org.linux-iscsi.%s.%s" % (localname, localarch)
+        prefix = f"iqn.2003-01.org.linux-iscsi.{localname}.{localarch}"
         prefix = prefix.strip().lower()
-        serial = "sn.%s" % str(uuid.uuid4())[24:]
-        return "%s:%s" % (prefix, serial)
+        serial = f"sn.{str(uuid.uuid4())[24:]}"
+        return f"{prefix}:{serial}"
     elif wwn_type == 'naa':
         # see http://standards.ieee.org/develop/regauth/tut/fibre.pdf
         # 5 = IEEE registered
@@ -348,13 +338,13 @@ def generate_wwn(wwn_type):
     elif wwn_type == 'eui':
         return "eui.001405" + uuid.uuid4().hex[-10:]
     else:
-        raise ValueError("Unknown WWN type: %s" % wwn_type)
+        raise ValueError(f"Unknown WWN type: {wwn_type}")
 
-def colonize(str):
+def colonize(string):
     '''
     helper function to add colons every 2 chars
     '''
-    return ":".join(str[i:i+2] for i in range(0, len(str), 2))
+    return ":".join(string[i:i + 2] for i in range(0, len(string), 2))
 
 def _cleanse_wwn(wwn_type, wwn):
     '''
@@ -364,13 +354,11 @@ def _cleanse_wwn(wwn_type, wwn):
     wwn = str(wwn.strip()).lower()
 
     if wwn_type in ('naa', 'eui', 'ib'):
-        if wwn.startswith("0x"):
-            wwn = wwn[2:]
+        wwn = wwn.removeprefix("0x")
         wwn = wwn.replace("-", "")
         wwn = wwn.replace(":", "")
 
-        if not (wwn.startswith("naa.") or wwn.startswith("eui.") or \
-            wwn.startswith("ib.")):
+        if not (wwn.startswith(('naa.', 'eui.', 'ib.'))):
             wwn = wwn_type + "." + wwn
 
     return wwn
@@ -383,16 +371,15 @@ def normalize_wwn(wwn_types, wwn):
     Returns (normalized_wwn, wwn_type), or exception if invalid wwn.
     '''
     wwn_test = {
-    'free': lambda wwn: True,
-    'iqn': lambda wwn: \
-        re.match(r"iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn) \
-        and not re.search(' ', wwn) \
-        and not re.search('_', wwn),
+    'free': lambda wwn: True,  # noqa: ARG005 TODO
+    'iqn': lambda wwn: re.match(r"iqn\.[0-9]{4}-[0-1][0-9]\..*\..*", wwn)
+                       and not re.search(' ', wwn)
+                       and not re.search('_', wwn),
     'naa': lambda wwn: re.match(r"naa\.[125c-fC-F][0-9a-fA-F]{15}$", wwn),
     'eui': lambda wwn: re.match(r"eui\.[0-9a-f]{16}$", wwn),
     'ib': lambda wwn: re.match(r"ib\.[0-9a-f]{32}$", wwn),
-    'unit_serial': lambda wwn: \
-        re.match("[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
+    'unit_serial': lambda wwn: re.match(
+        "[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$", wwn),
     }
 
     for wwn_type in wwn_types:
@@ -401,7 +388,7 @@ def normalize_wwn(wwn_types, wwn):
         if found_type:
             break
     else:
-        raise RTSLibError("WWN not valid as: %s" % ", ".join(wwn_types))
+        raise RTSLibError(f"WWN not valid as: {', '.join(wwn_types)}")
 
     return (clean_wwn, wwn_type)
 
@@ -421,33 +408,30 @@ def modprobe(module):
     if module in list_loaded_kernel_modules():
         return
 
+    import subprocess
+
     try:
         import kmod
         import kmod.error
         import kmod.Kmod
     except ImportError:
-        process = subprocess.Popen(("modprobe", module),
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        (stdoutdata, stderrdata) = process.communicate()
-        if process.returncode != 0:
-            raise RTSLibError(stderrdata)
+        out = subprocess.run(f"modprobe {module}", shell=True, capture_output=True, check=False)  # noqa: S602, S607
+        if out.returncode != 0:
+            raise RTSLibError(out.stderr.decode().rstrip())
         return
 
     try:
         kmod.Kmod().modprobe(module)
     except kmod.error.KmodError:
-        raise RTSLibError("Could not load module: %s" % module)
+        raise RTSLibError(f"Could not load module: {module}")
 
 def mount_configfs():
-    if not os.path.ismount("/sys/kernel/config"):
-        cmdline = "mount -t configfs none /sys/kernel/config"
-        process = subprocess.Popen(cmdline.split(),
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        (stdoutdata, stderrdata) = process.communicate()
-        if process.returncode != 0 and not os.path.ismount(
-            "/sys/kernel/config"):
+    config_dir = "/sys/kernel/config"
+    config_path = Path(config_dir)
+    if not config_path.is_mount():
+        cmdline = ["mount -t configfs none {config_dir}"]
+        out = subprocess.run(cmdline, shell=True, capture_output=True, check=False)  # noqa: S602
+        if out.returncode != 0 and not config_path.is_mount():
             raise RTSLibError("Cannot mount configfs")
 
 def dict_remove(d, items):
@@ -457,7 +441,7 @@ def dict_remove(d, items):
 
 @contextmanager
 def ignored(*exceptions):
-    try:
+    try:  # noqa: SIM105 TODO
         yield
     except exceptions:
         pass
@@ -477,7 +461,7 @@ def ignored(*exceptions):
 #
 def _get_auth_attr(self, attribute, ignore=False):
     self._check_self()
-    path = "%s/%s" % (self.path, attribute)
+    path = f"{self.path}/{attribute}"
     try:
         value = fread(path)
     except:
@@ -492,29 +476,30 @@ def _get_auth_attr(self, attribute, ignore=False):
 # Auth params take the string "NULL" to unset the attribute
 def _set_auth_attr(self, value, attribute, ignore=False):
     self._check_self()
-    path = "%s/%s" % (self.path, attribute)
+    path = f"{self.path}/{attribute}"
     value = value.strip()
     if value == "NULL":
         raise RTSLibError("'NULL' is not a permitted value")
-    if len(value) > 255:
-        raise RTSLibError("Value longer than maximum length of 255")
+    max_value = 255
+    if len(value) > max_value:
+        raise RTSLibError(f"Value longer than maximum length of {max_value}")
     if value == '':
         value = "NULL"
     try:
-        fwrite(path, "%s" % value)
+        fwrite(path, str(value))
     except:
         if not ignore:
             raise
 
 def set_attributes(obj, attr_dict, err_func):
-    for name, value in six.iteritems(attr_dict):
+    for name, value in attr_dict.items():
         try:
             obj.set_attribute(name, value)
         except RTSLibError as e:
             err_func(str(e))
 
 def set_parameters(obj, param_dict, err_func):
-    for name, value in six.iteritems(param_dict):
+    for name, value in param_dict.items():
         try:
             obj.set_parameter(name, value)
         except RTSLibError as e:

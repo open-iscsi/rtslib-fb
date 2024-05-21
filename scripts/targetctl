@@ -22,20 +22,20 @@ under the License.
 # A script to save/restore LIO configuration to/from a file in json format
 #
 
-from __future__ import print_function
-
-from rtslib_fb import RTSRoot
 import os
 import sys
+from pathlib import Path
+
+from rtslib_fb import RTSRoot
 
 default_save_file = "/etc/target/saveconfig.json"
 err = sys.stderr
 
 def usage():
-    print("syntax: %s save [file_to_save_to]" % sys.argv[0], file=err)
-    print("        %s restore [file_to_restore_from]" % sys.argv[0], file=err)
-    print("        %s clear" % sys.argv[0], file=err)
-    print("  default file is: %s" % default_save_file, file=err)
+    print(f"syntax: {sys.argv[0]} save [file_to_save_to]\n"
+          f"        {sys.argv[0]} restore [file_to_restore_from]\n"
+          f"        {sys.argv[0]} clear\n"
+          f"default file is: {default_save_file}", file=err)
     sys.exit(-1)
 
 def save(to_file):
@@ -45,18 +45,18 @@ def restore(from_file):
 
     try:
         errors = RTSRoot().restore_from_file(restore_file=from_file)
-    except IOError:
+    except OSError:
         # Not an error if the restore file is not present
-        print("No saved config file at %s, ok, exiting" % from_file)
+        print(f"No saved config file at {from_file}, ok, exiting")
         sys.exit(0)
 
     for error in errors:
         print(error, file=err)
 
-def clear(unused):
+def clear():
     RTSRoot().clear_existing(confirm=True)
 
-funcs = dict(save=save, restore=restore, clear=clear)
+funcs = {"save": save, "restore": restore, "clear": clear}
 
 def main():
     if os.geteuid() != 0:
@@ -69,12 +69,12 @@ def main():
     if sys.argv[1] == "--help":
         usage()
 
-    if sys.argv[1] not in funcs.keys():
+    if sys.argv[1] not in funcs:
         usage()
 
     savefile = default_save_file
     if len(sys.argv) == 3:
-        savefile = os.path.expanduser(sys.argv[2])
+        savefile = Path(sys.argv[2]).expanduser()
 
     funcs[sys.argv[1]](savefile)
 

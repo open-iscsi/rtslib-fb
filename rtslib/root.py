@@ -18,21 +18,27 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-import os
-import stat
-import json
-import glob
 import errno
-import shutil
+import json
+import os
+from contextlib import suppress
+from pathlib import Path
 
+from .alua import ALUATargetPortGroup
+from .fabric import FabricModule
 from .node import CFSNode
 from .target import Target
-from .fabric import FabricModule
-from .tcm import so_mapping, bs_cache, StorageObject
-from .utils import RTSLibError, RTSLibALUANotSupported, modprobe, mount_configfs
-from .utils import dict_remove, set_attributes
-from .utils import fread, fwrite
-from .alua import ALUATargetPortGroup
+from .tcm import StorageObject, bs_cache, so_mapping
+from .utils import (
+    RTSLibALUANotSupportedError,
+    RTSLibError,
+    dict_remove,
+    fread,
+    fwrite,
+    modprobe,
+    mount_configfs,
+    set_attributes,
+)
 
 default_save_file = "/etc/target/saveconfig.json"
 
@@ -72,7 +78,7 @@ class RTSRoot(CFSNode):
         Instantiate an RTSRoot object. Basically checks for configfs setup and
         base kernel modules (tcm)
         '''
-        super(RTSRoot, self).__init__()
+        super().__init__()
         try:
             mount_configfs()
         except RTSLibError:
@@ -90,61 +96,51 @@ class RTSRoot(CFSNode):
     def _list_targets(self):
         self._check_self()
         for fabric_module in self.fabric_modules:
-            for target in fabric_module.targets:
-                yield target
+            yield from fabric_module.targets
 
     def _list_storage_objects(self):
         self._check_self()
-        for so in StorageObject.all():
-            yield so
+        yield from StorageObject.all()
 
     def _list_alua_tpgs(self):
         self._check_self()
         for so in self.storage_objects:
-            for a in so.alua_tpgs:
-                yield a
+            yield from so.alua_tpgs
 
     def _list_tpgs(self):
         self._check_self()
         for t in self.targets:
-            for tpg in t.tpgs:
-                yield tpg
+            yield from t.tpgs
 
     def _list_node_acls(self):
         self._check_self()
         for t in self.tpgs:
-            for node_acl in t.node_acls:
-                yield node_acl
+            yield from t.node_acls
 
     def _list_node_acl_groups(self):
         self._check_self()
         for t in self.tpgs:
-            for nag in t.node_acl_groups:
-                yield nag
+            yield from t.node_acl_groups
 
     def _list_mapped_luns(self):
         self._check_self()
         for na in self.node_acls:
-            for mlun in na.mapped_luns:
-                yield mlun
+            yield from na.mapped_luns
 
     def _list_mapped_lun_groups(self):
         self._check_self()
         for nag in self.node_acl_groups:
-            for mlg in nag.mapped_lun_groups:
-                yield mlg
+            yield from nag.mapped_lun_groups
 
     def _list_network_portals(self):
         self._check_self()
         for t in self.tpgs:
-            for p in t.network_portals:
-                yield p
+            yield from t.network_portals
 
     def _list_luns(self):
         self._check_self()
         for t in self.tpgs:
-            for lun in t.luns:
-                yield lun
+            yield from t.luns
 
     def _list_sessions(self):
         self._check_self()
@@ -154,31 +150,30 @@ class RTSRoot(CFSNode):
 
     def _list_fabric_modules(self):
         self._check_self()
-        for mod in FabricModule.all():
-            yield mod
+        yield from FabricModule.all()
 
     def __str__(self):
         return "rtslib"
 
     def _set_dbroot(self):
-        dbroot_path = self.path + "/dbroot"
-        if not os.path.exists(dbroot_path):
+        dbroot_path = Path(self.path) / "dbroot"
+        if not dbroot_path.exists():
             self._dbroot = self._default_dbroot
             return
         self._dbroot = fread(dbroot_path)
         if self._dbroot != self._preferred_dbroot:
             try:
-                fwrite(dbroot_path, self._preferred_dbroot+"\n")
+                fwrite(dbroot_path, f"{self._preferred_dbroot}\n")
             except:
-                if not os.path.isdir(self._preferred_dbroot):
-                    raise RTSLibError("Cannot set dbroot to {}. Please check if this directory exists."
-                                      .format(self._preferred_dbroot))
+                if not Path(self._preferred_dbroot).is_dir():
+                    raise RTSLibError(f"Cannot set dbroot to {self._preferred_dbroot}. "
+                                      f"Please check if this directory exists.")
                 else:
-                    # Writing to dbroot_path after devices have been registered will make the kernel emit this error:
-                    # db_root: cannot be changed: target devices registered
+                    # Writing to dbroot_path after devices have been registered will make the
+                    # kernel emit this error: db_root: cannot be changed: target devices registered
                     from warnings import warn
-                    warn("Cannot set dbroot to {}. Target devices have already been registered."
-                         .format(self._preferred_dbroot))
+                    warn(f"Cannot set dbroot to {self._preferred_dbroot}. "
+                         f"Target devices have already been registered.", stacklevel=1)
                     return
 
             self._dbroot = fread(dbroot_path)
@@ -195,13 +190,13 @@ class RTSRoot(CFSNode):
         current = self.dump()
 
         try:
-            with open(save_file, "r") as f:
+            with Path(save_file).open as f:
                 saveconf = json.loads(f.read())
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 saveconf = {'storage_objects': [], 'targets': []}
             else:
-                raise ExecutionError("Could not open %s" % save_file)
+                raise OSError(f"Could not open {save_file}")
 
         fetch_cur_so = False
         fetch_cur_tg = False
@@ -276,7 +271,7 @@ class RTSRoot(CFSNode):
         config, suitable for serialization/deserialization, and then
         handing to restore().
         '''
-        d = super(RTSRoot, self).dump()
+        d = super().dump()
         d['storage_objects'] = [so.dump() for so in self.storage_objects]
         d['targets'] = [t.dump() for t in self.targets]
         d['fabric_modules'] = [f.dump() for f in self.fabric_modules
@@ -314,7 +309,7 @@ class RTSRoot(CFSNode):
             #   delete any storage_object's
             # * If restoreconfig was not supplied with neither target=iqn.xxx
             #   nor storage_object=blockx then delete all storage_object's
-            if (not storage_object and not target) or (storage_object and so.name == storage_object):
+            if (not storage_object and not target) or (storage_object and so.name == storage_object):  # noqa: E501
                 so.delete()
                 if storage_object:
                     break
@@ -322,8 +317,8 @@ class RTSRoot(CFSNode):
         # If somehow some hbas still exist (no storage object within?) clean
         # them up too.
         if not (storage_object or target):
-            for hba_dir in glob.glob("%s/core/*_*" % self.configfs_dir):
-                os.rmdir(hba_dir)
+            for hba_dir in Path(self.configfs_dir, 'core').glob('*_*'):
+                hba_dir.rmdir()
 
     def restore(self, config, target=None, storage_object=None,
                 clear_existing=False, abort_on_error=False):
@@ -341,15 +336,15 @@ class RTSRoot(CFSNode):
                     for loaded_so in self.storage_objects:
                         if config_so['name'] == loaded_so.name and \
                            config_so['plugin'] == loaded_so.plugin:
-                            raise RTSLibError("storageobject '%s:%s' exist not restoring"
-                                              %(loaded_so.plugin, loaded_so.name))
+                            raise RTSLibError(f"storageobject '{loaded_so.plugin}:"
+                                              f"{loaded_so.name}' exist not restoring")
 
             if any(self.targets):
                 for config_tg in config.get('targets', []):
                     for loaded_tg in self.targets:
                         if config_tg['wwn'] == loaded_tg.wwn:
-                            raise RTSLibError("target with wwn %s exist, not restoring"
-                                              %(loaded_tg.wwn))
+                            raise RTSLibError(
+                                f"target with wwn {loaded_tg.wwn} exist, not restoring")
         errors = []
 
         if abort_on_error:
@@ -370,35 +365,34 @@ class RTSRoot(CFSNode):
             #   was supplied then do not load any storage_object's
             # * If neither storage_object nor target option was supplied to
             #   restoreconfig, then go ahead and load all storage_object's
-            if (not storage_object and not target) or (storage_object and so['name'] == storage_object):
+            if (not storage_object and not target) or (storage_object and so['name'] == storage_object):  # noqa: E501
                 try:
                     so_cls = so_mapping[so['plugin']]
                 except KeyError:
-                    err_func("'plugin' not defined or invalid in storageobject %s" % so['name'])
+                    err_func(f"'plugin' not defined or invalid in storageobject {so['name']}")
                     if storage_object:
                         break
                     continue
                 kwargs = so.copy()
-                dict_remove(kwargs, ('exists', 'attributes', 'plugin', 'buffered_mode', 'alua_tpgs'))
+                dict_remove(kwargs, (
+                    'exists', 'attributes', 'plugin', 'buffered_mode', 'alua_tpgs'))
                 try:
                     so_obj = so_cls(**kwargs)
                 except Exception as e:
-                    err_func("Could not create StorageObject %s: %s" % (so['name'], e))
+                    err_func(f"Could not create StorageObject {so['name']}: {e}")
                     if storage_object:
                         break
                     continue
 
                 # Custom err func to include block name
                 def so_err_func(x):
-                    return err_func("Storage Object %s/%s: %s" % (so['plugin'], so['name'], x))
+                    return err_func(f"Storage Object {so['plugin']}/{so['name']}: {x}")  # noqa: B023 TODO
 
                 set_attributes(so_obj, so.get('attributes', {}), so_err_func)
 
                 for alua_tpg in so.get('alua_tpgs', {}):
-                    try:
+                    with suppress(RTSLibALUANotSupportedError):
                         ALUATargetPortGroup.setup(so_obj, alua_tpg, err_func)
-                    except RTSLibALUANotSupported:
-                        pass
 
                 if storage_object:
                     break
@@ -426,12 +420,12 @@ class RTSRoot(CFSNode):
             #   restoreconfig, then go ahead and load all targets
             if (not storage_object and not target) or (target and t['wwn'] == target):
                 if 'fabric' not in t:
-                    err_func("target %s missing 'fabric' field" % t['wwn'])
+                    err_func(f"target {t['wwn']} missing 'fabric' field")
                     if target:
                         break
                     continue
                 if t['fabric'] not in (f.name for f in self.fabric_modules):
-                    err_func("Unknown fabric '%s'" % t['fabric'])
+                    err_func(f"Unknown fabric '{t['fabric']}'")
                     if target:
                         break
                     continue
@@ -451,45 +445,35 @@ class RTSRoot(CFSNode):
         Write the configuration in json format to a file.
         Save file defaults to '/etc/target/saveconfig.json'.
         '''
-        if not save_file:
-            save_file = default_save_file
+        save_file = Path(default_save_file) if not save_file else Path(save_file)
 
-        if so_path:
-            saveconf = self._get_saveconf(so_path, save_file)
-        else:
-            saveconf = self.dump()
+        saveconf = self._get_saveconf(so_path, save_file) if so_path else self.dump()
 
-        tmp_file = save_file + ".temp"
+        tmp_file = save_file.with_name(f"{save_file.name}.temp")
 
-        mode = stat.S_IRUSR | stat.S_IWUSR  # 0o600
+        mode = 0o600  # rw-------
         umask = 0o777 ^ mode  # Prevents always downgrading umask to 0
 
         # For security, remove file with potentially elevated mode
-        try:
-            os.remove(tmp_file)
-        except OSError:
-            pass
+        tmp_file.unlink(missing_ok=True)
 
-        umask_original = os.umask(umask)
+        original_umask = os.umask(umask)
         # Even though the old file is first deleted, a race condition is still
-        # possible. Including os.O_EXCL with os.O_CREAT in the flags will
-        # prevent the file from being created if it exists due to a race
+        # possible. mode='x' opens the file for exclusive creation,
+        # failing if the file already exists
         try:
-            fdesc = os.open(tmp_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode)
-        except OSError:
-            raise ExecutionError("Could not open %s" % tmp_file)
+            with tmp_file.open(mode="x") as f:
+                json.dump(saveconf, f, sort_keys=True, indent=2)
+                f.write("\n")
+                f.flush()
+                os.fsync(f.fileno())
+        except OSError as e:
+            raise RuntimeError(f"Could not open {tmp_file}") from e
 
-        with os.fdopen(fdesc, 'w') as f:
-            f.write(json.dumps(saveconf, sort_keys=True, indent=2))
-            f.write("\n")
-            f.flush()
-            os.fsync(f.fileno())
-            f.close()
-
-        # copy along with permissions
-        shutil.copy(tmp_file, save_file)
-        os.umask(umask_original)
-        os.remove(tmp_file)
+        # move along with permissions
+        tmp_file.replace(save_file)
+        save_file.chmod(mode)
+        os.umask(original_umask)
 
     def restore_from_file(self, restore_file=None, clear_existing=True,
                           target=None, storage_object=None,
@@ -503,7 +487,7 @@ class RTSRoot(CFSNode):
         if not restore_file:
             restore_file = default_save_file
 
-        with open(restore_file, "r") as f:
+        with Path(restore_file).open as f:
             config = json.loads(f.read())
             return self.restore(config, target, storage_object,
                                 clear_existing=clear_existing,
