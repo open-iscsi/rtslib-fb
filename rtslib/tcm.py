@@ -150,6 +150,24 @@ class StorageObject(CFSNode):
             raise RTSLibError("Cannot write a T10 WWN Unit Serial to "
                               + "an unconfigured StorageObject")
 
+    def _get_vendor_id(self):
+        self._check_self()
+        path = "%s/wwn/vendor_id" % self.path
+
+        try:
+            return fread(path)
+        except:
+            return "LIO-ORG"
+
+    def _set_vendor_id(self, vendor_id):
+        self._check_self()
+        path = "%s/wwn/vendor_id" % self.path
+
+        try:
+            fwrite(path, "%s" % str(vendor_id).strip())
+        except:
+            pass
+
     def _set_udev_path(self, udev_path):
         self._check_self()
         path = "%s/udev_path" % self.path
@@ -311,12 +329,15 @@ class StorageObject(CFSNode):
             doc="Get list of ALUA Target Port Groups attached.")
     alua_supported = property(_get_alua_supported,
             doc="Returns true if ALUA can be setup. False if not supported.")
+    vendor_id = property(_get_vendor_id, _set_vendor_id,
+            doc="Get or set the StorageObject T10 Vendor ID as a string")
 
     def dump(self):
         d = super(StorageObject, self).dump()
         d['name'] = self.name
         d['plugin'] = self.plugin
         d['alua_tpgs'] = [tpg.dump() for tpg in self.alua_tpgs]
+        d['vendor_id'] = self.vendor_id
         return d
 
 
@@ -479,7 +500,8 @@ class RDMCPStorageObject(StorageObject):
 
     # RDMCPStorageObject private stuff
 
-    def __init__(self, name, size=None, wwn=None, nullio=False, index=None):
+    def __init__(self, name, size=None, wwn=None, nullio=False, index=None,
+                 vendor_id=None):
         '''
         A RDMCPStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{size} is specified, the underlying
@@ -500,20 +522,22 @@ class RDMCPStorageObject(StorageObject):
         @type wwn: string
         @param nullio: If rd should be created w/o backing page store.
         @type nullio: boolean
+        @param vendor_id: T10 Vendor ID, use default if None
+        @type vendor_id: string
         @return: A RDMCPStorageObject object.
         '''
 
         if size is not None:
             super(RDMCPStorageObject, self).__init__(name, 'create', index)
             try:
-                self._configure(size, wwn, nullio)
+                self._configure(size, wwn, nullio, vendor_id)
             except:
                 self.delete()
                 raise
         else:
             super(RDMCPStorageObject, self).__init__(name, 'lookup', index)
 
-    def _configure(self, size, wwn, nullio):
+    def _configure(self, size, wwn, nullio, vendor_id):
         self._check_self()
         # convert to pages
         size = round(float(size)/resource.getpagesize())
@@ -523,6 +547,8 @@ class RDMCPStorageObject(StorageObject):
         self._control("rd_pages=%d" % size)
         if nullio:
             self._control("rd_nullio=1")
+        if vendor_id is not None:
+            self._set_vendor_id(vendor_id)
         self._enable()
 
         super(RDMCPStorageObject, self)._configure(wwn)
@@ -709,7 +735,7 @@ class BlockStorageObject(StorageObject):
     # BlockStorageObject private stuff
 
     def __init__(self, name, dev=None, wwn=None, readonly=False,
-                 write_back=False, index=None):
+                 write_back=False, index=None, vendor_id=None):
         '''
         A BlockIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -731,20 +757,22 @@ class BlockStorageObject(StorageObject):
         @type dev: string
         @param wwn: T10 WWN Unit Serial, will generate if None
         @type wwn: string
+        @param vendor_id: T10 Vendor ID, use default if None
+        @type vendor_id: string
         @return: A BlockIOStorageObject object.
         '''
 
         if dev is not None:
             super(BlockStorageObject, self).__init__(name, 'create', index)
             try:
-                self._configure(dev, wwn, readonly)
+                self._configure(dev, wwn, readonly, vendor_id)
             except:
                 self.delete()
                 raise
         else:
             super(BlockStorageObject, self).__init__(name, 'lookup', index)
 
-    def _configure(self, dev, wwn, readonly):
+    def _configure(self, dev, wwn, readonly, vendor_id):
         self._check_self()
         if get_blockdev_type(dev) != 0:
             raise RTSLibError("Device %s is not a TYPE_DISK block device" % dev)
@@ -754,6 +782,10 @@ class BlockStorageObject(StorageObject):
         self._set_udev_path(dev)
         self._control("udev_path=%s" % dev)
         self._control("readonly=%d" % readonly)
+
+        if vendor_id is not None:
+            self._set_vendor_id(vendor_id)
+
         self._enable()
 
         super(BlockStorageObject, self)._configure(wwn)
@@ -810,7 +842,8 @@ class UserBackedStorageObject(StorageObject):
     '''
 
     def __init__(self, name, config=None, size=None, wwn=None,
-                 hw_max_sectors=None, control=None, index=None):
+                 hw_max_sectors=None, control=None, index=None,
+                 vendor_id=None):
         '''
         @param name: The name of the UserBackedStorageObject.
         @type name: string
@@ -826,6 +859,8 @@ class UserBackedStorageObject(StorageObject):
         @control: String of control=value tuples separate by a ',' that will
             passed to the kernel control file.
         @type: string
+        @param vendor_id: T10 Vendor ID, will use default if None
+        @type vendor_id: string
         @return: A UserBackedStorageObject object.
         '''
 
@@ -838,14 +873,15 @@ class UserBackedStorageObject(StorageObject):
                                   "from its configuration string")
             super(UserBackedStorageObject, self).__init__(name, 'create', index)
             try:
-                self._configure(config, size, wwn, hw_max_sectors, control)
+                self._configure(config, size, wwn, hw_max_sectors, control,
+                                vendor_id)
             except:
                 self.delete()
                 raise
         else:
             super(UserBackedStorageObject, self).__init__(name, 'lookup', index)
 
-    def _configure(self, config, size, wwn, hw_max_sectors, control):
+    def _configure(self, config, size, wwn, hw_max_sectors, control, vendor_id):
         self._check_self()
 
         if ':' in config:
@@ -856,6 +892,8 @@ class UserBackedStorageObject(StorageObject):
             self._control("hw_max_sectors=%s" % hw_max_sectors)
         if control is not None:
             self._control(control)
+        if vendor_id is not None:
+            self._set_vendor_id(vendor_id)
         self._enable()
 
         super(UserBackedStorageObject, self)._configure(wwn)
