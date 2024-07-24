@@ -18,8 +18,7 @@ a copy of the License at
 '''
 
 from .node import CFSNode
-from .utils import RTSLibError, RTSLibALUANotSupported, fread, fwrite
-import six
+from .utils import RTSLibALUANotSupportedError, RTSLibError, fread, fwrite
 
 alua_rw_params = ['alua_access_state', 'alua_access_status',
                   'alua_write_metadata', 'alua_access_type', 'preferred',
@@ -38,7 +37,7 @@ class ALUATargetPortGroup(CFSNode):
     """
 
     def __repr__(self):
-        return "<ALUA TPG %s>" % self.name
+        return f"<ALUA TPG {self.name}>"
 
     def __init__(self, storage_object, name, tag=None):
         """
@@ -48,17 +47,18 @@ class ALUATargetPortGroup(CFSNode):
                     up existing ALUA TPG with the same name
         """
         if storage_object.alua_supported is False:
-            raise RTSLibALUANotSupported("Backend does not support ALUA setup")
+            raise RTSLibALUANotSupportedError("Backend does not support ALUA setup")
 
         # default_tg_pt_gp takes tag 1
-        if tag is not None and (tag > 65535 or tag < 1):
-            raise RTSLibError("The TPG Tag must be between 1 and 65535")
+        max_tag_no = 65535
+        if tag is not None and (tag > max_tag_no or tag < 1):
+            raise RTSLibError(f"The TPG Tag must be between 1 and {max_tag_no}")
 
-        super(ALUATargetPortGroup, self).__init__()
+        super().__init__()
         self.name = name
         self.storage_object = storage_object
 
-        self._path = "%s/alua/%s" % (storage_object.path, name)
+        self._path = f"{storage_object.path}/alua/{name}"
 
         if tag is not None:
             try:
@@ -67,8 +67,8 @@ class ALUATargetPortGroup(CFSNode):
                 raise RTSLibError(msg)
 
             try:
-                fwrite("%s/tg_pt_gp_id" % self._path, tag)
-            except IOError as msg:
+                fwrite(f"{self._path}/tg_pt_gp_id", tag)
+            except OSError as msg:
                 self.delete()
                 raise RTSLibError("Cannot set id to %d: %s" % (tag, str(msg)))
         else:
@@ -90,167 +90,167 @@ class ALUATargetPortGroup(CFSNode):
             raise RTSLibError("Can not delete default_tg_pt_gp")
 
         # This will reset the ALUA tpg to default_tg_pt_gp
-        super(ALUATargetPortGroup, self).delete()
+        super().delete()
 
     def _get_alua_access_state(self):
         self._check_self()
-        path = "%s/alua_access_state" % self.path
+        path = f"{self.path}/alua_access_state"
         return int(fread(path))
 
     def _set_alua_access_state(self, newstate):
         self._check_self()
-        path = "%s/alua_access_state" % self.path
+        path = f"{self.path}/alua_access_state"
         try:
             fwrite(path, str(int(newstate)))
-        except IOError as e:
-            raise RTSLibError("Cannot change ALUA state: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot change ALUA state: {e}")
 
     def _get_alua_access_status(self):
         self._check_self()
-        path = "%s/alua_access_status" % self.path
+        path = f"{self.path}/alua_access_status"
         status = fread(path)
         return alua_statuses.index(status)
 
     def _set_alua_access_status(self, newstatus):
         self._check_self()
-        path = "%s/alua_access_status" % self.path
+        path = f"{self.path}/alua_access_status"
         try:
             fwrite(path, str(int(newstatus)))
-        except IOError as e:
-            raise RTSLibError("Cannot change ALUA status: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot change ALUA status: {e}")
 
     def _get_alua_access_type(self):
         self._check_self()
-        path = "%s/alua_access_type" % self.path
+        path = f"{self.path}/alua_access_type"
         alua_type = fread(path)
         return alua_types.index(alua_type)
 
     def _set_alua_access_type(self, access_type):
         self._check_self()
-        path = "%s/alua_access_type" % self.path
+        path = f"{self.path}/alua_access_type"
         try:
             fwrite(path, str(int(access_type)))
-        except IOError as e:
-            raise RTSLibError("Cannot change ALUA access type: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot change ALUA access type: {e}")
 
     def _get_preferred(self):
         self._check_self()
-        path = "%s/preferred" % self.path
+        path = f"{self.path}/preferred"
         return int(fread(path))
 
     def _set_preferred(self, pref):
         self._check_self()
-        path = "%s/preferred" % self.path
+        path = f"{self.path}/preferred"
         try:
             fwrite(path, str(int(pref)))
-        except IOError as e:
-            raise RTSLibError("Cannot set preferred: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set preferred: {e}")
 
     def _get_alua_write_metadata(self):
         self._check_self()
-        path = "%s/alua_write_metadata" % self.path
+        path = f"{self.path}/alua_write_metadata"
         return int(fread(path))
 
     def _set_alua_write_metadata(self, pref):
         self._check_self()
-        path = "%s/alua_write_metadata" % self.path
+        path = f"{self.path}/alua_write_metadata"
         try:
             fwrite(path, str(int(pref)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_write_metadata: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_write_metadata: {e}")
 
     def _get_alua_support_active_nonoptimized(self):
         self._check_self()
-        path = "%s/alua_support_active_nonoptimized" % self.path
+        path = f"{self.path}/alua_support_active_nonoptimized"
         return int(fread(path))
 
     def _set_alua_support_active_nonoptimized(self, enabled):
         self._check_self()
-        path = "%s/alua_support_active_nonoptimized" % self.path
+        path = f"{self.path}/alua_support_active_nonoptimized"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_support_active_nonoptimized: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_support_active_nonoptimized: {e}")
 
     def _get_alua_support_active_optimized(self):
         self._check_self()
-        path = "%s/alua_support_active_optimized" % self.path
+        path = f"{self.path}/alua_support_active_optimized"
         return int(fread(path))
 
     def _set_alua_support_active_optimized(self, enabled):
         self._check_self()
-        path = "%s/alua_support_active_optimized" % self.path
+        path = f"{self.path}/alua_support_active_optimized"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_support_active_optimized: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_support_active_optimized: {e}")
 
     def _get_alua_support_offline(self):
         self._check_self()
-        path = "%s/alua_support_offline" % self.path
+        path = f"{self.path}/alua_support_offline"
         return int(fread(path))
 
     def _set_alua_support_offline(self, enabled):
         self._check_self()
-        path = "%s/alua_support_offline" % self.path
+        path = f"{self.path}/alua_support_offline"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_support_offline: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_support_offline: {e}")
 
     def _get_alua_support_unavailable(self):
         self._check_self()
-        path = "%s/alua_support_unavailable" % self.path
+        path = f"{self.path}/alua_support_unavailable"
         return int(fread(path))
 
     def _set_alua_support_unavailable(self, enabled):
         self._check_self()
-        path = "%s/alua_support_unavailable" % self.path
+        path = f"{self.path}/alua_support_unavailable"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_support_unavailable: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_support_unavailable: {e}")
 
     def _get_alua_support_standby(self):
         self._check_self()
-        path = "%s/alua_support_standby" % self.path
+        path = f"{self.path}/alua_support_standby"
         return int(fread(path))
 
     def _set_alua_support_standby(self, enabled):
         self._check_self()
-        path = "%s/alua_support_standby" % self.path
+        path = f"{self.path}/alua_support_standby"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_support_standby: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_support_standby: {e}")
 
     def _get_alua_support_transitioning(self):
         self._check_self()
-        path = "%s/alua_support_transitioning" % self.path
+        path = f"{self.path}/alua_support_transitioning"
         return int(fread(path))
 
     def _set_alua_support_transitioning(self, enabled):
         self._check_self()
-        path = "%s/alua_support_transitioning" % self.path
+        path = f"{self.path}/alua_support_transitioning"
         try:
             fwrite(path, str(int(enabled)))
-        except IOError as e:
-            raise RTSLibError("Cannot set alua_support_transitioning: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set alua_support_transitioning: {e}")
 
     def _get_alua_support_lba_dependent(self):
         self._check_self()
-        path = "%s/alua_support_lba_dependent" % self.path
+        path = f"{self.path}/alua_support_lba_dependent"
         return int(fread(path))
 
     def _get_members(self):
         self._check_self()
-        path = "%s/members" % self.path
+        path = f"{self.path}/members"
 
         member_list = []
 
         for member in fread(path).splitlines():
             lun_path = member.split("/")
-            if len(lun_path) != 4:
+            if len(lun_path) != 4:  # noqa: PLR2004
                 continue
             member_list.append({ 'driver': lun_path[0], 'target': lun_path[1],
                                  'tpgt': int(lun_path[2].split("_", 1)[1]),
@@ -259,50 +259,50 @@ class ALUATargetPortGroup(CFSNode):
 
     def _get_tg_pt_gp_id(self):
         self._check_self()
-        path = "%s/tg_pt_gp_id" % self.path
+        path = f"{self.path}/tg_pt_gp_id"
         return int(fread(path))
 
     def _get_trans_delay_msecs(self):
         self._check_self()
-        path = "%s/trans_delay_msecs" % self.path
+        path = f"{self.path}/trans_delay_msecs"
         return int(fread(path))
 
     def _set_trans_delay_msecs(self, secs):
         self._check_self()
-        path = "%s/trans_delay_msecs" % self.path
+        path = f"{self.path}/trans_delay_msecs"
         try:
             fwrite(path, str(int(secs)))
-        except IOError as e:
-            raise RTSLibError("Cannot set trans_delay_msecs: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set trans_delay_msecs: {e}")
 
     def _get_implicit_trans_secs(self):
         self._check_self()
-        path = "%s/implicit_trans_secs" % self.path
+        path = f"{self.path}/implicit_trans_secs"
         return int(fread(path))
 
     def _set_implicit_trans_secs(self, secs):
         self._check_self()
-        path = "%s/implicit_trans_secs" % self.path
+        path = f"{self.path}/implicit_trans_secs"
         try:
             fwrite(path, str(int(secs)))
-        except IOError as e:
-            raise RTSLibError("Cannot set implicit_trans_secs: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set implicit_trans_secs: {e}")
 
     def _get_nonop_delay_msecs(self):
         self._check_self()
-        path = "%s/nonop_delay_msecs" % self.path
+        path = f"{self.path}/nonop_delay_msecs"
         return int(fread(path))
 
     def _set_nonop_delay_msecs(self, delay):
         self._check_self()
-        path = "%s/nonop_delay_msecs" % self.path
+        path = f"{self.path}/nonop_delay_msecs"
         try:
             fwrite(path, str(int(delay)))
-        except IOError as e:
-            raise RTSLibError("Cannot set nonop_delay_msecs: %s" % e)
+        except OSError as e:
+            raise RTSLibError(f"Cannot set nonop_delay_msecs: {e}")
 
     def dump(self):
-        d = super(ALUATargetPortGroup, self).dump()
+        d = super().dump()
         d['name'] = self.name
         d['tg_pt_gp_id'] = self.tg_pt_gp_id
         for param in alua_rw_params:
@@ -388,16 +388,16 @@ class ALUATargetPortGroup(CFSNode):
                                  doc="msecs to delay IO when non-optimized")
 
     @classmethod
-    def setup(cls, storage_obj, alua_tpg, err_func):
+    def setup(cls, storage_obj, alua_tpg, err_func):  # noqa: ARG003 TODO
         name = alua_tpg['name']
         if name == 'default_tg_pt_gp':
             return
 
         alua_tpg_obj = cls(storage_obj, name, alua_tpg['tg_pt_gp_id'])
-        for param, value in six.iteritems(alua_tpg):
-            if param != 'name' and param != 'tg_pt_gp_id':
+        for param, value in alua_tpg.items():
+            if param not in ('name', 'tg_pt_gp_id'):
                 try:
                     setattr(alua_tpg_obj, param, value)
                 except:
-                    raise RTSLibError("Could not set attribute '%s' for alua tpg '%s'"
-                                      % (param, alua_tpg['name']))
+                    raise RTSLibError(f"Could not set attribute '{param}' "
+                                      f"for alua tpg '{alua_tpg['name']}'")

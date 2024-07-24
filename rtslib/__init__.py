@@ -16,28 +16,54 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
-if __name__ == "rtslib-fb":
-    from warnings import warn
-    warn("'rtslib' package name for rtslib-fb is deprecated, please"
-         + " instead import 'rtslib_fb'", UserWarning, stacklevel=2)
-
-from .root import RTSRoot
-from .utils import RTSLibError, RTSLibBrokenLink, RTSLibNotInCFS
-from .utils import RTSLibALUANotSupported
-
-from .target import LUN, MappedLUN
-from .target import NodeACL, NetworkPortal, TPG, Target
-from .target import NodeACLGroup, MappedLUNGroup
-from .fabric import FabricModule
-
-from .tcm import FileIOStorageObject, BlockStorageObject
-from .tcm import PSCSIStorageObject, RDMCPStorageObject, UserBackedStorageObject
-from .tcm import StorageObjectFactory
-
 from .alua import ALUATargetPortGroup
+from .fabric import FabricModule
+from .root import RTSRoot
+from .target import (
+    LUN,
+    TPG,
+    MappedLUN,
+    MappedLUNGroup,
+    NetworkPortal,
+    NodeACL,
+    NodeACLGroup,
+    Target,
+)
+from .tcm import (
+    BlockStorageObject,
+    FileIOStorageObject,
+    PSCSIStorageObject,
+    RDMCPStorageObject,
+    StorageObjectFactory,
+    UserBackedStorageObject,
+)
+from .utils import (
+    RTSLibALUANotSupportedError,
+    RTSLibBrokenLink,
+    RTSLibError,
+    RTSLibNotInCFSError,
+)
 
-__version__ = '2.1.76'
-__author__ = "Jerome Martin <jxm@risingtidesystems.com>"
-__url__ = 'http://github.com/open-iscsi/rtslib-fb'
-__description__ = 'API for Linux kernel SCSI target (aka LIO)'
-__license__ = 'Apache 2.0'
+__all__ = [
+    "RTSRoot",
+    "RTSLibError",
+    "RTSLibBrokenLink",
+    "RTSLibNotInCFSError",
+    "RTSLibALUANotSupportedError",
+    "LUN",
+    "MappedLUN",
+    "NodeACL",
+    "NetworkPortal",
+    "TPG",
+    "Target",
+    "NodeACLGroup",
+    "MappedLUNGroup",
+    "FabricModule",
+    "FileIOStorageObject",
+    "BlockStorageObject",
+    "PSCSIStorageObject",
+    "RDMCPStorageObject",
+    "UserBackedStorageObject",
+    "StorageObjectFactory",
+    "ALUATargetPortGroup",
+]

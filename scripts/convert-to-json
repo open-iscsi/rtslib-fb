@@ -24,6 +24,8 @@ under the License.
 
 import json
 import re
+from pathlib import Path
+
 
 def human_to_bytes(hsize, kilo=1024):
     '''
@@ -47,8 +49,8 @@ def human_to_bytes(hsize, kilo=1024):
     '''
     size = hsize.replace('i', '')
     size = size.lower()
-    if not re.match("^[0-9\.]+[k|m|g|t]?[b]?$", size):
-        raise Exception("Cannot interpret size, wrong format: %s" % hsize)
+    if not re.match(r"^[0-9\.]+[k|m|g|t]?[b]?$", size):
+        raise Exception(f"Cannot interpret size, wrong format: {hsize}")
 
     size = size.rstrip('ib')
 
@@ -87,7 +89,7 @@ def parse_attributes(txt, cur):
     return (cur+1, attribs)
 
 def parse_fileio(txt, cur):
-    so = dict(plugin="fileio")
+    so = {'plugin': "fileio"}
     while txt[cur] != "}":
         if txt[cur] == "path":
             so["dev"] = txt[cur+1]
@@ -107,7 +109,7 @@ def parse_fileio(txt, cur):
     return (cur+1, so)
 
 def parse_block(txt, cur):
-    so = dict(plugin="block")
+    so = {'plugin': "block"}
     while txt[cur] != "}":
         if txt[cur] == "path":
             so["dev"] = txt[cur+1]
@@ -119,7 +121,7 @@ def parse_block(txt, cur):
     return (cur+1, so)
 
 def parse_ramdisk(txt, cur):
-    so = dict(plugin="ramdisk")
+    so = {'plugin': "ramdisk"}
     while txt[cur] != "}":
         if txt[cur] == "nullio":
             so["nullio"] = parse_yesno(txt[cur+1])
@@ -151,10 +153,10 @@ def parse_storage(txt, cur):
 def parse_lun(txt, cur):
     index = int(txt[cur+1])
     plugin, name = txt[cur+3].split(":")
-    return cur+4, dict(index=index, plugin=plugin, name=name)
+    return cur+4, {'index': index, 'plugin': plugin, 'name': name}
 
 def parse_mapped_lun(txt, cur):
-    mlun = dict(index=txt[cur+1])
+    mlun = {'index': txt[cur+1]}
     cur += 3
     while txt[cur] != "}":
         if txt[cur] == "target_lun":
@@ -168,7 +170,7 @@ def parse_mapped_lun(txt, cur):
     return cur+1, mlun
 
 def parse_acl(txt, cur):
-    acl = dict(node_wwn=txt[cur+1])
+    acl = {'node_wwn': txt[cur+1]}
     mapped_luns = []
     cur += 3
     while txt[cur] != "}":
@@ -190,7 +192,7 @@ def parse_tpg(tag, txt, cur):
     if tag is None:
         tag = int(txt[cur+1])
         cur += 2
-    tpg = dict(tag=tag)
+    tpg = {'tag': tag}
     luns = []
     acls = []
     portals = []
@@ -212,8 +214,8 @@ def parse_tpg(tag, txt, cur):
                 tpg["auth"] = auth
             continue
         if txt[cur] == "lun":
-            cur, l = parse_lun(txt, cur)
-            luns.append(l)
+            cur, lun = parse_lun(txt, cur)
+            luns.append(lun)
             continue
         if txt[cur] == "acl":
             cur, acl = parse_acl(txt, cur)
@@ -221,7 +223,7 @@ def parse_tpg(tag, txt, cur):
             continue
         if txt[cur] == "portal":
             ip, port = txt[cur+1].split(":")
-            portal = dict(ip_address=ip, port=port)
+            portal = {'ip_address': ip, 'port': port}
             portals.append(portal)
             cur += 2
             continue
@@ -235,7 +237,7 @@ def parse_tpg(tag, txt, cur):
 
 
 def parse_target(fabric, txt, cur):
-    target = dict(wwn=txt[cur+1], fabric=fabric)
+    target = {'wwn': txt[cur+1], 'fabric': fabric}
     tpgs = []
     tpgt = None
     # handle multiple tpgts
@@ -287,18 +289,18 @@ def split(s):
     in_quotes = False
     new_str = []
     for c in s:
-        if c not in " \n\t\"":
+        if c not in ' \n\t"':
             new_str.append(c)
-        elif c == '\"' and in_quotes == False:
+        elif c == '"' and not in_quotes:
             in_quotes = True
-        elif c == '\"' and in_quotes == True:
+        elif c == '"' and in_quotes:
             in_quotes = False
             if len(new_str) == 0:
                 # don't include things that are set to '""'
                 del new_lst[-1]
-        elif in_quotes == True: # append ws if in quotes
+        elif in_quotes:  # append ws if in quotes
             new_str.append(c)
-        elif len(new_str): # not in quotes, break on ws if anything in new_str
+        elif len(new_str):  # not in quotes, break on ws if anything in new_str
             new_lst.append("".join(new_str))
             new_str = []
         else:
@@ -316,12 +318,11 @@ def parse(txt, cur):
         elif txt[cur] == "fabric":
             cur = parse_fabric(txt, cur)
 
-with open("/etc/target/scsi_target.lio") as f:
+with Path("/etc/target/scsi_target.lio").open as f:
     txt = f.read()
     txt = split(txt)
     cur = parse(txt, 0)
 
-output = dict(storage_objects=sos, fabric_modules=fabs, targets=targs)
+output = {'storage_objects': sos, 'fabric_modules': fabs, 'targets': targs}
 
 print(json.dumps(output, indent=2, sort_keys=True))
-

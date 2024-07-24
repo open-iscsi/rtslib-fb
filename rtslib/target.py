@@ -18,20 +18,28 @@ License for the specific language governing permissions and limitations
 under the License.
 '''
 
+import contextlib
 import os
-from glob import iglob as glob
-from functools import partial
-from six.moves import range
 import uuid
+from functools import partial
+from pathlib import Path
 
-from .node import CFSNode
-from .utils import RTSLibBrokenLink, RTSLibError
-from .utils import fread, fwrite, normalize_wwn, generate_wwn
-from .utils import dict_remove, set_attributes, set_parameters, ignored
-from .utils import _get_auth_attr, _set_auth_attr
 from . import tcm
-
-import six
+from .node import CFSNode
+from .utils import (
+    RTSLibBrokenLink,
+    RTSLibError,
+    _get_auth_attr,
+    _set_auth_attr,
+    dict_remove,
+    fread,
+    fwrite,
+    generate_wwn,
+    ignored,
+    normalize_wwn,
+    set_attributes,
+    set_parameters,
+)
 
 auth_params = ('userid', 'password', 'mutual_userid', 'mutual_password')
 
@@ -45,7 +53,7 @@ class Target(CFSNode):
     # Target private stuff
 
     def __repr__(self):
-        return "<Target %s/%s>" % (self.fabric_module.name, self.wwn)
+        return f"<Target {self.fabric_module.name}/{self.wwn}>"
 
     def __init__(self, fabric_module, wwn=None, mode='any'):
         '''
@@ -63,7 +71,7 @@ class Target(CFSNode):
         @return: A Target object.
         '''
 
-        super(Target, self).__init__()
+        super().__init__()
         self.fabric_module = fabric_module
 
         fabric_module._check_self()
@@ -81,15 +89,14 @@ class Target(CFSNode):
 
         # Checking is done, convert to format the fabric wants
         fabric_wwn = fabric_module.to_fabric_wwn(self.wwn)
-        self._path = "%s/%s" % (self.fabric_module.path, fabric_wwn)
+        self._path = f"{self.fabric_module.path}/{fabric_wwn}"
         self._create_in_cfs_ine(mode)
 
     def _list_tpgs(self):
         self._check_self()
-        for tpg_dir in glob("%s/tpgt*" % self.path):
-            tag = os.path.basename(tpg_dir).split('_')[1]
-            tag = int(tag)
-            yield TPG(self, tag, 'lookup')
+        for tpg_dir in Path(self.path).glob("tpgt*"):
+            tag = tpg_dir.name.split('_')[1]
+            yield TPG(self, int(tag), 'lookup')
 
     # Target public stuff
 
@@ -107,7 +114,7 @@ class Target(CFSNode):
         self._check_self()
         for tpg in self.tpgs:
             tpg.delete()
-        super(Target, self).delete()
+        super().delete()
 
     tpgs = property(_list_tpgs, doc="Get the list of TPG for the Target.")
 
@@ -126,14 +133,14 @@ class Target(CFSNode):
         try:
             t_obj = Target(fm_obj, t['wwn'])
         except RTSLibError as e:
-            err_func("Could not create Target object: %s" % e)
+            err_func(f"Could not create Target object: {e}")
             return
 
         for tpg in t.get('tpgs', []):
             TPG.setup(t_obj, tpg, err_func)
 
     def dump(self):
-        d = super(Target, self).dump()
+        d = super().dump()
         d['wwn'] = self.wwn
         d['fabric'] = self.fabric_module.name
         d['tpgs'] = [tpg.dump() for tpg in self.tpgs]
@@ -169,7 +176,7 @@ class TPG(CFSNode):
         @return: A TPG object.
         '''
 
-        super(TPG, self).__init__()
+        super().__init__()
 
         if tag is None:
             tags = [tpg.tag for tpg in parent_target.tpgs]
@@ -192,12 +199,13 @@ class TPG(CFSNode):
 
         self._path = "%s/tpgt_%d" % (self.parent_target.path, self.tag)
 
-        target_path = self.parent_target.path
-        if not self.has_feature('tpgts') and not os.path.isdir(self._path):
-            for filename in os.listdir(target_path):
-                if filename.startswith("tpgt_") \
-                   and os.path.isdir("%s/%s" % (target_path, filename)) \
-                   and filename != "tpgt_%d" % self.tag:
+        path = Path(self._path)
+        target_path = Path(self.parent_target.path)
+        if not self.has_feature('tpgts') and not path.is_dir():
+            for filename in target_path.iterdir():
+                if filename.name.startswith("tpgt_") \
+                        and filename.is_dir() \
+                        and filename.name != f"tpgt_{self.tag}":
                     raise RTSLibError("Target cannot have multiple TPGs")
 
         self._create_in_cfs_ine(mode)
@@ -215,18 +223,17 @@ class TPG(CFSNode):
         if not self.has_feature('nps'):
             return
 
-        for network_portal_dir in os.listdir("%s/np" % self.path):
-            (ip_address, port) = \
-                os.path.basename(network_portal_dir).rsplit(":", 1)
+        np_path = Path(self.path) / 'np'
+        for network_portal_dir in np_path.iterdir():
+            ip_address, port = network_portal_dir.name.rsplit(":", 1)
             port = int(port)
             yield NetworkPortal(self, ip_address, port, 'lookup')
 
     def _get_enable(self):
         self._check_self()
-        path = "%s/enable" % self.path
-        # If the TPG does not have the enable attribute, then it is always
-        # enabled.
-        if os.path.isfile(path):
+        path = Path(self.path) / 'enable'
+        # If the TPG does not have the enable attribute, then it is always enabled.
+        if path.is_file():
             return bool(int(fread(path)))
         else:
             return True
@@ -237,12 +244,12 @@ class TPG(CFSNode):
         attribute, do nothing.
         '''
         self._check_self()
-        path = "%s/enable" % self.path
-        if os.path.isfile(path) and (boolean != self._get_enable()):
+        path = Path(self.path) / 'enable'
+        if path.is_file() and (boolean != self._get_enable()):
             try:
                 fwrite(path, str(int(boolean)))
-            except IOError as e:
-                raise RTSLibError("Cannot change enable state: %s" % e)
+            except OSError as e:
+                raise RTSLibError(f"Cannot change enable state: {e}")
 
     def _get_nexus(self):
         '''
@@ -251,8 +258,8 @@ class TPG(CFSNode):
         self._check_self()
         if self.has_feature('nexus'):
             try:
-                nexus_wwn = fread("%s/nexus" % self.path)
-            except IOError:
+                nexus_wwn = fread(f"{self.path}/nexus")
+            except OSError:
                 nexus_wwn = ''
             return nexus_wwn
         else:
@@ -278,15 +285,14 @@ class TPG(CFSNode):
             # Nexus wwn type should match parent target
             nexus_wwn = generate_wwn(self.parent_target.wwn_type)
 
-        fwrite("%s/nexus" % self.path, fm.to_fabric_wwn(nexus_wwn))
+        fwrite(f"{self.path}/nexus", fm.to_fabric_wwn(nexus_wwn))
 
     def _list_node_acls(self):
         self._check_self()
         if not self.has_feature('acls'):
             return
 
-        node_acl_dirs = [os.path.basename(path)
-                         for path in os.listdir("%s/acls" % self.path)]
+        node_acl_dirs = [path.name for path in Path(self.path, 'acls').iterdir()]
         for node_acl_dir in node_acl_dirs:
             fm = self.parent_target.fabric_module
             yield NodeACL(self, fm.from_fabric_wwn(node_acl_dir), 'lookup')
@@ -294,9 +300,9 @@ class TPG(CFSNode):
     def _list_node_acl_groups(self):
         self._check_self()
         if not self.has_feature('acls'):
-            return
+            return None
 
-        names = set([])
+        names = set()
 
         for na in self.node_acls:
             tag = na.tag
@@ -307,8 +313,7 @@ class TPG(CFSNode):
 
     def _list_luns(self):
         self._check_self()
-        lun_dirs = [os.path.basename(path)
-                    for path in os.listdir("%s/lun" % self.path)]
+        lun_dirs = [path.name for path in Path(self.path, 'lun').iterdir()]
         for lun_dir in lun_dirs:
             lun = lun_dir.split('_')[1]
             lun = int(lun)
@@ -316,8 +321,8 @@ class TPG(CFSNode):
 
     def _control(self, command):
         self._check_self()
-        path = "%s/control" % self.path
-        fwrite(path, "%s\n" % str(command))
+        path = f"{self.path}/control"
+        fwrite(path, f"{command!s}\n")
 
     # TPG public stuff
 
@@ -344,7 +349,7 @@ class TPG(CFSNode):
             lun.delete()
         for portal in self.network_portals:
             portal.delete()
-        super(TPG, self).delete()
+        super().delete()
 
     def node_acl(self, node_wwn, mode='any'):
         '''
@@ -367,55 +372,60 @@ class TPG(CFSNode):
         self._check_self()
         return LUN(self, lun=lun, storage_object=storage_object, alias=alias)
 
-    tag = property(_get_tag,
-            doc="Get the TPG Tag as an int.")
-    parent_target = property(_get_parent_target,
-                             doc="Get the parent Target object to which the " \
-                             + "TPG is attached.")
-    enable = property(_get_enable, _set_enable,
-                      doc="Get or set a boolean value representing the " \
-                      + "enable status of the TPG. " \
-                      + "True means the TPG is enabled, False means it is " \
-                      + "disabled.")
-    network_portals = property(_list_network_portals,
-            doc="Get the list of NetworkPortal objects currently attached " \
-                               + "to the TPG.")
-    node_acls = property(_list_node_acls,
-                         doc="Get the list of NodeACL objects currently " \
-                         + "attached to the TPG.")
-    node_acl_groups = property(_list_node_acl_groups,
-                         doc="Get the list of NodeACL groups currently " \
-                         + "attached to the TPG.")
-    luns = property(_list_luns,
-                    doc="Get the list of LUN objects currently attached " \
-                    + "to the TPG.")
+    tag = property(_get_tag,doc="Get the TPG Tag as an int.")
+    parent_target = property(
+        _get_parent_target,
+        doc="Get the parent Target object to which the TPG is attached.")
+    enable = property(
+        _get_enable,
+        _set_enable,
+        doc="Get or set a boolean value representing the enable status of the TPG. "
+            "True means the TPG is enabled, False means it is disabled.")
+    network_portals = property(
+        _list_network_portals,
+        doc="Get the list of NetworkPortal objects currently attached to the TPG.")
+    node_acls = property(
+        _list_node_acls,
+        doc="Get the list of NodeACL objects currently attached to the TPG.")
+    node_acl_groups = property(
+        _list_node_acl_groups,
+        doc="Get the list of NodeACL groups currently attached to the TPG.")
+    luns = property(
+        _list_luns,
+        doc="Get the list of LUN objects currently attached to the TPG.")
+    nexus = property(
+        _get_nexus,
+        _set_nexus,
+        doc="Get or set (once) the TPG's Nexus is used.")
 
-    nexus = property(_get_nexus, _set_nexus,
-                     doc="Get or set (once) the TPG's Nexus is used.")
-
-    chap_userid = property(partial(_get_auth_attr, attribute='auth/userid', ignore=True),
-                           partial(_set_auth_attr, attribute='auth/userid', ignore=True),
-                           doc="Set or get the initiator CHAP auth userid.")
-    chap_password = property(partial(_get_auth_attr, attribute='auth/password', ignore=True),
-                             partial(_set_auth_attr, attribute='auth/password', ignore=True),
-                             doc="Set or get the initiator CHAP auth password.")
-    chap_mutual_userid = property(partial(_get_auth_attr, attribute='auth/userid_mutual', ignore=True),
-                                  partial(_set_auth_attr, attribute='auth/userid_mutual', ignore=True),
-                                  doc="Set or get the initiator CHAP auth userid.")
-    chap_mutual_password = property(partial(_get_auth_attr, attribute='auth/password_mutual', ignore=True),
-                                    partial(_set_auth_attr, attribute='auth/password_mutual', ignore=True),
-                                    doc="Set or get the initiator CHAP auth password.")
+    chap_userid = property(
+        partial(_get_auth_attr, attribute='auth/userid', ignore=True),
+        partial(_set_auth_attr, attribute='auth/userid', ignore=True),
+        doc="Set or get the initiator CHAP auth userid.")
+    chap_password = property(
+        partial(_get_auth_attr, attribute='auth/password', ignore=True),
+        partial(_set_auth_attr, attribute='auth/password', ignore=True),
+        doc="Set or get the initiator CHAP auth password.")
+    chap_mutual_userid = property(
+        partial(_get_auth_attr, attribute='auth/userid_mutual', ignore=True),
+        partial(_set_auth_attr, attribute='auth/userid_mutual', ignore=True),
+        doc="Set or get the initiator CHAP auth userid.")
+    chap_mutual_password = property(
+        partial(_get_auth_attr, attribute='auth/password_mutual', ignore=True),
+        partial(_set_auth_attr, attribute='auth/password_mutual', ignore=True),
+        doc="Set or get the initiator CHAP auth password.")
 
     def _get_authenticate_target(self):
         self._check_self()
-        path = "%s/auth/authenticate_target" % self.path
+        path = f"{self.path}/auth/authenticate_target"
         try:
             return bool(int(fread(path)))
         except:
             return None
 
-    authenticate_target = property(_get_authenticate_target,
-                                   doc="Get the boolean authenticate target flag.")
+    authenticate_target = property(
+        _get_authenticate_target,
+        doc="Get the boolean authenticate target flag.")
 
     @classmethod
     def setup(cls, t_obj, tpg, err_func):
@@ -435,16 +445,15 @@ class TPG(CFSNode):
         tpg_obj.enable = tpg.get('enable', True)
         dict_remove(tpg, ('luns', 'portals', 'node_acls', 'tag',
                           'attributes', 'parameters', 'enable'))
-        for name, value in six.iteritems(tpg):
+        for name, value in tpg.items():
             if value:
                 try:
                     setattr(tpg_obj, name, value)
                 except:
-                    err_func("Could not set tpg %s attribute '%s'" %
-                             (tpg_obj.tag, name))
+                    err_func(f"Could not set tpg {tpg_obj.tag} attribute '{name}'")
 
     def dump(self):
-        d = super(TPG, self).dump()
+        d = super().dump()
         d['tag'] = self.tag
         d['enable'] = self.enable
         d['luns'] = [lun.dump() for lun in self.luns]
@@ -499,7 +508,7 @@ class LUN(CFSNode):
         @type alias: string
         @return: A LUN object.
         '''
-        super(LUN, self).__init__()
+        super().__init__()
 
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
@@ -507,7 +516,7 @@ class LUN(CFSNode):
             raise RTSLibError("Invalid parent TPG")
 
         if lun is None:
-            luns = [l.lun for l in self.parent_tpg.luns]
+            luns = [tpg_lun.lun for tpg_lun in self.parent_tpg.luns]
             for index in range(self.MAX_TARGET_LUN+1):
                 if index not in luns:
                     lun = index
@@ -524,8 +533,8 @@ class LUN(CFSNode):
         self._path = "%s/lun/lun_%d" % (self.parent_tpg.path, self.lun)
 
         if storage_object is None and alias is not None:
-            raise RTSLibError("The alias parameter has no meaning " \
-                              + "without the storage_object parameter")
+            raise RTSLibError("The alias parameter has no meaning "
+                              "without the storage_object parameter")
 
         if storage_object is not None:
             self._create_in_cfs_ine('create')
@@ -544,9 +553,9 @@ class LUN(CFSNode):
         else:
             alias = str(alias).strip()
             if '/' in alias:
-                raise RTSLibError("Invalid alias: %s", alias)
+                raise RTSLibError(f"Invalid alias: {alias}")
 
-        destination = "%s/%s" % (self.path, alias)
+        destination = f"{self.path}/{alias}"
 
         if storage_object.exists:
             source = storage_object.path
@@ -557,15 +566,15 @@ class LUN(CFSNode):
 
     def _get_alias(self):
         self._check_self()
-        for path in os.listdir(self.path):
-            if os.path.islink("%s/%s" % (self.path, path)):
-                return os.path.basename(path)
+        for path in Path(self.path).iterdir():
+            if path.is_symlink():
+                return path.name
 
         raise RTSLibBrokenLink("Broken LUN in configFS, no storage object")
 
     def _get_storage_object(self):
         self._check_self()
-        alias_path = os.path.realpath("%s/%s" % (self.path, self.alias))
+        alias_path = os.path.realpath(f"{self.path}/{self.alias}")
         return tcm.StorageObject.so_from_path(alias_path)
 
     def _get_parent_tpg(self):
@@ -583,7 +592,7 @@ class LUN(CFSNode):
 
         for na in tpg.node_acls:
             for mlun in na.mapped_luns:
-                if os.path.realpath("%s/%s" % (mlun.path, mlun.alias)) == self.path:
+                if os.path.realpath(f"{mlun.path}/{mlun.alias}") == self.path:
                     yield mlun
 
 
@@ -600,14 +609,14 @@ class LUN(CFSNode):
         if storage_object.alua_supported is False:
             return None
 
-        path = "%s/alua_tg_pt_gp" % self.path
+        path = f"{self.path}/alua_tg_pt_gp"
         try:
             info = fread(path)
             if not info:
                 return None
             group_line = info.splitlines()[0]
             return group_line.split(':')[1].strip()
-        except IOError as e:
+        except OSError:
             return None
 
     def _set_alua_tg_pt_gp_name(self, group_name):
@@ -616,10 +625,10 @@ class LUN(CFSNode):
         if not self._get_alua_tg_pt_gp_name():
             return -1
 
-        path = "%s/alua_tg_pt_gp" % self.path
+        path = f"{self.path}/alua_tg_pt_gp"
         try:
             fwrite(path, group_name)
-        except IOError as e:
+        except OSError:
             return -1
 
         return 0
@@ -630,10 +639,10 @@ class LUN(CFSNode):
         if self._get_storage_object().alua_supported is False:
             return None
 
-        path = "%s/alua_tg_pt_offline" % self.path
+        path = Path(self.path) / "alua_tg_pt_offline"
         try:
-            return bool(int(fread(path))) if os.path.isfile(path) else None
-        except IOError as e:
+            return bool(int(fread(path))) if path.is_file() else None
+        except OSError:
             return None
 
     def _set_alua_tg_pt_offline(self, boolean):
@@ -642,11 +651,11 @@ class LUN(CFSNode):
         if self._get_storage_object().alua_supported is False:
             return -1
 
-        path = "%s/alua_tg_pt_offline" % self.path
+        path = Path(self.path) / "alua_tg_pt_offline"
         try:
-            if os.path.isfile(path):
+            if path.is_file():
                 fwrite(path, "1" if boolean else "0")
-        except IOError as e:
+        except OSError:
             return -1
 
         return 0
@@ -657,28 +666,28 @@ class LUN(CFSNode):
         if self._get_storage_object().alua_supported is False:
             return None
 
-        path = "%s/alua_tg_pt_status" % self.path
+        path = Path(self.path) / "alua_tg_pt_status"
         try:
-            return int(fread(path)) if os.path.isfile(path) else None
-        except IOError as e:
+            return int(fread(path)) if path.is_file() else None
+        except OSError:
             return None
 
     def _set_alua_tg_pt_status(self, integer):
         self._check_self()
 
-        if integer != self.ALUA_STATUS_NONE and\
-            integer != self.ALUA_STATUS_ALTERED_BY_EXPLICIT_STPG and\
-            integer != self.ALUA_STATUS_ALTERED_BY_IMPLICIT_ALUA:
+        if integer not in (self.ALUA_STATUS_NONE,
+                           self.ALUA_STATUS_ALTERED_BY_EXPLICIT_STPG,
+                           self.ALUA_STATUS_ALTERED_BY_IMPLICIT_ALUA):
             return -1
 
         if self._get_storage_object().alua_supported is False:
             return -1
 
-        path = "%s/alua_tg_pt_status" % self.path
+        path = Path(self.path) / "alua_tg_pt_status"
         try:
-            if os.path.isfile(path):
+            if path.is_file():
                 fwrite(path, str(integer))
-        except IOError as e:
+        except OSError:
             return -1
 
         return 0
@@ -689,10 +698,10 @@ class LUN(CFSNode):
         if self._get_storage_object().alua_supported is False:
             return None
 
-        path = "%s/alua_tg_pt_write_md" % self.path
+        path = Path(self.path) / "alua_tg_pt_write_md"
         try:
-            return bool(int(fread(path))) if os.path.isfile(path) else None
-        except IOError as e:
+            return bool(int(fread(path))) if path.is_file() else None
+        except OSError:
             return None
 
     def _set_alua_tg_pt_write_md(self, boolean):
@@ -701,11 +710,11 @@ class LUN(CFSNode):
         if self._get_storage_object().alua_supported is False:
             return -1
 
-        path = "%s/alua_tg_pt_write_md" % self.path
+        path = Path(self.path) / "alua_tg_pt_write_md"
         try:
-            if os.path.isfile(path):
+            if path.is_file():
                 fwrite(path, "1" if boolean else "0")
-        except IOError as e:
+        except OSError:
             return -1
 
         return 0
@@ -729,10 +738,11 @@ class LUN(CFSNode):
         except RTSLibBrokenLink:
             pass
         else:
-            if os.path.islink("%s/%s" % (self.path, link)):
-                os.unlink("%s/%s" % (self.path, link))
+            path = Path(self.path) / link
+            if path.is_symlink:
+                path.unlink()
 
-        super(LUN, self).delete()
+        super().delete()
 
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
@@ -779,16 +789,13 @@ class LUN(CFSNode):
             err_func("Creating TPG %d LUN index %d failed" %
                      (tpg_obj.tag, lun['index']))
 
-        try:
+        # alua_tg_pt_gp support not present in older versions
+        with contextlib.suppress(KeyError):
             lun_obj.alua_tg_pt_gp_name = lun['alua_tg_pt_gp_name']
-        except KeyError:
-            # alua_tg_pt_gp support not present in older versions
-            pass
 
     def dump(self):
-        d = super(LUN, self).dump()
-        d['storage_object'] = "/backstores/%s/%s" % \
-            (self.storage_object.plugin,  self.storage_object.name)
+        d = super().dump()
+        d['storage_object'] = f"/backstores/{self.storage_object.plugin}/{self.storage_object.name}"
         d['index'] = self.lun
         d['alias'] = self.alias
         d['alua_tg_pt_gp_name'] = self.alua_tg_pt_gp_name
@@ -807,7 +814,7 @@ class NetworkPortal(CFSNode):
     # NetworkPortal private stuff
 
     def __repr__(self):
-        return "<NetworkPortal %s port %s>" % (self.ip_address, self.port)
+        return f"<NetworkPortal {self.ip_address} port {self.port}>"
 
     def __init__(self, parent_tpg, ip_address, port=3260, mode='any'):
         '''
@@ -826,7 +833,7 @@ class NetworkPortal(CFSNode):
         @type mode:string
         @return: A NetworkPortal object.
         '''
-        super(NetworkPortal, self).__init__()
+        super().__init__()
 
         self._ip_address = str(ip_address)
 
@@ -859,33 +866,33 @@ class NetworkPortal(CFSNode):
 
     def _get_iser(self):
         try:
-            return bool(int(fread("%s/iser" % self.path)))
-        except IOError:
+            return bool(int(fread(f"{self.path}/iser")))
+        except OSError:
             return False
 
     def _set_iser(self, boolean):
-        path = "%s/iser" % self.path
+        path = Path(self.path) / "iser"
         try:
             fwrite(path, str(int(boolean)))
-        except IOError:
+        except OSError:
             # b/w compat: don't complain if iser entry is missing
-            if os.path.isfile(path):
+            if path.is_file():
                 raise RTSLibError("Cannot change iser")
 
     def _get_offload(self):
         try:
             # only offload at the moment is cxgbit
-            return bool(int(fread("%s/cxgbit" % self.path)))
-        except IOError:
+            return bool(int(fread(f"{self.path}/cxgbit")))
+        except OSError:
             return False
 
     def _set_offload(self, boolean):
-        path = "%s/cxgbit" % self.path
+        path = Path(self.path) / "cxgbit"
         try:
             fwrite(path, str(int(boolean)))
-        except IOError:
+        except OSError:
             # b/w compat: don't complain if cxgbit entry is missing
-            if os.path.isfile(path):
+            if path.is_file():
                 raise RTSLibError("Cannot change offload")
 
     # NetworkPortal public stuff
@@ -893,7 +900,7 @@ class NetworkPortal(CFSNode):
     def delete(self):
         self.iser = False
         self.offload = False
-        super(NetworkPortal, self).delete()
+        super().delete()
 
     parent_tpg = property(_get_parent_tpg,
             doc="Get the parent TPG object.")
@@ -902,11 +909,11 @@ class NetworkPortal(CFSNode):
     ip_address = property(_get_ip_address,
             doc="Get the NetworkPortal's IP address as a string.")
     iser = property(_get_iser, _set_iser,
-                    doc="Get or set a boolean value representing if this " \
-                        + "NetworkPortal supports iSER.")
+                    doc="Get or set a boolean value representing if "
+                        "this NetworkPortal supports iSER.")
     offload = property(_get_offload, _set_offload,
-                    doc="Get or set a boolean value representing if this " \
-                        + "NetworkPortal supports offload.")
+                    doc="Get or set a boolean value representing if "
+                        "this NetworkPortal supports offload.")
 
     @classmethod
     def setup(cls, tpg_obj, p, err_func):
@@ -922,11 +929,10 @@ class NetworkPortal(CFSNode):
             np.iser = p.get('iser', False)
             np.offload = p.get('offload', False)
         except (RTSLibError, KeyError) as e:
-            err_func("Creating NetworkPortal object %s:%s failed: %s" %
-                     (p['ip_address'], p['port'], e))
+            err_func(f"Creating NetworkPortal object {p['ip_address']}:{p['port']} failed: {e}")
 
     def dump(self):
-        d = super(NetworkPortal, self).dump()
+        d = super().dump()
         d['port'] = self.port
         d['ip_address'] = self.ip_address
         d['iser'] = self.iser
@@ -943,7 +949,7 @@ class NodeACL(CFSNode):
     # NodeACL private stuff
 
     def __repr__(self):
-        return "<NodeACL %s>" % self.node_wwn
+        return f"<NodeACL {self.node_wwn}>"
 
     def __init__(self, parent_tpg, node_wwn, mode='any'):
         '''
@@ -961,7 +967,7 @@ class NodeACL(CFSNode):
         @return: A NodeACL object.
         '''
 
-        super(NodeACL, self).__init__()
+        super().__init__()
 
         if isinstance(parent_tpg, TPG):
             self._parent_tpg = parent_tpg
@@ -970,7 +976,7 @@ class NodeACL(CFSNode):
 
         fm = self.parent_tpg.parent_target.fabric_module
         self._node_wwn, self.wwn_type = normalize_wwn(fm.wwn_types, node_wwn)
-        self._path = "%s/acls/%s" % (self.parent_tpg.path, fm.to_fabric_wwn(self.node_wwn))
+        self._path = f"{self.parent_tpg.path}/acls/{fm.to_fabric_wwn(self.node_wwn)}"
         self._create_in_cfs_ine(mode)
 
     def _get_node_wwn(self):
@@ -981,45 +987,45 @@ class NodeACL(CFSNode):
 
     def _get_tcq_depth(self):
         self._check_self()
-        path = "%s/cmdsn_depth" % self.path
+        path = f"{self.path}/cmdsn_depth"
         return fread(path)
 
     def _set_tcq_depth(self, depth):
         self._check_self()
-        path = "%s/cmdsn_depth" % self.path
+        path = f"{self.path}/cmdsn_depth"
         try:
-            fwrite(path, "%s" % depth)
-        except IOError as msg:
+            fwrite(path, str(depth))
+        except OSError as msg:
             msg = msg[1]
-            raise RTSLibError("Cannot set tcq_depth: %s" % str(msg))
+            raise RTSLibError(f"Cannot set tcq_depth: {msg!s}")
 
     def _get_tag(self):
         self._check_self()
         try:
-            tag = fread("%s/tag" % self.path)
+            tag = fread(f"{self.path}/tag")
             if tag:
                 return tag
             return None
-        except IOError:
+        except OSError:
             return None
 
     def _set_tag(self, tag_str):
         with ignored(IOError):
             if tag_str is None:
-                fwrite("%s/tag" % self.path, 'NULL')
+                fwrite(f"{self.path}/tag", 'NULL')
             else:
-                fwrite("%s/tag" % self.path, tag_str)
+                fwrite(f"{self.path}/tag", tag_str)
 
     def _list_mapped_luns(self):
         self._check_self()
-        for mapped_lun_dir in glob("%s/lun_*" % self.path):
-            mapped_lun = int(os.path.basename(mapped_lun_dir).split("_")[1])
+        for mapped_lun_dir in Path(self.path).glob('lun_*'):
+            mapped_lun = int(mapped_lun_dir.name.split("_")[1])
             yield MappedLUN(self, mapped_lun)
 
     def _get_session(self):
         try:
-            lines = fread("%s/info" % self.path).splitlines()
-        except IOError:
+            lines = fread(f"{self.path}/info").splitlines()
+        except OSError:
             return None
 
         if lines[0].startswith("No active"):
@@ -1041,7 +1047,7 @@ class NodeACL(CFSNode):
             elif "TARG_CONN_STATE_" in line:
                 cid = int(line.split(":")[1].split()[0])
                 cstate = line.split("_STATE_")[1].split()[0]
-                session['connections'].append(dict(cid=cid, cstate=cstate))
+                session['connections'].append({'cid': cid, 'cstate': cstate})
             elif "Address" in line:
                 session['connections'][-1]['address'] = line.split()[1]
                 session['connections'][-1]['transport'] = line.split()[2]
@@ -1064,7 +1070,7 @@ class NodeACL(CFSNode):
         self._check_self()
         for mapped_lun in self.mapped_luns:
             mapped_lun.delete()
-        super(NodeACL, self).delete()
+        super().delete()
 
     def mapped_lun(self, mapped_lun, tpg_lun=None, write_protect=None):
         '''
@@ -1075,8 +1081,8 @@ class NodeACL(CFSNode):
                          write_protect=write_protect)
 
     tcq_depth = property(_get_tcq_depth, _set_tcq_depth,
-                         doc="Set or get the TCQ depth for the initiator " \
-                         + "sessions matching this NodeACL.")
+                         doc="Set or get the TCQ depth for the initiator "
+                             "sessions matching this NodeACL.")
     tag = property(_get_tag, _set_tag,
             doc="Set or get the NodeACL tag. If not supported, return None")
     parent_tpg = property(_get_parent_tpg,
@@ -1092,7 +1098,7 @@ class NodeACL(CFSNode):
                            partial(_set_auth_attr, attribute='auth/userid'),
                            doc="Set or get the initiator CHAP auth userid.")
     chap_password = property(partial(_get_auth_attr, attribute='auth/password'),
-                             partial(_set_auth_attr, attribute='auth/password',),
+                             partial(_set_auth_attr, attribute='auth/password'),
                              doc="Set or get the initiator CHAP auth password.")
     chap_mutual_userid = property(partial(_get_auth_attr, attribute='auth/userid_mutual'),
                                   partial(_set_auth_attr, attribute='auth/userid_mutual'),
@@ -1103,7 +1109,7 @@ class NodeACL(CFSNode):
 
     def _get_authenticate_target(self):
         self._check_self()
-        path = "%s/auth/authenticate_target" % self.path
+        path = f"{self.path}/auth/authenticate_target"
         return bool(int(fread(path)))
 
     authenticate_target = property(_get_authenticate_target,
@@ -1117,7 +1123,7 @@ class NodeACL(CFSNode):
         try:
             acl_obj = cls(tpg_obj, acl['node_wwn'])
         except RTSLibError as e:
-            err_func("Error when creating NodeACL for %s: %s" % (acl['node_wwn'], e))
+            err_func(f"Error when creating NodeACL for {acl['node_wwn']}: {e}")
             return
 
         set_attributes(acl_obj, acl.get('attributes', {}), err_func)
@@ -1126,16 +1132,15 @@ class NodeACL(CFSNode):
             MappedLUN.setup(tpg_obj, acl_obj, mlun, err_func)
 
         dict_remove(acl, ('attributes', 'mapped_luns', 'node_wwn'))
-        for name, value in six.iteritems(acl):
+        for name, value in acl.items():
             if value:
                 try:
                     setattr(acl_obj, name, value)
                 except:
-                    err_func("Could not set nodeacl %s attribute '%s'" %
-                             (acl['node_wwn'], name))
+                    err_func(f"Could not set nodeacl {acl['node_wwn']} attribute '{name}'")
 
     def dump(self):
-        d = super(NodeACL, self).dump()
+        d = super().dump()
         d['node_wwn'] = self.node_wwn
         d['mapped_luns'] = [lun.dump() for lun in self.mapped_luns]
         if self.tag:
@@ -1188,11 +1193,10 @@ class MappedLUN(CFSNode):
         @type write_protect: bool
         '''
 
-        super(MappedLUN, self).__init__()
+        super().__init__()
 
         if not isinstance(parent_nodeacl, NodeACL):
-            raise RTSLibError("The parent_nodeacl parameter must be " \
-                              + "a NodeACL object")
+            raise RTSLibError("The parent_nodeacl parameter must be a NodeACL object")
         else:
             self._parent_nodeacl = parent_nodeacl
             if not parent_nodeacl.exists:
@@ -1201,16 +1205,15 @@ class MappedLUN(CFSNode):
         try:
             self._mapped_lun = int(mapped_lun)
         except ValueError:
-            raise RTSLibError("The mapped_lun parameter must be an " \
-                              + "integer value")
+            raise RTSLibError("The mapped_lun parameter must be an integer value")
         if self._mapped_lun < 0:
             raise RTSLibError("Mapped LUN must be >= 0")
 
         self._path = "%s/lun_%d" % (self.parent_nodeacl.path, self.mapped_lun)
 
         if tpg_lun is None and write_protect is not None:
-            raise RTSLibError("The write_protect parameter has no " \
-                              + "meaning without the tpg_lun parameter")
+            raise RTSLibError("The write_protect parameter has no "
+                              "meaning without the tpg_lun parameter")
 
         if tpg_lun is not None:
             self._create_in_cfs_ine('create')
@@ -1230,20 +1233,18 @@ class MappedLUN(CFSNode):
             try:
                 tpg_lun = int(tpg_lun)
             except ValueError:
-                raise RTSLibError("The tpg_lun must be either an "
-                                  + "integer or a LUN object")
+                raise RTSLibError("The tpg_lun must be either an integer or a LUN object")
         # Check that the tpg_lun exists in the TPG
         for lun in self.parent_nodeacl.parent_tpg.luns:
             if lun.lun == tpg_lun:
                 tpg_lun = lun
                 break
         if not (isinstance(tpg_lun, LUN) and tpg_lun):
-            raise RTSLibError("LUN %s does not exist in this TPG"
-                              % str(tpg_lun))
+            raise RTSLibError(f"LUN {tpg_lun!s} does not exist in this TPG")
 
         if not alias:
             alias = str(uuid.uuid4())[-10:]
-        os.symlink(tpg_lun.path, "%s/%s" % (self.path, alias))
+        os.symlink(tpg_lun.path, f"{self.path}/{alias}")
 
         try:
             self.write_protect = int(write_protect) > 0
@@ -1252,9 +1253,9 @@ class MappedLUN(CFSNode):
 
     def _get_alias(self):
         self._check_self()
-        for path in os.listdir(self.path):
-            if os.path.islink("%s/%s" % (self.path, path)):
-                return os.path.basename(path)
+        for path in Path(self.path).iterdir():
+            if path.is_symlink():
+                return path.name
 
         raise RTSLibBrokenLink("Broken LUN in configFS, no storage object")
 
@@ -1266,7 +1267,7 @@ class MappedLUN(CFSNode):
 
     def _set_write_protect(self, write_protect):
         self._check_self()
-        path = "%s/write_protect" % self.path
+        path = f"{self.path}/write_protect"
         if write_protect:
             fwrite(path, "1")
         else:
@@ -1274,12 +1275,12 @@ class MappedLUN(CFSNode):
 
     def _get_write_protect(self):
         self._check_self()
-        path = "%s/write_protect" % self.path
+        path = f"{self.path}/write_protect"
         return bool(int(fread(path)))
 
     def _get_tpg_lun(self):
         self._check_self()
-        path = os.path.realpath("%s/%s" % (self.path, self.alias))
+        path = os.path.realpath(f"{self.path}/{self.alias}")
         for lun in self.parent_nodeacl.parent_tpg.luns:
             if lun.path == path:
                 return lun
@@ -1298,13 +1299,13 @@ class MappedLUN(CFSNode):
         '''
         self._check_self()
         try:
-            lun_link = "%s/%s" % (self.path, self.alias)
+            lun_link = Path(self.path) / self.alias
         except RTSLibBrokenLink:
             pass
         else:
-            if os.path.islink(lun_link):
-                os.unlink(lun_link)
-        super(MappedLUN, self).delete()
+            if lun_link.is_symlink():
+                lun_link.unlink()
+        super().delete()
 
     mapped_lun = property(_get_mapped_lun,
             doc="Get the integer MappedLUN mapped_lun index.")
@@ -1348,7 +1349,7 @@ class MappedLUN(CFSNode):
             err_func("Creating MappedLUN object %d failed" % mlun['index'])
 
     def dump(self):
-        d = super(MappedLUN, self).dump()
+        d = super().dump()
         d['write_protect'] = self.write_protect
         d['index'] = self.mapped_lun
         d['tpg_lun'] = self.tpg_lun.lun
@@ -1356,7 +1357,7 @@ class MappedLUN(CFSNode):
         return d
 
 
-class Group(object):
+class Group:
     '''
     An abstract base class akin to CFSNode, but for classes that
     emulate a higher-level group object across the actual NodeACL
@@ -1439,10 +1440,10 @@ class NodeACLGroup(Group):
     Allow a group of NodeACLs that share a tag to be managed collectively.
     '''
     def __repr__(self):
-        return "<NodeACLGroup %s>" % self.name
+        return f"<NodeACLGroup {self.name}>"
 
     def __init__(self, parent_tpg, name):
-        super(NodeACLGroup, self).__init__(NodeACLGroup._node_acls.fget)
+        super().__init__(NodeACLGroup._node_acls.fget)
         _check_group_name(name)
         self._name = name
         self._parent_tpg = parent_tpg
@@ -1627,7 +1628,7 @@ class NodeACLGroup(Group):
     tcq_depth = property(partial(Group._get_prop, prop="tcq_depth"),
                          partial(Group._set_prop, prop="tcq_depth"),
                          doc="Set or get the TCQ depth for the initiator "
-                         + "sessions matching this NodeACLGroup")
+                             "sessions matching this NodeACLGroup")
     authenticate_target = property(partial(Group._get_prop, prop="authenticate_target"),
                                    doc="Get the boolean authenticate target flag.")
 
@@ -1642,11 +1643,11 @@ class MappedLUNGroup(Group):
         return "<MappedLUNGroup %s:lun %d>" % (self._nag.name, self._mapped_lun)
 
     def __init__(self, nodeaclgroup, mapped_lun, *args, **kwargs):
-        super(MappedLUNGroup, self).__init__(MappedLUNGroup._mapped_luns.fget)
+        super().__init__(MappedLUNGroup._mapped_luns.fget)
         self._nag = nodeaclgroup
         self._mapped_lun = mapped_lun
         for na in self._nag._node_acls:
-            MappedLUN(na, mapped_lun=mapped_lun, *args, **kwargs)
+            MappedLUN(na, *args, mapped_lun=mapped_lun, **kwargs)
 
     @property
     def _mapped_luns(self):
