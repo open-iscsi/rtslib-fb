@@ -415,7 +415,7 @@ def modprobe(module):
         import kmod.error
         import kmod.Kmod
     except ImportError:
-        out = subprocess.run(f"modprobe {module}", shell=True, capture_output=True, check=False)  # noqa: S602, S607
+        out = subprocess.run(f"modprobe {module}", shell=True, capture_output=True, check=False)  # noqa: S602
         if out.returncode != 0:
             raise RTSLibError(out.stderr.decode().rstrip())
         return
