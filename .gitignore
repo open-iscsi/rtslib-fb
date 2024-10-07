@@ -13,10 +13,13 @@ debian/rtslib-doc.debianebhelper.log
 debian/rtslib-doc.substvars
 debian/rtslib-doc/
 debian/tmp/
-dist/*
+dist/
 doc/*
 *.pyc
 debian/rtslib-doc.debhelper.log
 venv/
+.venv/
 .idea
 *egg-info/
+.mypy_cache/
+.ruff_cache/
