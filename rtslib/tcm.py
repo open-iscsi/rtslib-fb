@@ -1005,9 +1005,9 @@ class _Backstore(CFSNode):
                 with lock_file_path.open('w+') as lkfd:
                     fcntl.flock(lkfd, fcntl.LOCK_EX)
                     indexes = set(bs_cache.values())
-                    for index in range(1048576):
-                        if index not in indexes:
-                            self._index = index
+                    for i in range(1048576):
+                        if i not in indexes:
+                            self._index = i
                             bs_cache[self._lookup_key] = self._index
                             break
                     else:
