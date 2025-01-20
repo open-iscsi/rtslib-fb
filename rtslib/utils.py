@@ -115,10 +115,8 @@ def is_dev_in_use(path):
     except OSError:
         return True
     else:
-        try:
+        with suppress(OSError):
             os.close(file_fd)
-        except OSError:
-            pass
         return False
 
 def _get_size_for_dev(device):
