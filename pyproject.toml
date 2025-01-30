@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "rtslib"
+name = "rtslib-fb"
 description = "API for Linux kernel SCSI target (aka LIO)"
 readme = "README.md"
 license = "Apache-2.0"
