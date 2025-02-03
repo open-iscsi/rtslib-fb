@@ -34,6 +34,12 @@ Homepage = "http://github.com/open-iscsi/rtslib-fb"
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.build.targets.wheel]
+packages = [
+    "rtslib",
+    "rtslib_fb.py"
+]
+
 [tool.hatch.envs.default]
 dependencies = [
     "ruff",
