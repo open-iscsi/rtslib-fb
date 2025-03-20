@@ -31,6 +31,9 @@ paths = ["COPYING"]
 [project.urls]
 Homepage = "http://github.com/open-iscsi/rtslib-fb"
 
+[project.scripts]
+targetctl = "rtslib.targetctl:main"
+
 [tool.hatch.version]
 source = "vcs"
 
@@ -90,4 +93,4 @@ ignore = [
 ]
 [tool.ruff.lint.per-file-ignores]
 # Magic value used in comparison
-"scripts/targetctl" = ["PLR2004"]
+"rtslib/targetctl.py" = ["PLR2004"]
