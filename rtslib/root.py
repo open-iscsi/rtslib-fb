@@ -190,7 +190,7 @@ class RTSRoot(CFSNode):
         current = self.dump()
 
         try:
-            with Path(save_file).open as f:
+            with Path(save_file).open() as f:
                 saveconf = json.loads(f.read())
         except OSError as e:
             if e.errno == errno.ENOENT:
@@ -487,7 +487,7 @@ class RTSRoot(CFSNode):
         if not restore_file:
             restore_file = default_save_file
 
-        with Path(restore_file).open as f:
+        with Path(restore_file).open() as f:
             config = json.loads(f.read())
             return self.restore(config, target, storage_object,
                                 clear_existing=clear_existing,
