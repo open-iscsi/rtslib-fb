@@ -318,7 +318,7 @@ def parse(txt, cur):
         elif txt[cur] == "fabric":
             cur = parse_fabric(txt, cur)
 
-with Path("/etc/target/scsi_target.lio").open as f:
+with Path("/etc/target/scsi_target.lio").open() as f:
     txt = f.read()
     txt = split(txt)
     cur = parse(txt, 0)
