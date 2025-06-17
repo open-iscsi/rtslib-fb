@@ -19,6 +19,11 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
+  - repo: https://github.com/packit/pre-commit-hooks
+    rev: v1.3.0
+    hooks:
+      - id: validate-config
+
 ci:
   autofix_commit_msg: |
     [pre-commit.ci] auto fixes from pre-commit.com hooks
