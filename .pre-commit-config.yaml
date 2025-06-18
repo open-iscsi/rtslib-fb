@@ -29,5 +29,5 @@ ci:
     [pre-commit.ci] auto fixes from pre-commit.com hooks
 
     For more information, see https://pre-commit.ci
-  autofix_prs: true
+  autofix_prs: false
   autoupdate_schedule: monthly
