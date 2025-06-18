@@ -356,7 +356,7 @@ class RTSRoot(CFSNode):
 
         for index, so in enumerate(config.get('storage_objects', [])):
             if 'name' not in so:
-                err_func("'name' not defined in storage object %d" % index)
+                err_func(f"'name' not defined in storage object {index}")
                 continue
 
             # * Restore/load the single matching storage object if
@@ -400,7 +400,7 @@ class RTSRoot(CFSNode):
         # Don't need to create fabric modules
         for index, fm in enumerate(config.get('fabric_modules', [])):
             if 'name' not in fm:
-                err_func("'name' not defined in fabricmodule %d" % index)
+                err_func(f"'name' not defined in fabricmodule {index}")
                 continue
             for fm_obj in self.fabric_modules:
                 if fm['name'] == fm_obj.name:
@@ -409,7 +409,7 @@ class RTSRoot(CFSNode):
 
         for index, t in enumerate(config.get('targets', [])):
             if 'wwn' not in t:
-                err_func("'wwn' not defined in target %d" % index)
+                err_func(f"'wwn' not defined in target {index}")
                 continue
 
             # * Restore/load the single matching target if target=iqn.xxx was

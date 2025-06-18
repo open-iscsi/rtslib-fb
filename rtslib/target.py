@@ -159,7 +159,7 @@ class TPG(CFSNode):
     # TPG private stuff
 
     def __repr__(self):
-        return "<TPG %d>" % self.tag
+        return f"<TPG {self.tag}>"
 
     def __init__(self, parent_target, tag=None, mode='any'):
         '''
@@ -197,7 +197,7 @@ class TPG(CFSNode):
         else:
             raise RTSLibError("Invalid parent Target")
 
-        self._path = "%s/tpgt_%d" % (self.parent_target.path, self.tag)
+        self._path = f"{self.parent_target.path}/tpgt_{self.tag}"
 
         path = Path(self._path)
         target_path = Path(self.parent_target.path)
@@ -482,8 +482,7 @@ class LUN(CFSNode):
     # LUN private stuff
 
     def __repr__(self):
-        return "<LUN %d (%s/%s)>" % (self.lun, self.storage_object.plugin,
-                                    self.storage_object.name)
+        return f"<LUN {self.lun} ({self.storage_object.plugin}/{self.storage_object.name})>"
 
     def __init__(self, parent_tpg, lun=None, storage_object=None, alias=None):
         '''
@@ -522,15 +521,15 @@ class LUN(CFSNode):
                     lun = index
                     break
             if lun is None:
-                raise RTSLibError("All LUNs 0-%d in use" % self.MAX_TARGET_LUN)
+                raise RTSLibError(f"All LUNs 0-{self.MAX_TARGET_LUN} in use")
         else:
             lun = int(lun)
             if lun < 0 or lun > self.MAX_TARGET_LUN:
-                raise RTSLibError("LUN must be 0 to %d" % self.MAX_TARGET_LUN)
+                raise RTSLibError(f"LUN must be 0 to {self.MAX_TARGET_LUN}")
 
         self._lun = lun
 
-        self._path = "%s/lun/lun_%d" % (self.parent_tpg.path, self.lun)
+        self._path = f"{self.parent_tpg.path}/lun/lun_{self.lun}"
 
         if storage_object is None and alias is not None:
             raise RTSLibError("The alias parameter has no meaning "
@@ -766,13 +765,13 @@ class LUN(CFSNode):
     @classmethod
     def setup(cls, tpg_obj, lun, err_func):
         if 'index' not in lun:
-            err_func("'index' missing from a LUN in TPG %d" % tpg_obj.tag)
+            err_func(f"'index' missing from a LUN in TPG {tpg_obj.tag}")
             return
 
         try:
             bs_name, so_name = lun['storage_object'].split('/')[2:]
         except:
-            err_func("Malformed storage object field for LUN %d" % lun['index'])
+            err_func(f"Malformed storage object field for LUN {lun['index']}")
             return
 
         for so in tcm.StorageObject.all():
@@ -780,14 +779,13 @@ class LUN(CFSNode):
                 match_so = so
                 break
         else:
-            err_func("Could not find matching StorageObject for LUN %d" % lun['index'])
+            err_func(f"Could not find matching StorageObject for LUN {lun['index']}")
             return
 
         try:
            lun_obj =  cls(tpg_obj, lun['index'], storage_object=match_so, alias=lun.get('alias'))
         except (RTSLibError, KeyError):
-            err_func("Creating TPG %d LUN index %d failed" %
-                     (tpg_obj.tag, lun['index']))
+            err_func(f"Creating TPG {tpg_obj.tag} LUN index {lun['index']} failed")
 
         # alua_tg_pt_gp support not present in older versions
         with contextlib.suppress(KeyError):
@@ -918,10 +916,10 @@ class NetworkPortal(CFSNode):
     @classmethod
     def setup(cls, tpg_obj, p, err_func):
         if 'ip_address' not in p:
-            err_func("'ip_address' field missing from a portal in TPG %d" % tpg_obj.tag)
+            err_func(f"'ip_address' field missing from a portal in TPG {tpg_obj.tag}")
             return
         if 'port' not in p:
-            err_func("'port' field missing from a portal in TPG %d" % tpg_obj.tag)
+            err_func(f"'port' field missing from a portal in TPG {tpg_obj.tag}")
             return
 
         try:
@@ -1165,9 +1163,7 @@ class MappedLUN(CFSNode):
     # MappedLUN private stuff
 
     def __repr__(self):
-        return "<MappedLUN %s lun %d -> tpg%d lun %d>" % \
-            (self.parent_nodeacl.node_wwn, self.mapped_lun,
-             self.parent_nodeacl.parent_tpg.tag, self.tpg_lun.lun)
+        return f"<MappedLUN {self.parent_nodeacl.node_wwn} lun {self.mapped_lun} -> tpg{self.parent_nodeacl.parent_tpg.tag} lun {self.tpg_lun.lun}>"
 
     def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None, alias=None):
@@ -1336,8 +1332,7 @@ class MappedLUN(CFSNode):
                 tpg_lun_obj = lun
                 break
         else:
-            err_func("Could not find matching TPG LUN %d for MappedLUN %s" %
-                     (mlun['tpg_lun'], mlun['index']))
+            err_func(f"Could not find matching TPG LUN {mlun['tpg_lun']} for MappedLUN {mlun['index']}")
             return
 
         try:
@@ -1346,7 +1341,7 @@ class MappedLUN(CFSNode):
                            mlun.get('alias'))
             mlun_obj.tag = mlun.get("tag", None)
         except (RTSLibError, KeyError):
-            err_func("Creating MappedLUN object %d failed" % mlun['index'])
+            err_func(f"Creating MappedLUN object {mlun['index']} failed")
 
     def dump(self):
         d = super().dump()

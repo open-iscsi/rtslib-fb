@@ -70,7 +70,7 @@ class ALUATargetPortGroup(CFSNode):
                 fwrite(f"{self._path}/tg_pt_gp_id", tag)
             except OSError as msg:
                 self.delete()
-                raise RTSLibError("Cannot set id to %d: %s" % (tag, str(msg)))
+                raise RTSLibError(f"Cannot set id to {tag}: {msg}")
         else:
             try:
                 self._create_in_cfs_ine('lookup')
