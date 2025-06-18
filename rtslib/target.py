@@ -1163,7 +1163,10 @@ class MappedLUN(CFSNode):
     # MappedLUN private stuff
 
     def __repr__(self):
-        return f"<MappedLUN {self.parent_nodeacl.node_wwn} lun {self.mapped_lun} -> tpg{self.parent_nodeacl.parent_tpg.tag} lun {self.tpg_lun.lun}>"
+        return (
+            f"<MappedLUN {self.parent_nodeacl.node_wwn} lun {self.mapped_lun} -> "
+            f"tpg{self.parent_nodeacl.parent_tpg.tag} lun {self.tpg_lun.lun}>"
+        )
 
     def __init__(self, parent_nodeacl, mapped_lun,
                  tpg_lun=None, write_protect=None, alias=None):
@@ -1332,7 +1335,10 @@ class MappedLUN(CFSNode):
                 tpg_lun_obj = lun
                 break
         else:
-            err_func(f"Could not find matching TPG LUN {mlun['tpg_lun']} for MappedLUN {mlun['index']}")
+            err_func(
+                f"Could not find matching TPG LUN {mlun['tpg_lun']} "
+                f"for MappedLUN {mlun['index']}"
+            )
             return
 
         try:
