@@ -107,7 +107,6 @@ Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 
 '''
 
-import os
 from contextlib import suppress
 from functools import partial
 from pathlib import Path
