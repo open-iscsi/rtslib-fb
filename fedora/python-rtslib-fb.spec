@@ -41,7 +41,6 @@ BuildRequires:  python3-hatchling
 Summary:        %{summary}
 # Runtime requirements
 Requires:       python3-pyudev
-%{?python_provide:%python_provide python3-%{pkg_name}}
 
 %package -n target-restore
 Summary:          Systemd service for targetcli/rtslib
