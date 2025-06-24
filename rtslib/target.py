@@ -1337,7 +1337,7 @@ class MappedLUN(CFSNode):
         else:
             err_func(
                 f"Could not find matching TPG LUN {mlun['tpg_lun']} "
-                f"for MappedLUN {mlun['index']}"
+                f"for MappedLUN {mlun['index']}",
             )
             return
 
