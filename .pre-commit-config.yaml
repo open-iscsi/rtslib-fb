@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.7.1
+    rev: v0.11.13
     hooks:
       - id: ruff
         args: [--fix]
@@ -11,13 +11,23 @@ repos:
       - id: check-case-conflict
       - id: check-ast
       - id: check-docstring-first
-      - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-builtin-literals
-      - id: check-docstring-first
-      - id: check-merge-conflict
       - id: check-toml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+
+  - repo: https://github.com/packit/pre-commit-hooks
+    rev: v1.3.0
+    hooks:
+      - id: validate-config
+
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    For more information, see https://pre-commit.ci
+  autofix_prs: false
+  autoupdate_schedule: monthly
