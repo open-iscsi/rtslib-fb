@@ -227,11 +227,11 @@ def parse_tpg(tag, txt, cur):
             portals.append(portal)
             cur += 2
             continue
-    if len(luns):
+    if luns:
         tpg["luns"] = luns
-    if len(acls):
+    if acls:
         tpg["node_acls"] = acls
-    if len(portals):
+    if portals:
         tpg["portals"] = portals
     return cur+1, tpg
 
@@ -300,7 +300,7 @@ def split(s):
                 del new_lst[-1]
         elif in_quotes:  # append ws if in quotes
             new_str.append(c)
-        elif len(new_str):  # not in quotes, break on ws if anything in new_str
+        elif new_str:  # not in quotes, break on ws if anything in new_str
             new_lst.append("".join(new_str))
             new_str = []
         else:
