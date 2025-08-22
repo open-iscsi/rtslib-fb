@@ -203,6 +203,14 @@ class StorageObject(CFSNode):
         self._check_self()
         return self._parse_info('Status').lower()
 
+    def _get_read_mbytes(self):
+        self._check_self()
+        return int(fread("%s/statistics/scsi_lu/read_mbytes" % self.path))
+
+    def _get_write_mbytes(self):
+        self._check_self()
+        return int(fread("%s/statistics/scsi_lu/read_mbytes" % self.path))
+
     def _gen_attached_luns(self):
         '''
         Fast scan of luns attached to a storage object. This is an order of
@@ -315,6 +323,12 @@ class StorageObject(CFSNode):
             doc="Get list of ALUA Target Port Groups attached.")
     alua_supported = property(_get_alua_supported,
             doc="Returns true if ALUA can be setup. False if not supported.")
+
+    read_mbytes = property(_get_read_mbytes,
+            doc="Get the number of megabytes read from this StorageObject")
+
+    write_mbytes = property(_get_write_mbytes,
+            doc="Get the number of megabytes written to this StorageObject")
 
     def dump(self):
         d = super().dump()
