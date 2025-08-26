@@ -94,3 +94,5 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Magic value used in comparison
 "rtslib/targetctl.py" = ["PLR2004"]
+# Allow assert statements in tests
+"tests/**/*.py" = ["S101", "PLC0415"]
