@@ -53,6 +53,13 @@ class RTSLibNotInCFSError(RTSLibError):
     object that does not exist.
     '''
 
+
+# Backward compatibility aliases for the old exception names
+# These were renamed in commit fdd69b1 to follow PEP8 naming conventions
+# but broke backward compatibility. Keep the old names as aliases.
+RTSLibALUANotSupported = RTSLibALUANotSupportedError
+RTSLibNotInCFS = RTSLibNotInCFSError
+
 def fwrite(path, string):
     '''
     This function writes a string to a file, and takes care of

@@ -38,32 +38,36 @@ from .tcm import (
     UserBackedStorageObject,
 )
 from .utils import (
+    RTSLibALUANotSupported,  # Backward compatibility alias
     RTSLibALUANotSupportedError,
     RTSLibBrokenLink,
     RTSLibError,
+    RTSLibNotInCFS,  # Backward compatibility alias
     RTSLibNotInCFSError,
 )
 
 __all__ = [
-    "RTSRoot",
-    "RTSLibError",
-    "RTSLibBrokenLink",
-    "RTSLibNotInCFSError",
-    "RTSLibALUANotSupportedError",
     "LUN",
-    "MappedLUN",
-    "NodeACL",
-    "NetworkPortal",
     "TPG",
-    "Target",
-    "NodeACLGroup",
-    "MappedLUNGroup",
+    "ALUATargetPortGroup",
+    "BlockStorageObject",
     "FabricModule",
     "FileIOStorageObject",
-    "BlockStorageObject",
+    "MappedLUN",
+    "MappedLUNGroup",
+    "NetworkPortal",
+    "NodeACL",
+    "NodeACLGroup",
     "PSCSIStorageObject",
     "RDMCPStorageObject",
-    "UserBackedStorageObject",
+    "RTSLibALUANotSupported",  # Backward compatibility alias
+    "RTSLibALUANotSupportedError",
+    "RTSLibBrokenLink",
+    "RTSLibError",
+    "RTSLibNotInCFS",  # Backward compatibility alias
+    "RTSLibNotInCFSError",
+    "RTSRoot",
     "StorageObjectFactory",
-    "ALUATargetPortGroup",
+    "Target",
+    "UserBackedStorageObject",
 ]
