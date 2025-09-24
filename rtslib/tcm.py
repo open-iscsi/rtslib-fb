@@ -711,7 +711,7 @@ class BlockStorageObject(StorageObject):
     # BlockStorageObject private stuff
 
     def __init__(self, name, dev=None, wwn=None, readonly=False,
-                 write_back=False, index=None):  # noqa: ARG002 TODO
+                 write_back=False, index=None, exclusive=True):  # noqa: ARG002 TODO
         '''
         A BlockIOStorageObject can be instantiated in two ways:
             - B{Creation mode}: If I{dev} is specified, the underlying configFS
@@ -739,23 +739,28 @@ class BlockStorageObject(StorageObject):
         if dev is not None:
             super().__init__(name, 'create', index)
             try:
-                self._configure(dev, wwn, readonly)
+                self._configure(dev, wwn, readonly, exclusive)
             except:
                 self.delete()
                 raise
         else:
             super().__init__(name, 'lookup', index)
 
-    def _configure(self, dev, wwn, readonly):
+    def _configure(self, dev, wwn, readonly, exclusive):
         self._check_self()
         if get_blockdev_type(dev) != 0:
             raise RTSLibError(f"Device {dev} is not a TYPE_DISK block device")
-        if is_dev_in_use(dev):
+        if exclusive and is_dev_in_use(dev):
             raise RTSLibError(
                 "Cannot configure StorageObject because device {dev} is already in use")
         self._set_udev_path(dev)
         self._control(f"udev_path={dev}")
         self._control("readonly=%d" % readonly)
+
+        self._control("exclusive=%d" % exclusive)
+        # Check if exclusive was supported by the kernel
+        if not exclusive and self._get_exclusive():
+            raise RTSLibError("Cannot configure StorageObject. exclusive=false not supported.")
         self._enable()
 
         super()._configure(wwn)
@@ -785,6 +790,19 @@ class BlockStorageObject(StorageObject):
         except AttributeError:
             return False
 
+    def _get_exclusive(self):
+        self._check_self()
+        # 'exclusive' not present before kernel 6.17. In older kernels it
+        # was always equivalent of exclusive=True.
+        try:
+            excl = self._parse_info('exclusive')
+            if excl is None:
+                return True
+
+            return bool(int(excl))
+        except AttributeError:
+            return True
+
     # BlockStorageObject public stuff
 
     major = property(_get_major,
@@ -797,6 +815,8 @@ class BlockStorageObject(StorageObject):
             doc="True if write-back, False if write-through (write cache disabled)")
     readonly = property(_get_readonly,
             doc="True if the device is read-only, False if read/write")
+    exclusive = property(_get_exclusive,
+            doc="True if the device is owned by this backstore instance, False if it's shareable")
 
     def dump(self):
         d = super().dump()
@@ -804,6 +824,7 @@ class BlockStorageObject(StorageObject):
         d['readonly'] = self.readonly
         d['wwn'] = self.wwn
         d['dev'] = self.udev_path
+        d['exclusive'] = self.exclusive
         return d
 
 

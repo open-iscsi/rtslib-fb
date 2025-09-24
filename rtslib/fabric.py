@@ -451,7 +451,7 @@ class SRPTFabricModule(_BaseFabricModule):
 
     @property
     def wwns(self):
-        for wwn_file in Path("/sys/class/infiniband").glob("**/ports/*/gids/0"):
+        for wwn_file in Path("/sys/class/infiniband").glob("*/ports/*/gids/0"):
             yield f"ib.{fread(wwn_file).replace(':', '')}"
 
 
