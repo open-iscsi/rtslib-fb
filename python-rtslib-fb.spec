@@ -57,6 +57,7 @@ on system restart.
 # Build steps
 %prep
 %autosetup -n %{upstream_name}-%{version}
+ln -sf rtslib rtslib_fb
 
 %build
 %pyproject_wheel
