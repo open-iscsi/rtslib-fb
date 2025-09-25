@@ -246,7 +246,7 @@ class StorageObject(CFSNode):
         Generate all ALUA groups attach to a storage object.
         '''
         self._check_self()
-        for tpg in os.listdir(f"{self.path}/alua"):
+        for tpg in [p.name for p in Path(f"{self.path}/alua").iterdir()]:
             if self.alua_supported:
                 yield ALUATargetPortGroup(self, tpg)
 
@@ -392,15 +392,13 @@ class PSCSIStorageObject(StorageObject):
 
         if is_dev_in_use(udev_path):
             raise RTSLibError("Cannot configure StorageObject because "
-                              + "device %s (SCSI %d:%d:%d:%d) "
-                              % (udev_path, hostid, channelid,
-                                 targetid, lunid)
-                              + "is already in use")
+                               f"device {udev_path} (SCSI {hostid}:{channelid}:{targetid}:{lunid}) "
+                               "is already in use")
 
-        self._control("scsi_host_id=%d," % hostid \
-                      + "scsi_channel_id=%d," % channelid \
-                      + "scsi_target_id=%d," % targetid \
-                      + "scsi_lun_id=%d" % lunid)
+        self._control(f"scsi_host_id={hostid},"
+                      f"scsi_channel_id={channelid},"
+                      f"scsi_target_id={targetid},"
+                      f"scsi_lun_id={lunid}")
         self._set_udev_path(udev_path)
         self._enable()
 
@@ -522,7 +520,7 @@ class RDMCPStorageObject(StorageObject):
         if size == 0:
             size = 1
 
-        self._control("rd_pages=%d" % size)
+        self._control(f"rd_pages={size}")
         if nullio:
             self._control("rd_nullio=1")
         self._enable()
@@ -630,7 +628,7 @@ class FileIOStorageObject(StorageObject):
             if size is None:
                 raise RTSLibError("Path is to a file, size needed")
 
-            self._control("fd_dev_name=%s,fd_dev_size=%d" % (dev, size))
+            self._control(f"fd_dev_name={dev},fd_dev_size={size}")
 
         else: # a block device
             # size is ignored but we can't raise an exception because
@@ -646,10 +644,10 @@ class FileIOStorageObject(StorageObject):
 
         if write_back:
             self.set_attribute("emulate_write_cache", 1)
-            self._control("fd_buffered_io=%d" % write_back)
+            self._control(f"fd_buffered_io={write_back}")
 
         if aio:
-            self._control("fd_async_io=%d" % aio)
+            self._control(f"fd_async_io={aio}")
 
         self._set_udev_path(dev)
 
@@ -755,9 +753,9 @@ class BlockStorageObject(StorageObject):
                 "Cannot configure StorageObject because device {dev} is already in use")
         self._set_udev_path(dev)
         self._control(f"udev_path={dev}")
-        self._control("readonly=%d" % readonly)
+        self._control(f"readonly={readonly}")
 
-        self._control("exclusive=%d" % exclusive)
+        self._control(f"exclusive={exclusive}")
         # Check if exclusive was supported by the kernel
         if not exclusive and self._get_exclusive():
             raise RTSLibError("Cannot configure StorageObject. exclusive=false not supported.")
@@ -875,7 +873,7 @@ class UserBackedStorageObject(StorageObject):
         if ':' in config:
             raise RTSLibError("':' not allowed in config string")
         self._control(f"dev_config={config}")
-        self._control("dev_size=%d" % size)
+        self._control(f"dev_size={size}")
         if hw_max_sectors is not None:
             self._control(f"hw_max_sectors={hw_max_sectors}")
         if control is not None:
@@ -1070,7 +1068,7 @@ class _Backstore(CFSNode):
 
     def _get_name(self):
         self._check_self()
-        return "%s%d" % (self.plugin, self.index)
+        return f"{self.plugin}{self.index}"
 
     plugin = property(_get_plugin,
             doc="Get the backstore plugin name.")
