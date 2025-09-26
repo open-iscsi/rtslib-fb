@@ -246,7 +246,7 @@ class StorageObject(CFSNode):
         Generate all ALUA groups attach to a storage object.
         '''
         self._check_self()
-        for tpg in os.listdir(f"{self.path}/alua"):
+        for tpg in (p.name for p in Path(f"{self.path}/alua").iterdir()):
             if self.alua_supported:
                 yield ALUATargetPortGroup(self, tpg)
 
