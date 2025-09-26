@@ -107,7 +107,6 @@ Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 
 '''
 
-import os
 from contextlib import suppress
 from functools import partial
 from pathlib import Path
@@ -550,6 +549,6 @@ class FabricModule:
     @classmethod
     def list_registered_drivers(cls):
         try:
-            return os.listdir('/sys/module/target_core_mod/holders')
+            return [p.name for p in Path('/sys/module/target_core_mod/holders').iterdir()]
         except OSError:
             return []
