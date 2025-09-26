@@ -90,6 +90,7 @@ ignore = [
     "B904",    # TODO raise-without-from-inside-except
     "PERF203", # TODO `try`-`except` within a loop incurs performance overhead
     "PLR09",   # Too many branches/statements/arguments
+    "UP031",   # Use format specifiers instead of percent format
 ]
 [tool.ruff.lint.per-file-ignores]
 # Magic value used in comparison
