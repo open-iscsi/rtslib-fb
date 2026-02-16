@@ -384,6 +384,13 @@ class SBPFabricModule(_BaseFabricModule):
                 break
 
 
+class Fnic2FabricModule(_BaseFabricModule):
+    def __init__(self):
+        super(Fnic2FabricModule, self).__init__('fnic2')
+        self.features = ("acls")
+        self.kernel_module = "fnic2"
+
+
 class Qla2xxxFabricModule(_BaseFabricModule):
     def __init__(self):
         super().__init__('qla2xxx')
@@ -530,6 +537,7 @@ fabric_modules = {
     "vhost": VhostFabricModule,
     "xen-pvscsi": XenPvScsiFabricModule,
     "ibmvscsis": IbmvscsisFabricModule,
+    "fnic2": Fnic2FabricModule,
     }
 
 #
