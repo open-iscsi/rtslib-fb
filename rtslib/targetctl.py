@@ -53,7 +53,7 @@ def restore(from_file):
     for error in errors:
         print(error, file=err)
 
-def clear():
+def clear(_unused):  # Unused argument required for funcs dispatch
     RTSRoot().clear_existing(confirm=True)
 
 funcs = {"save": save, "restore": restore, "clear": clear}
