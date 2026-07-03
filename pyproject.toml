@@ -25,9 +25,6 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.license-files]
-paths = ["COPYING"]
-
 [project.urls]
 Homepage = "http://github.com/open-iscsi/rtslib-fb"
 
