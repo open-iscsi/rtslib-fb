@@ -86,6 +86,7 @@ ignore = [
     "E722",    # TODO do not use bare 'except'
     "B904",    # TODO raise-without-from-inside-except
     "PERF203", # TODO `try`-`except` within a loop incurs performance overhead
+    "PLC0415", # `import` should be at the top-level of a file
     "PLR09",   # Too many branches/statements/arguments
     "UP031",   # Use format specifiers instead of percent format
 ]

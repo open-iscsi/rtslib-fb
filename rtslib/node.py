@@ -40,6 +40,9 @@ class CFSNode:
     def __ne__(self, other):
         return self._path != other._path
 
+    def __hash__(self):
+        return hash(self._path)
+
     def _get_path(self):
         return self._path
 

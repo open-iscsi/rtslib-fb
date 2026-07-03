@@ -94,6 +94,9 @@ class StorageObject(CFSNode):
     def __ne__(self, other):
         return not self == other
 
+    def __hash__(self):
+        return hash((self.plugin, self.name))
+
     def _config_pr_aptpl(self):
         """
         LIO actually *writes* pr aptpl info to the filesystem, so we
@@ -1010,7 +1013,7 @@ class _Backstore(CFSNode):
 
         self._lookup_key = f"{dirp}/{name}"
         if index is None:
-            self._index = bs_cache.get(self._lookup_key, None)
+            self._index = bs_cache.get(self._lookup_key)
             if self._index is not None and mode == 'create':
                 raise RTSLibError(f"Storage object {self._plugin}/{name} exists")
         else:
