@@ -105,6 +105,11 @@ Sets the path of the configfs group used by the fabric module. Defaults to the
 name of the module from the fabrics list.
 Example: self._path = f"{self.configfs_dir}/{my_cfs_dir}"
 
+* available
+Whether the fabric can be used on this system at all, e.g. because it needs
+a specific hypervisor. Fabrics that are not available are not listed by
+FabricModule.all() unless they already exist in configfs. Defaults to True.
+
 '''
 
 from contextlib import suppress
@@ -162,6 +167,8 @@ class _BaseFabricModule(CFSNode):
         self.kernel_module = f"{self.name}_target_mod"
 
     # FabricModule public stuff
+
+    available = True
 
     def _check_self(self):
         if not self.exists:
@@ -504,6 +511,14 @@ class XenPvScsiFabricModule(_BaseFabricModule):
         self.wwn_types = ('naa',)
         self.kernel_module = "xen-scsiback"
 
+    @property
+    def available(self):
+        # xen-scsiback only works when running as a Xen domain
+        try:
+            return fread("/sys/hypervisor/type") == "xen"
+        except OSError:
+            return False
+
 
 class IbmvscsisFabricModule(_BaseFabricModule):
     def __init__(self):
@@ -544,7 +559,9 @@ class FabricModule:
     @classmethod
     def all(cls):
         for mod in fabric_modules.values():
-            yield mod()
+            fabric = mod()
+            if fabric.available or fabric.exists:
+                yield fabric
 
     @classmethod
     def list_registered_drivers(cls):
