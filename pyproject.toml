@@ -37,7 +37,7 @@ source = "vcs"
 [tool.hatch.build.targets.wheel]
 packages = [
     "rtslib",
-    "rtslib_fb"
+    "rtslib_fb",  # deprecated alias of rtslib
 ]
 
 [tool.hatch.envs.default]
