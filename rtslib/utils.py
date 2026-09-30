@@ -406,32 +406,23 @@ def modprobe(module):
     @param module: The name of the kernel module to be loaded.
     @type module: str
     '''
-    if module in list_loaded_kernel_modules():
-        return
-
-    import subprocess
-
-    try:
-        import kmod
-        import kmod.error
-        import kmod.Kmod
-    except ImportError:
-        out = subprocess.run(f"modprobe {module}", shell=True, capture_output=True, check=False)  # noqa: S602
-        if out.returncode != 0:
-            raise RTSLibError(out.stderr.decode().rstrip())
+    # /proc/modules always uses underscores, modprobe accepts both
+    if module.replace('-', '_') in list_loaded_kernel_modules():
         return
 
     try:
-        kmod.Kmod().modprobe(module)
-    except kmod.error.KmodError:
-        raise RTSLibError(f"Could not load module: {module}")
+        out = subprocess.run(["modprobe", module], capture_output=True, check=False)  # noqa: S603, S607
+    except OSError as e:
+        raise RTSLibError(f"Could not load module {module}: {e}")
+    if out.returncode != 0:
+        raise RTSLibError(f"Could not load module {module}: {out.stderr.decode().rstrip()}")
 
 def mount_configfs():
     config_dir = "/sys/kernel/config"
     config_path = Path(config_dir)
     if not config_path.is_mount():
-        cmdline = [f"mount -t configfs none {config_dir}"]
-        out = subprocess.run(cmdline, shell=True, capture_output=True, check=False)  # noqa: S602
+        cmdline = ["mount", "-t", "configfs", "none", config_dir]
+        out = subprocess.run(cmdline, capture_output=True, check=False)  # noqa: S603
         if out.returncode != 0 and not config_path.is_mount():
             raise RTSLibError("Cannot mount configfs")
 
