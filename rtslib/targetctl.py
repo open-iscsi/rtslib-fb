@@ -26,7 +26,7 @@ import os
 import sys
 from pathlib import Path
 
-from .root import RTSRoot
+from rtslib import RTSRoot
 
 default_save_file = "/etc/target/saveconfig.json"
 err = sys.stderr
