@@ -11,19 +11,15 @@ rtslib-fb development
 ---------------------
 rtslib-fb is licensed under the Apache 2.0 license. Contributions are welcome.
 
-Since rtslib-fb is used most often with targetcli-fb, the targetcli-fb
-mailing should be used for rtslib-fb discussion.
-
- * Mailing list: [targetcli-fb-devel](https://lists.fedorahosted.org/mailman/listinfo/targetcli-fb-devel)
  * Source repo: [GitHub](https://github.com/open-iscsi/rtslib-fb)
- * Bugs: [GitHub](https://github.com/open-iscsi/rtslib-fb/issues) or [Trac](https://fedorahosted.org/targetcli-fb/)
- * Tarballs: [fedorahosted](https://fedorahosted.org/releases/t/a/targetcli-fb/)
+ * Bugs: [GitHub](https://github.com/open-iscsi/rtslib-fb/issues)
+ * Releases: [PyPI](https://pypi.org/project/rtslib-fb/)
 
 Packages
 --------
 rtslib-fb is packaged for a number of Linux distributions including
 RHEL,
-[Fedora](https://apps.fedoraproject.org/packages/python-rtslib),
+[Fedora](https://src.fedoraproject.org/rpms/python-rtslib),
 openSUSE, Arch Linux,
 [Gentoo](https://packages.gentoo.org/packages/dev-python/rtslib-fb), and
 [Debian](https://tracker.debian.org/pkg/python-rtslib-fb).
