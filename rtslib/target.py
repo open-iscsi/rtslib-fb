@@ -562,7 +562,7 @@ class LUN(CFSNode):
         else:
             raise RTSLibError("storage_object does not exist in configFS")
 
-        os.symlink(source, destination)
+        Path(destination).symlink_to(source)
 
     def _get_alias(self):
         self._check_self()
@@ -1244,7 +1244,7 @@ class MappedLUN(CFSNode):
 
         if not alias:
             alias = str(uuid.uuid4())[-10:]
-        os.symlink(tpg_lun.path, f"{self.path}/{alias}")
+        Path(f"{self.path}/{alias}").symlink_to(tpg_lun.path)
 
         try:
             self.write_protect = int(write_protect) > 0
